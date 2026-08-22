@@ -1,0 +1,39 @@
+{
+  "scenario_id": "renuncia",
+  "person_id": "p_ana",
+  "items_huerfanos": [
+    { "id": "k1", "tipo": "tarea", "descripcion": "Comprar vuelos del jefe" },
+    {
+      "id": "k2",
+      "tipo": "tarea",
+      "descripcion": "Administrar el CRM de clientes"
+    },
+    {
+      "id": "k3",
+      "tipo": "conocimiento",
+      "descripcion": "Coordinar el onboarding de nuevos empleados"
+    },
+    {
+      "id": "k4",
+      "tipo": "acceso",
+      "descripcion": "Gestionar accesos y llaves de la oficina"
+    },
+    {
+      "id": "k5",
+      "tipo": "tarea",
+      "descripcion": "Pagar la nómina y a los proveedores"
+    },
+    {
+      "id": "k6",
+      "tipo": "conocimiento",
+      "descripcion": "Renovar contratos de proveedores (internet, limpieza, catering)"
+    },
+    {
+      "id": "k7",
+      "tipo": "tarea",
+      "descripcion": "Organizar viajes y logística del equipo"
+    }
+  ],
+  "impacto": { "tareas": 7, "dias_recuperacion": 12, "score": 64 },
+  "playbook_md": "# Empalme de Ana\n\nAna se va y deja 7 tareas huérfanas. Esto es lo que su reemplazo (o el equipo, mientras tanto) necesita saber para no dejar caer la operación.\n\n## Viajes del jefe\n\n- Al jefe **solo le gusta viajar en LATAM**. No reservar con otra aerolínea aunque sea más barata: ya ha pasado y hay que cancelar y rehacer todo.\n- Usar la tarjeta corporativa que está en la caja fuerte de finanzas, clave con Camila.\n\n## CRM y clientes\n\n- El CRM lo revisa cada lunes en la mañana; hay que asignar a alguien que lo haga o los leads se enfrían.\n- Las cuentas \"VIP\" están etiquetadas en rojo y las gestiona ella directamente.\n\n## Accesos y oficina\n\n- Ana tiene el único juego de llaves maestras de la oficina; sacar copia con el administrador del edificio.\n- Ella coordina onboarding de nuevas personas: laptop, cuenta de correo y tour del primer día.\n\n## Pagos y proveedores\n\n- Nómina se paga el día 28 de cada mes, sin excepciones.\n- Los contratos de internet, limpieza y catering se renuevan en fechas distintas; revisar el calendario compartido de Ana.\n\n## Siguiente paso\n\nRepartir estas 7 tareas entre 2-3 personas mientras se contrata un reemplazo, priorizando nómina y accesos en la primera semana."
+}
