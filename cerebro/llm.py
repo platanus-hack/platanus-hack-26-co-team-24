@@ -18,8 +18,13 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
+from .esquemas import RAIZ
+
 MODELO = os.getenv("CEREBRO_MODELO", "claude-opus-5")
-CACHE_DIR = Path(os.getenv("CEREBRO_CACHE_DIR", ".cache_cerebro"))
+# En Railway/Render el disco es efímero: la caché no sobrevive un reinicio y la
+# primera llamada tras cada deploy va en frío. Los KnowledgeItem viven en
+# Supabase (P3 los persiste), así que lo único que se re-paga es el playbook.
+CACHE_DIR = Path(os.getenv("CEREBRO_CACHE_DIR", str(RAIZ / ".cache_cerebro")))
 CACHE_ACTIVA = os.getenv("CEREBRO_CACHE", "1") != "0"
 
 T = TypeVar("T", bound=BaseModel)

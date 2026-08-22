@@ -23,6 +23,7 @@ from . import grafo as g
 from . import llm, mocks
 from .esquemas import (
     ESCENARIOS_POR_ID,
+    RAIZ,
     KnowledgeItem,
     Quest,
     RawEvent,
@@ -32,7 +33,7 @@ from .esquemas import (
 
 LOTE = 20  # eventos por llamada: contexto manejable y evidencia rastreable
 
-DIR_EVENTOS = Path("data/raw")
+DIR_EVENTOS = RAIZ / "data" / "raw"
 FIXTURE_P2 = DIR_EVENTOS / "fixture_p2.json"  # el nuestro, hasta que P1 publique
 
 
