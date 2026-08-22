@@ -10,12 +10,13 @@ import json
 import re
 from pathlib import Path
 
-from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, calcular_riesgo, cargar_eventos,
-                     extraer, generar_digest, resiliencia_equipo, simular)
+from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, bus_factor, calcular_riesgo,
+                     cargar_eventos, extraer, generar_digest, resiliencia_equipo, simular)
 from cerebro.grafo import colaboradores, construir_grafo, es_puente, grado, intermediacion
 from cerebro.nucleo import (PISO_NORMALIZACION, _afectados, _bloque_colaboracion, _dedup_exacto,
                             _emails_de, _formatear_eventos, cobertura, peso_riesgo)
-from cerebro.validacion import escenarios_sanos, monotonia, sensibilidad_pesos, spearman
+from cerebro.validacion import (bus_factor_coherente, escenarios_sanos, monotonia,
+                                sensibilidad_pesos, spearman)
 
 EVENTOS = cargar_eventos()
 
@@ -164,6 +165,62 @@ def test_playbook_de_respaldo_solo_usa_datos_reales():
     assert set(re.findall(r"[\w.+-]+@[\w.-]+\.\w+", md)) <= reales
 
 
+def test_bus_factor_de_un_punto_unico_de_falla():
+    """Todo en una cabeza: sacarla a ella basta para romper el equipo."""
+    solo_ana = [item(f"k{i}", "acceso", "ana@e.com") for i in range(4)]
+    bf = bus_factor(solo_ana)
+    assert bf.numero == 1 and bf.personas == ["ana@e.com"]
+    assert bf.fraccion_huerfana == 1.0
+
+
+def test_bus_factor_sube_cuando_hay_respaldos():
+    """Con todo respaldado por dos personas más hay que sacar a varias."""
+    respaldado = [
+        item(f"k{i}", "acceso", "ana@e.com", ["bob@e.com", "cid@e.com"]) for i in range(4)
+    ]
+    assert bus_factor(respaldado).numero == 3, "hay que sacar a los tres que saben"
+    assert bus_factor([]).numero == 0
+
+
+def test_bus_factor_ve_la_cascada_de_respaldos():
+    """Un respaldo que ya se fue no respalda a nadie: ese es el peligro real.
+
+    El umbral se cruza al SUPERAR el 50%, no al alcanzarlo — igual que en
+    Avelino et al., donde el algoritmo para cuando más de la mitad queda sin
+    experto.
+    """
+    items = [
+        item("a", "acceso", "ana@e.com"),                 # sin respaldo
+        item("b", "acceso", "bob@e.com", ["ana@e.com"]),  # respaldado... por Ana
+    ]
+    bf = bus_factor(items)
+    assert bf.personas[0] == "ana@e.com", "es dueña de uno y respaldo del otro"
+    assert bf.pasos[0].items_huerfanos == 1, "sacar a Ana huerfaniza solo lo suyo"
+    assert bf.pasos[1].items_huerfanos == 2, "pero deja a Bob sin red: cae también lo suyo"
+    assert bf.numero == 2
+
+
+def test_bus_factor_no_baja_al_agregar_respaldos():
+    """Monotonía: documentar nunca puede empeorar el número."""
+    frágil = [item(f"k{i}", "proceso", "ana@e.com") for i in range(3)]
+    cubierto = [
+        item(f"k{i}", "proceso", "ana@e.com", ["bob@e.com", "cid@e.com"]) for i in range(3)
+    ]
+    assert bus_factor(cubierto).numero >= bus_factor(frágil).numero
+
+
+def test_bus_factor_coincide_con_el_riesgo():
+    """Dos métricas independientes sobre los mismos datos deben coincidir."""
+    items = extraer([], mock=True)
+    assert bus_factor_coherente(items, EVENTOS) == []
+    assert bus_factor(items).personas[0] == "ana@empresa.com"
+
+
+def test_autocritica_sin_api_key_no_revienta():
+    r = simular("renuncia", extraer([], mock=True), "ana@empresa.com", EVENTOS, autocritica=True)
+    assert r.generado_por == "respaldo" and r.puntaje_playbook is None
+
+
 def test_metadata_de_p1_llega_al_prompt():
     """Los archivos tocados de un commit son la señal más fuerte de quién toca qué."""
     commit = next(e for e in EVENTOS if e.metadata.get("archivos"))
@@ -224,7 +281,7 @@ def test_contrato_serializa():
     scores = calcular_riesgo(items, EVENTOS)
     sim = simular("renuncia", items, "ana@empresa.com", mock=True)
     quests = generar_digest(items, scores, mock=True)
-    for obj in [*items, *scores, sim, *quests]:
+    for obj in [*items, *scores, sim, *quests, bus_factor(items)]:
         json.loads(obj.model_dump_json())
     assert "dueño_principal" in items[0].model_dump()
     assert sim.playbook_md.strip().startswith("#")

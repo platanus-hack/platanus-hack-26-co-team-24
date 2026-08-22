@@ -3,19 +3,19 @@
     python -m cerebro.validacion
 
 El problema de fondo: no existe una verdad de referencia sobre "quién es el
-punto único de falla". Así que en vez de una métrica, seis comprobaciones que
+punto único de falla". Así que en vez de una métrica, siete comprobaciones que
 atacan el problema por ángulos distintos. Ninguna basta sola; juntas dicen si el
 sistema está funcionando.
 
-1. Anti-alucinación   ¿inventó personas que no existen en los eventos?
-2. Evidencia          ¿las citas son textuales o se las inventó?
-3. Casos sembrados    ¿encontró lo que sabemos que está ahí? (precisión/recall)
-4. Escenarios         ¿los 7 corren y dan resultados distintos entre sí?
+1. Anti-alucinación   ¿inventó personas o citó evidencia que no existe?
+2. Casos sembrados    ¿encontró lo que sabemos que está ahí? (precisión/recall)
+3. Escenarios         ¿los 7 corren y dan resultados distintos entre sí?
+4. Bus factor         ¿el número y el ranking de riesgo cuentan la misma historia?
 5. Monotonía          ¿la fórmula se comporta como promete?
 6. Sensibilidad       ¿el ranking sobrevive si muevo los pesos inventados?
 7. Ranking humano     ¿coincide con lo que el equipo cree? (correlación de Spearman)
 
-Las 1-6 corren sin red. La 6 necesita `data/ranking_humano.json`, que se llena
+Las 1-6 corren sin red. La 7 necesita `data/ranking_humano.json`, que se llena
 con una encuesta de cinco minutos al equipo.
 """
 
@@ -28,7 +28,7 @@ import unicodedata
 from pathlib import Path
 
 from .esquemas import RAIZ, KnowledgeItem, RawEvent, RiskScore
-from .nucleo import PESOS, calcular_riesgo, peso_riesgo
+from .nucleo import PESOS, bus_factor, calcular_riesgo, peso_riesgo
 
 RUTA_RANKING_HUMANO = RAIZ / "data" / "ranking_humano.json"
 
@@ -208,6 +208,30 @@ def escenarios_sanos(items: list[KnowledgeItem]) -> list[str]:
 # --- 3. Monotonía: la fórmula tiene que cumplir lo que promete ------------------
 
 
+def bus_factor_coherente(items: list[KnowledgeItem], eventos: list[RawEvent]) -> list[str]:
+    """El bus factor y el score de riesgo tienen que contar la misma historia.
+
+    Son dos métricas independientes sobre los mismos datos: una greedy sobre
+    cobertura, otra una suma ponderada. Si la persona que el bus factor saca
+    primero no está arriba en el ranking de riesgo, una de las dos está mal.
+    """
+    fallos = []
+    bf = bus_factor(items)
+    scores = calcular_riesgo(items, eventos)
+    if bf.numero < 1:
+        fallos.append(f"bus factor {bf.numero}: con conocimiento sin respaldo debería ser >= 1")
+    if not bf.personas:
+        return fallos
+    top_riesgo = [s.persona_id for s in scores[:3]]
+    if bf.personas[0] not in top_riesgo:
+        fallos.append(
+            f"el bus factor saca primero a {bf.personas[0]} pero el riesgo pone arriba a {top_riesgo}"
+        )
+    if not (0.0 <= bf.fraccion_huerfana <= 1.0):
+        fallos.append(f"fracción huérfana fuera de rango: {bf.fraccion_huerfana}")
+    return fallos
+
+
 def monotonia(items: list[KnowledgeItem], eventos: list[RawEvent]) -> list[str]:
     """Propiedades que la fórmula NUNCA debe violar, pase lo que pase.
 
@@ -360,7 +384,19 @@ def reporte(items: list[KnowledgeItem], eventos: list[RawEvent]) -> int:
     else:
         print("  ✓ los 7 corren, dan resultados distintos y no inventan personas")
 
-    print("\n── 4. Monotonía de la fórmula ──")
+    print("\n── 4. Bus factor ──")
+    bf = bus_factor(items)
+    print(f"  bus factor {bf.numero} · {bf.fraccion_huerfana:.0%} huérfano al final · "
+          f"primero sale {bf.personas[0] if bf.personas else '—'}")
+    fallos = bus_factor_coherente(items, eventos)
+    if fallos:
+        graves += len(fallos)
+        for f in fallos:
+            print(f"  ✗ {f}")
+    else:
+        print("  ✓ coherente con el ranking de riesgo")
+
+    print("\n── 5. Monotonía de la fórmula ──")
     fallos = monotonia(items, eventos)
     if fallos:
         graves += len(fallos)
@@ -369,7 +405,7 @@ def reporte(items: list[KnowledgeItem], eventos: list[RawEvent]) -> int:
     else:
         print("  ✓ respaldar baja el riesgo, acumular lo sube, cubrir sube la resiliencia")
 
-    print("\n── 5. Sensibilidad a los pesos (±50%, 200 corridas) ──")
+    print("\n── 6. Sensibilidad a los pesos (±50%, 200 corridas) ──")
     s = sensibilidad_pesos(items, eventos)
     print(f"  Spearman vs. ranking base: mediana {s['spearman_mediana']}, peor caso {s['spearman_minimo']}")
     print(f"  El primer puesto se conserva en el {s['lider_estable_pct']}% de las corridas")
@@ -377,7 +413,7 @@ def reporte(items: list[KnowledgeItem], eventos: list[RawEvent]) -> int:
         graves += 1
         print("  ✗ el ranking depende demasiado de los pesos elegidos a mano")
 
-    print("\n── 6. Contra el juicio del equipo ──")
+    print("\n── 7. Contra el juicio del equipo ──")
     h = vs_ranking_humano(scores)
     if h is None:
         print(f"  — falta {RUTA_RANKING_HUMANO}. Es la única verdad de referencia real:")

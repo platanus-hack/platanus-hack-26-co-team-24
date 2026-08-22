@@ -10,6 +10,7 @@ datos falsos por su cuenta. Nunca revientan por falta de credenciales.
 
 from .esquemas import (
     ESCENARIOS,
+    BusFactor,
     ESCENARIOS_POR_ID,
     Escenario,
     KnowledgeItem,
@@ -18,19 +19,21 @@ from .esquemas import (
     RiskScore,
     SimulationResult,
 )
-from .nucleo import (calcular_riesgo, cargar_eventos, extraer, generar_digest,
+from .nucleo import (bus_factor, calcular_riesgo, cargar_eventos, extraer, generar_digest,
                      resiliencia_equipo, simular)
 
 __all__ = [
     "extraer",
     "cargar_eventos",
     "calcular_riesgo",
+    "bus_factor",
     "simular",
     "generar_digest",
     "resiliencia_equipo",
     "RawEvent",
     "KnowledgeItem",
     "RiskScore",
+    "BusFactor",
     "SimulationResult",
     "Quest",
     "Escenario",
