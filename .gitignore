@@ -4,3 +4,7 @@ __pycache__/
 .env
 .DS_Store
 .cache_cerebro/
+# Snapshot de la última corrida de /admin/procesar. Se regenera solo.
+# Cuando haya una corrida buena con Claude, forzar su commit (git add -f) como
+# plan B del demo sin red.
+data/estado.json
