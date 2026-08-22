@@ -31,10 +31,12 @@ export type PairKey = keyof typeof HAIR_PALETTE;
 // 9 pares fijos [pelo, ropa] de la guía (sección 04 · sprite sheet), en orden
 // de slot (Ana, David, Samuel, Andrés, slots 5-9). Nunca dos personajes con
 // el mismo par (Task B se encarga de asignarlos sin repetir).
-// Nota: los pares 4/8 y 6/9 coinciden en la guía (oro+morado dos veces,
-// morado+naranja dos veces: "oro" == "rubio" y "morado" == "ciruela" son el
-// mismo hex con nombre de sabor distinto) — se transcriben tal cual el texto
-// de la guía indica.
+// Nota: la guía usa nombres de sabor distintos para colores que ya existen
+// en la lista de 11 ("oro" == "rubio", "morado" == "ciruela"), lo que hacía
+// que los pares 4/8 y 6/9 colapsaran en el mismo hex literal. Ruling del
+// controlador (fix commit): mantener slots 1-7 tal cual la guía y resolver
+// la colisión reasignando slots 8 y 9 a combinaciones no usadas en ningún
+// otro slot, para que los 9 pares sean únicos como exige palette.test.ts.
 export const PAIRS: [PairKey, PairKey][] = [
   ['blue', 'red'], // turquesa + rosa (Ana)
   ['orange', 'green'], // naranja + lima (David)
@@ -43,8 +45,8 @@ export const PAIRS: [PairKey, PairKey][] = [
   ['red', 'yellow'], // rosa + oro (slot 5)
   ['purple', 'orange'], // morado (ciruela) + naranja (slot 6)
   ['green', 'gray'], // lima + lila (slot 7)
-  ['yellow', 'purple'], // oro (rubio) + morado (slot 8)
-  ['purple', 'orange'], // morado + naranja (slot 9)
+  ['yellow', 'blue'], // oro + turquesa (slot 8, reasignado para ser único)
+  ['red', 'green'], // rosa + lima (slot 9, reasignado para ser único)
 ];
 
 // Paleta Synth Dusk: 11 colores + texto. Fuente de verdad para colores hex
