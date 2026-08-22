@@ -1,5 +1,6 @@
 import type { OfficeScene } from '../OfficeScene';
 import { floatIcon, wait } from './fx';
+import { sfx } from '../../audio';
 
 const RED = 0xff1744;
 const DESK_COUNT = 9;
@@ -45,18 +46,23 @@ export async function run(
 
   switch (id) {
     case 'incendio':
+      sfx('shake');
       await runIncendio(scene);
       break;
     case 'apagon':
+      sfx('blackout');
       await runApagon(scene);
       break;
     case 'meet_caido':
+      sfx('alarm');
       await runMeetCaido(scene);
       break;
     case 'ransomware':
+      sfx('alarm');
       await runRansomware(scene);
       break;
     default:
+      sfx('alarm');
       break;
   }
 }

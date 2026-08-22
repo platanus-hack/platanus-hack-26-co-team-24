@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import type { OfficeScene } from '../OfficeScene';
 import { wait } from './fx';
+import { sfx } from '../../audio';
 
 const RED = 0xff1744;
 const SMOKE_KEY = 'smoke';
@@ -13,6 +14,7 @@ const LAMP_COUNT = 4;
  * para que se note, las luces titilan en rojo y los devs del equipo corren
  * hacia el server a intentar algo. Dura ~5-8 s. */
 export async function run(scene: OfficeScene): Promise<void> {
+  sfx('smoke');
   const server = scene.objects['server'];
   if (server) {
     // Destello rojo breve antes de quedar "apagado" (frame 1): más

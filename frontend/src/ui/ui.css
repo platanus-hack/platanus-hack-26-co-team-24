@@ -145,6 +145,27 @@
   color: #39ff14;
 }
 
+/* --- Mute --- */
+
+.mute-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 15;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #00e5ff;
+  border-radius: 6px;
+  background: #120f3a;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 0 12px #00e5ff55;
+}
+
 /* --- Consola arcade (escenarios) --- */
 
 .arcade-open {

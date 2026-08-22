@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { bus } from '../bus';
 import { getEscenarios, getOficina } from '../api';
+import { sfx, unlock } from '../audio';
 import type { Person, Scenario } from '../types';
 import './ui.css';
 
@@ -43,6 +44,8 @@ export function ArcadeConsole() {
 
   const simulate = () => {
     if (!selected) return;
+    unlock();
+    sfx('click');
     setRunning(true);
     setOpen(false);
     bus.emit('scenario:start', {
@@ -57,7 +60,11 @@ export function ArcadeConsole() {
         type="button"
         className="arcade-open"
         disabled={running}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          unlock();
+          sfx('click');
+          setOpen((v) => !v);
+        }}
       >
         🕹️ Consola
       </button>
@@ -70,7 +77,10 @@ export function ArcadeConsole() {
               type="button"
               className="arcade-close"
               aria-label="Cerrar"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                sfx('click');
+                setOpen(false);
+              }}
             >
               ×
             </button>
@@ -85,7 +95,10 @@ export function ArcadeConsole() {
                     'arcade-item' +
                     (s.id === selectedId ? ' arcade-item--active' : '')
                   }
-                  onClick={() => setSelectedId(s.id)}
+                  onClick={() => {
+                    sfx('click');
+                    setSelectedId(s.id);
+                  }}
                 >
                   <span className="arcade-item__name">{s.nombre}</span>
                   <span className="arcade-item__desc">{s.descripcion}</span>

@@ -1,5 +1,6 @@
 import type { OfficeScene } from '../OfficeScene';
 import { wait } from './fx';
+import { sfx } from '../../audio';
 
 const RED = 0xff1744;
 const LAMP_COUNT = 4;
@@ -10,6 +11,7 @@ const LAMP_INTERVAL_MS = 300;
  * (círculo + haz rotando) queda sobre el escritorio vacío mientras las
  * luces titilan en rojo. Dura ~3 s. */
 export async function run(scene: OfficeScene): Promise<void> {
+  sfx('alarm');
   const pc = scene.objects['pc_0'];
   pc?.setVisible(false);
 

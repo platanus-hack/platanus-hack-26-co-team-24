@@ -1,5 +1,6 @@
 import type { OfficeScene } from '../OfficeScene';
 import { floatIcon, wait } from './fx';
+import { sfx } from '../../audio';
 
 const TILE = 16;
 const GRAY = 0x777777;
@@ -19,6 +20,7 @@ export async function run(scene: OfficeScene, personId: string): Promise<void> {
 
   await char.walkTo('door');
   if (!scene.sys.isActive()) return;
+  sfx('door');
 
   await new Promise<void>((resolve) => {
     scene.tweens.add({

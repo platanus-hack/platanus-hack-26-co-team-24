@@ -4,6 +4,8 @@ import { config } from '../game/config';
 import { RiskTooltip } from './RiskTooltip';
 import { ArcadeConsole } from './ArcadeConsole';
 import { ResultPanel } from './ResultPanel';
+import { MuteButton } from './MuteButton';
+import { unlock } from '../audio';
 
 declare global {
   interface Window {
@@ -24,8 +26,12 @@ export function GameCanvas() {
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+    <div
+      style={{ position: 'relative', width: '100%', height: '100vh' }}
+      onPointerDown={unlock}
+    >
       <div ref={ref} style={{ width: '100%', height: '100%' }} />
+      <MuteButton />
       <RiskTooltip />
       <ArcadeConsole />
       <ResultPanel />
