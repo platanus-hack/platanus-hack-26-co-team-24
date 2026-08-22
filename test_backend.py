@@ -7,6 +7,9 @@ cambie de forma, que `?mock=true` funcione con la base vacía, y que completar
 una quest mueva de verdad el puntaje del equipo.
 """
 
+import os
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from backend import estado as st
@@ -22,6 +25,20 @@ def mock_limpio():
     el resultado dependería del orden alfabético de los nombres.
     """
     st._mock = None
+
+
+def test_las_rutas_no_dependen_del_cwd():
+    """Lo que evita que la oficina salga vacía cuando el proceso no arranca
+    desde la raíz del repo — que es justo lo que pasa en Render.
+
+    Mientras el PR #2 siga abierto, `cerebro` resuelve estas rutas contra el CWD
+    y `backend/__init__` las corrige desde afuera.
+    """
+    from cerebro import nucleo
+
+    assert nucleo.DIR_EVENTOS.is_absolute(), nucleo.DIR_EVENTOS
+    assert nucleo.FIXTURE_P2.is_absolute(), nucleo.FIXTURE_P2
+    assert Path(os.environ["CEREBRO_CACHE_DIR"]).is_absolute()
 
 
 def test_salud_responde():

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: bus-factor-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -e ".[api]"
+    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /salud
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # Sin esto el playbook sale determinista: correcto en los datos, sin
+      # narración. Se pone a mano en el dashboard, no se versiona.
+      - key: ANTHROPIC_API_KEY
+        sync: false
