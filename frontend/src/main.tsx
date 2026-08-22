@@ -3,17 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import './index.css';
 import { GameCanvas } from './ui/GameCanvas';
-
-function AvatarPlaceholder() {
-  return <p>Editor de avatar (próximamente)</p>;
-}
+import { AvatarEditor } from './ui/AvatarEditor';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/oficina" element={<GameCanvas />} />
-        <Route path="/avatar" element={<AvatarPlaceholder />} />
+        <Route path="/avatar" element={<AvatarEditor />} />
         <Route path="/" element={<Navigate to="/oficina" replace />} />
       </Routes>
     </BrowserRouter>

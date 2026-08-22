@@ -3,6 +3,9 @@ import { getOficina, getRiesgo } from '../api';
 import type { Riesgo } from '../types';
 import { Character } from './Character';
 import { createPathfinder, type Pathfinder } from './pathfinding';
+import { loadAvatar } from '../avatarStorage';
+
+const DEMO_USER_ID = 'p_ana';
 
 const OBJECTS_KEY = 'objects';
 
@@ -84,7 +87,14 @@ export class OfficeScene extends Phaser.Scene {
       .then((oficina) => {
         // La escena pudo haberse cerrado mientras esperábamos la respuesta.
         if (!this.sys.isActive()) return;
+        // Sin backend real, el editor de avatar (/avatar) guarda la config
+        // del usuario demo en localStorage; la reflejamos aquí para que
+        // "crear avatar -> recargar -> el personaje lo luce" funcione.
+        const localAvatar = !import.meta.env.VITE_API_URL ? loadAvatar() : null;
         for (const person of oficina.people) {
+          if (localAvatar && person.id === DEMO_USER_ID) {
+            person.avatar_config = localAvatar;
+          }
           const character = new Character(this, person, this.pathfinder);
           this.add.existing(character);
           this.characters[person.id] = character;
