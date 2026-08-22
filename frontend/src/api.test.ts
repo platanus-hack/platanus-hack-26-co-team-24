@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { getOficina, simular } from './api';
+import { isValidAvatar } from './avatarStorage';
 
 describe('api (modo mock, sin VITE_API_URL)', () => {
   it('getOficina devuelve 9 personas', async () => {
@@ -13,5 +14,268 @@ describe('api (modo mock, sin VITE_API_URL)', () => {
       person_id: 'p_ana',
     });
     expect(result.playbook_md.length).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Modo real: `BASE` se evalúa al importar el módulo, así que cada caso stubea
+// el env, resetea el registro de módulos y re-importa `./api` (mismo patrón
+// que audio.test.ts / avatarStorage.test.ts).
+// ---------------------------------------------------------------------------
+
+/** Respuesta real de GET /oficina (verificada con curl contra P3). El
+ * `avatar_config` de P3 NO es el nuestro: números + paletas en español. */
+const RAW_OFICINA = {
+  oficina: { id: 'of-demo', nombre: 'Bus Factor HQ' },
+  miembros: [
+    'ana',
+    'david',
+    'valentina',
+    'jorge',
+    'brayan',
+    'andres',
+    'laura',
+    'camila',
+    'sofia',
+  ].map((n, i) => ({
+    email: `${n}@empresa.com`,
+    nombre: `${n} Apellido`,
+    rol: 'Rol',
+    sprite: `lpc-0${(i % 9) + 1}`,
+    avatar_config: { cuerpo: 1, peinado: 3, ropa: 2, paleta: 'coral' },
+    score: 100 - i * 10,
+    items_criticos: [`ki-00${i}`],
+    total_items: 1,
+    detalle: `detalle de ${n}`,
+  })),
+  resiliencia_equipo: 0.42,
+};
+
+const RAW_RIESGO = {
+  scores: [
+    {
+      persona_id: 'ana@empresa.com',
+      score: 100,
+      riesgo_absoluto: 0.0,
+      items_criticos: ['ki-001', 'ki-002'],
+      total_items: 3,
+      detalle: '3 elementos sin respaldo. Bus factor 1.',
+    },
+  ],
+  resiliencia_equipo: 0.42,
+};
+
+const RAW_ESCENARIOS = [
+  {
+    id: 'renuncia',
+    tipo: 'persona',
+    nombre: 'Renuncia / ausencia',
+    descripcion: 'Un miembro clave deja el equipo.',
+    requiere_objetivo: true,
+  },
+  {
+    id: 'robo_pc',
+    tipo: 'persona',
+    nombre: 'Robo del computador',
+    descripcion: 'Le roban el equipo a una persona.',
+    requiere_objetivo: true,
+  },
+  {
+    id: 'caida_github',
+    tipo: 'infra',
+    nombre: 'Caída de GitHub',
+    descripcion: 'GitHub queda inaccesible.',
+    requiere_objetivo: false,
+  },
+];
+
+const RAW_SIMULAR = {
+  scenario_id: 'renuncia',
+  objetivo_id: 'ana@empresa.com',
+  items_huerfanos: [
+    {
+      id: 'ki-001',
+      tipo: 'tarea',
+      descripcion: 'Comprar tiquetes de la gerencia',
+      dueño_principal: 'ana@empresa.com',
+      respaldos: [],
+      fuente: 'slack',
+      evidencia: 'Ya quedó reservado el vuelo',
+      evento_ids: [],
+    },
+    {
+      id: 'ki-002',
+      tipo: 'regla_tacita',
+      descripcion: 'Al jefe solo se le reserva en LATAM',
+      dueño_principal: 'ana@empresa.com',
+      respaldos: [],
+      fuente: 'slack',
+      evidencia: 'ojo: al jefe solo le gusta viajar en LATAM',
+      evento_ids: [],
+    },
+  ],
+  impacto: '2 elemento(s) quedan sin dueño y sin respaldo.',
+  playbook_md: '# Renuncia / ausencia\n\nContenido real.',
+  advertencias: ['Sin ANTHROPIC_API_KEY: playbook sin narración.'],
+  generado_por: 'respaldo',
+};
+
+/** Importa `./api` con `VITE_API_URL` puesto y `fetch` stubeado. Devuelve el
+ * módulo y el mock de fetch para inspeccionar la request enviada. */
+async function importRealApi(payload: unknown) {
+  vi.stubEnv('VITE_API_URL', 'http://x');
+  const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
+    ok: true,
+    status: 200,
+    json: async () => payload,
+  }));
+  vi.stubGlobal('fetch', fetchMock);
+  vi.resetModules();
+  const api = await import('./api');
+  return { api, fetchMock };
+}
+
+describe('api (modo real, con VITE_API_URL)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it('IS_MOCK es false y DEMO_USER_ID cae al usuario demo de P3', async () => {
+    const { api } = await importRealApi(RAW_OFICINA);
+    expect(api.IS_MOCK).toBe(false);
+    expect(api.DEMO_USER_ID).toBe('ana@empresa.com');
+  });
+
+  it('getOficina mapea miembros -> people con ids email, desk por índice y office', async () => {
+    const { api, fetchMock } = await importRealApi(RAW_OFICINA);
+    const oficina = await api.getOficina();
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://x/oficina');
+    expect(oficina.office).toEqual({ id: 'of-demo', nombre: 'Bus Factor HQ' });
+    expect(oficina.people).toHaveLength(9);
+    expect(oficina.people[0].id).toBe('ana@empresa.com');
+    expect(oficina.people.map((p) => p.desk)).toEqual([
+      0, 1, 2, 3, 4, 5, 6, 7, 8,
+    ]);
+  });
+
+  it('getOficina traduce el avatar_config ajeno de P3 a configs válidas y distintas', async () => {
+    const { api } = await importRealApi(RAW_OFICINA);
+    const oficina = await api.getOficina();
+
+    for (const person of oficina.people) {
+      expect(isValidAvatar(person.avatar_config)).toBe(true);
+    }
+    const distintas = new Set(
+      oficina.people.map((p) => JSON.stringify(p.avatar_config)),
+    );
+    expect(distintas.size).toBe(9);
+  });
+
+  it('getOficina respeta un avatar_config que ya venga en nuestro formato', async () => {
+    const nuestro = {
+      cuerpo: 'dark',
+      peinado: 'long',
+      ropa: 'suit',
+      paleta: 'purple',
+    };
+    const payload = structuredClone(RAW_OFICINA) as unknown as {
+      miembros: { avatar_config: unknown }[];
+    };
+    payload.miembros[0].avatar_config = nuestro;
+    const { api } = await importRealApi(payload);
+    const oficina = await api.getOficina();
+    expect(oficina.people[0].avatar_config).toEqual(nuestro);
+  });
+
+  it('getRiesgo mapea persona_id -> person_id y expone el detalle como primer item', async () => {
+    const { api } = await importRealApi(RAW_RIESGO);
+    const riesgo = await api.getRiesgo();
+
+    expect(riesgo.scores[0].person_id).toBe('ana@empresa.com');
+    expect(riesgo.scores[0].score).toBe(100);
+    expect(riesgo.scores[0].items_criticos[0]).toEqual({
+      id: 'detalle',
+      tipo: 'resumen',
+      descripcion: '3 elementos sin respaldo. Bus factor 1.',
+    });
+    expect(riesgo.scores[0].items_criticos.map((i) => i.id)).toEqual([
+      'detalle',
+      'ki-001',
+      'ki-002',
+    ]);
+  });
+
+  it('getEscenarios envuelve el array plano y renombra requiere_objetivo -> requiere_persona', async () => {
+    const { api } = await importRealApi(RAW_ESCENARIOS);
+    const { scenarios } = await api.getEscenarios();
+
+    expect(scenarios).toHaveLength(3);
+    const requiere = Object.fromEntries(
+      scenarios.map((s) => [s.id, s.requiere_persona]),
+    );
+    expect(requiere).toEqual({
+      renuncia: true,
+      robo_pc: true,
+      caida_github: false,
+    });
+  });
+
+  it('simular envía objetivo_id y adapta impacto (string) a {tareas, texto}', async () => {
+    const { api, fetchMock } = await importRealApi(RAW_SIMULAR);
+    const result = await api.simular({
+      scenario_id: 'renuncia',
+      person_id: 'ana@empresa.com',
+    });
+
+    const init = fetchMock.mock.calls[0][1]!;
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({
+      scenario_id: 'renuncia',
+      objetivo_id: 'ana@empresa.com',
+    });
+
+    expect(result.person_id).toBe('ana@empresa.com');
+    expect(result.impacto.tareas).toBe(2);
+    expect(result.impacto.texto).toBe(RAW_SIMULAR.impacto);
+    expect(result.playbook_md).toBe(RAW_SIMULAR.playbook_md);
+    expect(result.items_huerfanos[0]).toEqual({
+      id: 'ki-001',
+      tipo: 'tarea',
+      descripcion: 'Comprar tiquetes de la gerencia',
+    });
+  });
+
+  it('simular avisa por consola si el backend devuelve advertencias', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { api } = await importRealApi(RAW_SIMULAR);
+    await api.simular({
+      scenario_id: 'renuncia',
+      person_id: 'ana@empresa.com',
+    });
+    expect(warn).toHaveBeenCalled();
+  });
+
+  it('putAvatar no llama a la red (PUT /avatar no existe en P3) y resuelve ok', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const { api, fetchMock } = await importRealApi({});
+    const res = await api.putAvatar({
+      cuerpo: 'light',
+      peinado: 'short',
+      ropa: 'shirt',
+      paleta: 'blue',
+    });
+    expect(res).toEqual({ ok: true });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(info).toHaveBeenCalled();
+  });
+
+  it('VITE_DEMO_USER_ID sobreescribe el usuario demo', async () => {
+    vi.stubEnv('VITE_DEMO_USER_ID', 'otro@empresa.com');
+    const { api } = await importRealApi(RAW_OFICINA);
+    expect(api.DEMO_USER_ID).toBe('otro@empresa.com');
   });
 });

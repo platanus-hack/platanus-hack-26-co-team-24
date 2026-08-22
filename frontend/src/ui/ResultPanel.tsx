@@ -74,22 +74,28 @@ export function ResultPanel() {
     <div className="result-panel">
       <p className="result-panel__title">Resultado de la simulación</p>
 
+      {/* La API real sólo manda una frase de impacto; el mock trae además las
+          métricas numéricas. Pintamos sólo los tiles que tengan valor. */}
       <div className="result-stats">
-        <div className="result-stat">
-          <span className="result-stat__value">{r.impacto.tareas}</span>
-          <span className="result-stat__label">tareas huérfanas</span>
-        </div>
-        <div className="result-stat">
-          <span className="result-stat__value">
-            {r.impacto.dias_recuperacion}
-          </span>
-          <span className="result-stat__label">días de recuperación</span>
-        </div>
-        <div className="result-stat">
-          <span className="result-stat__value">{r.impacto.score}</span>
-          <span className="result-stat__label">impacto</span>
-        </div>
+        {(
+          [
+            [r.impacto.tareas, 'tareas huérfanas'],
+            [r.impacto.dias_recuperacion, 'días de recuperación'],
+            [r.impacto.score, 'impacto'],
+          ] as [number | undefined, string][]
+        )
+          .filter(([value]) => value !== undefined)
+          .map(([value, label]) => (
+            <div className="result-stat" key={label}>
+              <span className="result-stat__value">{value}</span>
+              <span className="result-stat__label">{label}</span>
+            </div>
+          ))}
       </div>
+
+      {r.impacto.texto && (
+        <p className="result-panel__impacto">{r.impacto.texto}</p>
+      )}
 
       <ul className="result-items">
         {r.items_huerfanos.map((item) => (

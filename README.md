@@ -116,15 +116,30 @@ Cambiar este contrato = avisar en el canal del equipo + bump de versión (`v1` �
 3. Reiniciar `npm run dev` (Vite solo lee env al arrancar)
 4. Abrir `/oficina`
 
-**Nota para P3:**
-- Habilitar CORS para `http://localhost:5173` y el origen de Vercel
-- Endpoints consumidos deben retornar JSON exactamente como en "Contratos v1": `GET /oficina`, `GET /riesgo`, `GET /escenarios`, `POST /simular`, `PUT /avatar`
-- Cualquier diferencia de contrato se reporta a P3 (P3 se adapta)
+**Diferencias ya adaptadas (rama `p4/integracion`, todo dentro de `frontend/src/api.ts`):**
+| Contrato v1 (front) | API real de P3 | Adaptación |
+| --- | --- | --- |
+| `GET /oficina` → `{office, people[{id, desk, avatar_config}]}` | `{oficina, miembros[{email, sprite, avatar_config, score, ...}]}` | `id = email`, `desk = índice` (P3 no manda escritorio) |
+| `avatar_config: {cuerpo:'light', peinado:'short', ...}` | `{cuerpo:1, peinado:3, ropa:2, paleta:'coral'}` | si no valida, config determinista por índice para que los 9 se vean distintos |
+| `GET /riesgo` → `items_criticos: [{id,tipo,descripcion}]` | `persona_id` + `items_criticos: ["ki-001"]` (sólo ids) + `detalle` | `person_id = persona_id`; el `detalle` va como primer item (`{id:'detalle', tipo:'resumen'}`) y los ids como items sin descripción |
+| `GET /escenarios` → `{scenarios: [...]}` con `requiere_persona` | array plano con `requiere_objetivo` | se envuelve en `{scenarios}` y se renombra el flag |
+| ids `github_caido` / `meet_caido` / `incendio` | `caida_github` / `caida_meet` / `evacuacion` | **mandan los de P3**: renombrados en el front (mock incluido) |
+| `POST /simular` body `{scenario_id, person_id}` | body `{scenario_id, objetivo_id}` (422 si falta) | se traduce el nombre del campo |
+| `impacto: {tareas, dias_recuperacion, score}` | `impacto: "3 elemento(s) sin dueño..."` (string) | `impacto = {tareas: items.length, texto}`; el panel oculta los tiles sin valor y muestra la frase |
+| `PUT /avatar` | **no existe** | no se llama a la red: el avatar vive en `localStorage` (y se reaplica al usuario demo al spawnear) |
+
+**TODO para P3:**
+- [ ] `PUT /avatar` (persistir el avatar del usuario demo; hoy sólo `localStorage`)
+- [ ] `avatar_config` en nuestro formato: `{cuerpo:'light'|'dark', peinado:'short'|'long', ropa:'shirt'|'suit', paleta:'blue'|'red'|'green'|'yellow'|'purple'|'gray'}`
+- [ ] (nice to have) descripciones de los `items_criticos` en `GET /riesgo`, no sólo ids
+- [x] CORS abierto para `http://localhost:5173` y el origen de Vercel
+
+**Usuario demo:** `VITE_DEMO_USER_ID` (vacío = `p_ana` en mock, `ana@empresa.com` contra P3).
 
 **Checklist de humo:**
 - [ ] 9 personajes spawn en la oficina
 - [ ] Las auras cambian al cambiar scores
-- [ ] `/avatar` → Guardar → reload mantiene el avatar (ahora via `PUT /avatar` + `GET /oficina`, localStorage ignorado)
+- [ ] `/avatar` → Guardar → reload mantiene el avatar (por `localStorage`: `PUT /avatar` sigue pendiente en P3)
 - [ ] "Renuncia" 3× seguidas muestra animación y panel con playbook
 - [ ] Fallo de API muestra panel de error y la oficina se restaura
 - [ ] Mute funciona

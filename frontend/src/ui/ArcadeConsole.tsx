@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { bus } from '../bus';
-import { getEscenarios, getOficina } from '../api';
+import { DEMO_USER_ID, getEscenarios, getOficina } from '../api';
 import { sfx, unlock } from '../audio';
 import type { Person, Scenario } from '../types';
 import './ui.css';
-
-const DEFAULT_PERSON = 'p_ana';
 
 /** Consola arcade: botón flotante (y el objeto `console` de la escena) que
  * abre el panel de escenarios. Lanza la simulación por el bus y se bloquea
@@ -15,7 +13,7 @@ export function ArcadeConsole() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [personId, setPersonId] = useState(DEFAULT_PERSON);
+  const [personId, setPersonId] = useState(DEMO_USER_ID);
   const [running, setRunning] = useState(false);
 
   useEffect(() => {

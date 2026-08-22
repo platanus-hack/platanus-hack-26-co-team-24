@@ -1,13 +1,11 @@
 import Phaser from 'phaser';
-import { getOficina, getRiesgo, simular, IS_MOCK } from '../api';
+import { getOficina, getRiesgo, simular, DEMO_USER_ID } from '../api';
 import type { Riesgo } from '../types';
 import { Character } from './Character';
 import { createPathfinder, type Pathfinder } from './pathfinding';
 import { loadAvatar } from '../avatarStorage';
 import { bus } from '../bus';
 import { getRunner } from './scenarios';
-
-const DEMO_USER_ID = 'p_ana';
 
 const OBJECTS_KEY = 'objects';
 
@@ -164,10 +162,13 @@ export class OfficeScene extends Phaser.Scene {
       .then((oficina) => {
         // La escena pudo haberse cerrado mientras esperábamos la respuesta.
         if (!this.sys.isActive()) return;
-        // Sin backend real, el editor de avatar (/avatar) guarda la config
-        // del usuario demo en localStorage; la reflejamos aquí para que
-        // "crear avatar -> recargar -> el personaje lo luce" funcione.
-        const localAvatar = IS_MOCK ? loadAvatar() : null;
+        // El editor de avatar (/avatar) guarda la config del usuario demo en
+        // localStorage; la reflejamos aquí para que "crear avatar -> recargar
+        // -> el personaje lo luce" funcione. También en modo real: P3 aún no
+        // persiste avatares (no hay PUT /avatar) y su `avatar_config` viene en
+        // otro formato, así que localStorage es la única fuente del avatar
+        // que el usuario acaba de crear.
+        const localAvatar = loadAvatar();
         for (const person of oficina.people) {
           if (localAvatar && person.id === DEMO_USER_ID) {
             person.avatar_config = localAvatar;

@@ -17,7 +17,10 @@ export const PALETAS: AvatarConfig['paleta'][] = [
   'gray',
 ];
 
-function isValid(v: unknown): v is AvatarConfig {
+/** Valida una config de avatar campo por campo contra las opciones fijas.
+ * Exportada porque `api.ts` la usa para decidir si el `avatar_config` que
+ * manda el backend real sirve tal cual o hay que sustituirlo. */
+export function isValidAvatar(v: unknown): v is AvatarConfig {
   if (!v || typeof v !== 'object') return false;
   const c = v as Record<string, unknown>;
   return (
@@ -35,7 +38,7 @@ export function loadAvatar(): AvatarConfig | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return isValid(parsed) ? parsed : null;
+    return isValidAvatar(parsed) ? parsed : null;
   } catch {
     return null;
   }

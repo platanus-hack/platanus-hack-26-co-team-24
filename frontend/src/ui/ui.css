@@ -372,6 +372,14 @@
   text-align: center;
 }
 
+.result-panel__impacto {
+  /* Frase de impacto de la API real (el mock trae además los tiles). */
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #ffd166;
+}
+
 .result-items {
   flex: none;
   margin: 12px 0;

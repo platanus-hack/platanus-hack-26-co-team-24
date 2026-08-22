@@ -48,6 +48,14 @@ export interface SimulationResult {
   scenario_id: string;
   person_id?: string;
   items_huerfanos: ItemCritico[];
-  impacto: { tareas: number; dias_recuperacion: number; score: number };
+  // P3 manda `impacto` como frase ("3 elemento(s) sin dueño..."); el mock
+  // trae además las métricas numéricas. Todo salvo `tareas` es opcional y
+  // `ResultPanel` oculta lo que falte.
+  impacto: {
+    tareas: number;
+    dias_recuperacion?: number;
+    score?: number;
+    texto?: string;
+  };
   playbook_md: string;
 }
