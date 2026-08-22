@@ -168,10 +168,10 @@ export class Character extends Phaser.GameObjects.Container {
 
   /** Camina hasta `point` (nombre en `scene.points`) siguiendo el path del
    * pathfinder, un tween por celda, sin teletransportes.
-   * Nota: pisa intencionalmente a `Container.moveTo(child, index)` (reordenar
-   * hijos), que este personaje nunca usa. */
-  // @ts-expect-error -- firma distinta a Phaser.GameObjects.Container#moveTo a propósito
-  async moveTo(point: string): Promise<void> {
+   * Nota: se llama `walkTo` (no `moveTo`) para no sombrear
+   * `Container.moveTo(child, index)` (reordenar hijos) con una firma
+   * incompatible. */
+  async walkTo(point: string): Promise<void> {
     const scene = this.scene as OfficeScene;
     const target = this.resolveTargetTile(point, scene);
     const from = { x: Math.floor(this.x / TILE), y: Math.floor(this.y / TILE) };
@@ -237,7 +237,7 @@ export class Character extends Phaser.GameObjects.Container {
   private async tick(): Promise<void> {
     if (!this.running || !this.scene) return;
     const state = nextState();
-    await this.moveTo(pointFor(state, this.person.desk));
+    await this.walkTo(pointFor(state, this.person.desk));
     if (!this.running || !this.scene) return;
     this.play(state === 'trabajando' ? 'type' : 'idle');
     this.scheduleNext(durationMs(state));
