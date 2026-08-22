@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { config } from '../game/config';
+import { RiskTooltip } from './RiskTooltip';
 
 declare global {
   interface Window {
@@ -20,5 +21,10 @@ export function GameCanvas() {
     };
   }, []);
 
-  return <div ref={ref} style={{ width: '100%', height: '100vh' }} />;
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+      <div ref={ref} style={{ width: '100%', height: '100%' }} />
+      <RiskTooltip />
+    </div>
+  );
 }

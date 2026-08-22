@@ -1,0 +1,54 @@
+.risk-tooltip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  max-width: 280px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #120f3a;
+  border: 2px solid #00e5ff;
+  border-left-width: 6px;
+  color: #ffffff;
+  font-family: monospace;
+}
+
+.risk-tooltip__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.risk-tooltip__name {
+  margin: 0;
+  font-size: 14px;
+}
+
+.risk-tooltip__rol {
+  margin: 2px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.risk-tooltip__close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+}
+
+.risk-tooltip__score {
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.risk-tooltip__items {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+}

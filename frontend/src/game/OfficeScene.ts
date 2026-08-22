@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { getOficina } from '../api';
+import { getOficina, getRiesgo } from '../api';
+import type { Riesgo } from '../types';
 import { Character } from './Character';
 import { createPathfinder, type Pathfinder } from './pathfinding';
 
@@ -89,8 +90,27 @@ export class OfficeScene extends Phaser.Scene {
           this.characters[person.id] = character;
           character.startBehavior();
         }
+        this.loadRisk();
       })
       .catch((err) => console.error('getOficina', err));
+  }
+
+  private loadRisk(): void {
+    getRiesgo()
+      .then((r) => {
+        if (!this.sys.isActive()) return;
+        this.applyRisk(r);
+      })
+      .catch((err) => console.error('getRiesgo', err));
+  }
+
+  /** Aplica un `Riesgo` a los personajes ya spawneados (color/pulso del aura
+   * + items críticos para el tooltip). Público para poder re-ejecutarse tras
+   * restaurar un escenario simulado. */
+  applyRisk(riesgo: Riesgo): void {
+    riesgo.scores.forEach((s) => {
+      this.characters[s.person_id]?.setRisk(s.score, s.items_criticos);
+    });
   }
 
   private loadPoints(): void {

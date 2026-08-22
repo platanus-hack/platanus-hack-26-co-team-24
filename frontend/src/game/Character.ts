@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
-import type { Person } from '../types';
+import type { ItemCritico, Person } from '../types';
 import type { OfficeScene } from './OfficeScene';
 import type { Pathfinder } from './pathfinding';
 import { PALETTE } from './palette';
 import { nextState, durationMs, pointFor } from './behavior';
+import { scoreToColor, isCritical } from './risk';
+import { bus } from '../bus';
 
 const TILE = 16;
 const SPEED = 48; // px/s, constante
@@ -91,6 +93,9 @@ function isBlocked(map: Phaser.Tilemaps.Tilemap, x: number, y: number): boolean 
 export class Character extends Phaser.GameObjects.Container {
   readonly person: Person;
   readonly aura: Phaser.GameObjects.Arc;
+  /** Público en lectura; sólo `setRisk()` debería escribirlo. */
+  riskScore = 0;
+  riskItems: ItemCritico[] = [];
 
   private readonly bodySprite: Phaser.GameObjects.Sprite;
   private readonly clothes: Phaser.GameObjects.Sprite;
@@ -102,6 +107,7 @@ export class Character extends Phaser.GameObjects.Container {
   private walkTween?: Phaser.Tweens.Tween;
   private cancelCurrentTween?: () => void;
   private walkGeneration = 0;
+  private pulseTween?: Phaser.Tweens.Tween;
 
   constructor(scene: OfficeScene, person: Person, pathfinder: Pathfinder) {
     const spawn = chairPixelFor(scene, person.desk);
@@ -130,8 +136,47 @@ export class Character extends Phaser.GameObjects.Container {
     this.add([this.aura, this.bodySprite, this.clothes, this.hair]);
     this.play('type');
 
+    this.setSize(16, 24);
+    this.setInteractive({ useHandCursor: true });
+    this.on('pointerdown', () => {
+      bus.emit('person:click', {
+        id: this.person.id,
+        nombre: this.person.nombre,
+        rol: this.person.rol,
+        score: this.riskScore,
+        items: this.riskItems,
+      });
+    });
+
     scene.sys.updateList.add(this);
     scene.events.once('shutdown', () => this.stopBehavior());
+  }
+
+  /** Actualiza el color/pulso del aura según el score de riesgo y guarda los
+   * items críticos para el tooltip (`bus.emit('person:click', ...)`). */
+  setRisk(score: number, items: ItemCritico[]): void {
+    this.riskScore = score;
+    this.riskItems = items;
+
+    this.aura.setFillStyle(scoreToColor(score), 0.55);
+
+    if (isCritical(score)) {
+      this.aura.setRadius(9);
+      if (!this.pulseTween) {
+        this.pulseTween = this.scene.tweens.add({
+          targets: this.aura,
+          alpha: { from: 0.3, to: 0.9 },
+          duration: 600,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      }
+    } else {
+      this.pulseTween?.stop();
+      this.pulseTween = undefined;
+      this.aura.setAlpha(0.55);
+    }
   }
 
   preUpdate(_time: number, _delta: number): void {
