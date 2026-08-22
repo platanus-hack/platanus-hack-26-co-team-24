@@ -153,21 +153,9 @@ export class OfficeScene extends Phaser.Scene {
 
   private setupCamera(): void {
     const cam = this.cameras.main;
-    // Zoom the camera in so the office is viewed up close (the map is exactly
-    // the size of the game canvas, so without this the whole map fits in one
-    // screen and there is no room left to pan).
-    cam.setZoom(2);
+    // No zoom/pan: the map is exactly the size of the game canvas (640x400),
+    // so the whole office fits on screen at zoom 1. Config-level `zoom: 2`
+    // (see game/config.ts) scales the canvas up for pixel-art crispness.
     cam.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
-    // Pan target computed from the actual bounds/viewport instead of a
-    // hard-coded pixel value, so it stays correct if the map or zoom change.
-    const panTarget = Math.max(0, this.map.widthInPixels - cam.displayWidth);
-    this.tweens.add({
-      targets: cam,
-      scrollX: panTarget,
-      duration: 8000,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1,
-    });
   }
 }
