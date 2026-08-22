@@ -30,6 +30,23 @@ let master: GainNode | null = null;
 let musicStarted = false;
 let nextStepTime = 0;
 let step = 0;
+let warnedNoAudioContext = false;
+
+function warnOnce(msg: string, err?: unknown): void {
+  if (warnedNoAudioContext) return;
+  warnedNoAudioContext = true;
+  if (err !== undefined) console.warn(msg, err);
+  else console.warn(msg);
+}
+
+/** AudioContext o su prefijo webkit, si el navegador lo soporta. */
+function getAudioContextCtor(): (new () => AudioContext) | undefined {
+  const g = globalThis as unknown as {
+    AudioContext?: new () => AudioContext;
+    webkitAudioContext?: new () => AudioContext;
+  };
+  return g.AudioContext ?? g.webkitAudioContext;
+}
 
 function readMuted(): boolean {
   try {
@@ -45,9 +62,11 @@ export function isMuted(): boolean {
 }
 
 /** Aplica/persiste el mute. No lanza si aún no existe AudioContext: sólo
- * toca la ganancia si ya se creó (p.ej. en tests, sin gesto del usuario). */
+ * toca la ganancia si ya se creó (p.ej. en tests, sin gesto del usuario).
+ * `setTargetAtTime` en vez de asignar `.value` directo: evita el "click"
+ * audible de un cambio de ganancia instantáneo. */
 export function setMuted(m: boolean): void {
-  if (master) master.gain.value = m ? 0 : 1;
+  if (master && ctx) master.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.01);
   try {
     localStorage.setItem(MUTE_KEY, m ? '1' : '0');
   } catch {
@@ -97,14 +116,27 @@ function startMusic(): void {
 }
 
 /** Crea (o reanuda) el AudioContext y arranca la música. Debe llamarse desde
- * un gesto del usuario (click) por la autoplay policy del navegador. */
+ * un gesto del usuario (click) por la autoplay policy del navegador.
+ * No-op silencioso (con warning una sola vez) si el navegador no soporta
+ * Web Audio API, o si la construcción del contexto falla por otra razón. */
 export function unlock(): void {
   if (!ctx) {
-    ctx = new AudioContext();
+    const Ctor = getAudioContextCtor();
+    if (!Ctor) {
+      warnOnce('audio: Web Audio API no disponible en este navegador');
+      return;
+    }
+    try {
+      ctx = new Ctor();
+    } catch (err) {
+      warnOnce('audio: no se pudo crear AudioContext', err);
+      ctx = null;
+      return;
+    }
     master = ctx.createGain();
     master.gain.value = readMuted() ? 0 : 1;
     master.connect(ctx.destination);
-    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__audioCtx = ctx;
+    if (import.meta.env.DEV) (globalThis as unknown as Record<string, unknown>).__audioCtx = ctx;
   }
   if (ctx.state === 'suspended') ctx.resume();
   startMusic();

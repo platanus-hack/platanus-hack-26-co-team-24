@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { midiToHz, LEAD, BASS, isMuted, setMuted } from './audio';
+import { midiToHz, LEAD, BASS, isMuted, setMuted, unlock, sfx } from './audio';
 
 // Stub mínimo de localStorage en memoria (mismo patrón que avatarStorage.test.ts).
 function makeMemoryStorage(): Storage {
@@ -53,5 +53,15 @@ describe('mute (localStorage)', () => {
 
   it('setMuted no lanza sin AudioContext creado', () => {
     expect(() => setMuted(false)).not.toThrow();
+  });
+});
+
+describe('unlock() sin Web Audio API disponible', () => {
+  it('no lanza y sfx() queda como no-op (navegador sin AudioContext/webkitAudioContext)', () => {
+    // El entorno de test (Node, sin jsdom) ya no tiene AudioContext global,
+    // igual que un navegador viejo sin soporte: cubre ambos casos.
+    expect((globalThis as { AudioContext?: unknown }).AudioContext).toBeUndefined();
+    expect(() => unlock()).not.toThrow();
+    expect(() => sfx('click')).not.toThrow();
   });
 });
