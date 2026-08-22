@@ -144,7 +144,7 @@ export const putAvatar = (cfg: AvatarConfig) =>
 
 **Files:** `src/game/pathfinding.ts`, `src/game/Character.ts`, `src/game/behavior.ts`, `src/game/behavior.test.ts`, `src/bus.ts`
 
-**Produces:** `Character.moveTo(point: string): Promise<void>`, `Character.play(anim: 'sit'|'type'|'idle'|'stand'|'walk_up'|'walk_down'|'walk_left'|'walk_right')`, `nextState(r?: number): State`, `durationMs(state: State): number`.
+**Produces:** `Character.walkTo(point: string): Promise<void>`, `Character.play(anim: 'sit'|'type'|'idle'|'stand'|'walk_up'|'walk_down'|'walk_left'|'walk_right')`, `nextState(r?: number): State`, `durationMs(state: State): number`.
 
 - [ ] `bus.ts`: `export const bus = new Phaser.Events.EventEmitter();` Eventos: `scenario:start`, `scenario:result`, `scenario:error`, `person:click`.
 - [ ] `pathfinding.ts`: easystar con grid de `collision` (0 libre / 1 bloqueado), `setAcceptableTiles([0])`, `findPath(from, to): Promise<{x:number,y:number}[]>`.
@@ -162,7 +162,7 @@ export const durationMs = (_: State, r = Math.random()) => 4000 + r * 8000;
 ```
 
 - [ ] `behavior.test.ts`: 10 000 muestras de `nextState()` → `trabajando` entre 0.67 y 0.73; `nextState(0.99)` es `caminar`.
-- [ ] `Character.ts`: `Phaser.GameObjects.Container` con aura (círculo) + sprite. `moveTo` recorre el path con un tween por celda, velocidad constante (`duration = 16 / speed * 1000`), `ease: 'Linear'`, gira el sprite al dir antes de cada tramo. Loop: `state = nextState()` → `moveTo(punto del estado)` → `play(anim)` → `delay(durationMs)` → repeat. `stopBehavior()` para los escenarios.
+- [ ] `Character.ts`: `Phaser.GameObjects.Container` con aura (círculo) + sprite. `walkTo` recorre el path con un tween por celda, velocidad constante (`duration = 16 / speed * 1000`), `ease: 'Linear'`, gira el sprite al dir antes de cada tramo. Loop: `state = nextState()` → `walkTo(punto del estado)` → `play(anim)` → `delay(durationMs)` → repeat. `stopBehavior()` para los escenarios.
 - [ ] `OfficeScene`: `getOficina()` → spawn 9 `Character` en su `desk_N`. Escuchar `bus.on('scenario:start')`.
 - [ ] Checklist hora 6: nadie atraviesa muebles; si dos comparten celda, offset de 2px por índice (ponytail: sin evitación dinámica; añadir si se ve feo en el demo).
 - [ ] Commit: `feat(game): personajes con pathfinding y comportamiento ambiental`
@@ -202,7 +202,7 @@ export const durationMs = (_: State, r = Math.random()) => 4000 + r * 8000;
 **Files:** `src/game/scenarios/renuncia.ts`, `src/ui/ArcadeConsole.tsx`, `src/ui/ResultPanel.tsx`, `OfficeScene.ts`
 
 - [ ] `ArcadeConsole`: `getEscenarios()` → lista; si `requiere_persona`, `<select>` de persona. Lanzar → `bus.emit('scenario:start', { scenario_id, person_id })`. Se abre al hacer click en el objeto `console` de la escena.
-- [ ] `renuncia.ts`: `export async function run(scene: OfficeScene, char: Character)`: `char.stopBehavior()` → `play('stand')` → `await moveTo('door')` → tween `alpha: 0` → tint gris `0x777777` al escritorio → 3 iconos "?" con tween flotante `y: -6, yoyo, repeat: -1`. Duración 6-8 s. Sonido `door.ogg`.
+- [ ] `renuncia.ts`: `export async function run(scene: OfficeScene, char: Character)`: `char.stopBehavior()` → `play('stand')` → `await walkTo('door')` → tween `alpha: 0` → tint gris `0x777777` al escritorio → 3 iconos "?" con tween flotante `y: -6, yoyo, repeat: -1`. Duración 6-8 s. Sonido `door.ogg`.
 - [ ] Orquestación en `OfficeScene`: en `scenario:start`, lanzar en paralelo `simular(body)` y `run(...)`; `await Promise.all` → `bus.emit('scenario:result', result)`. Si `simular` rechaza → `bus.emit('scenario:error', msg)` y restaurar oficina. Nunca se queda a medias en el demo.
 - [ ] `ResultPanel`: items huérfanos, impacto, `playbook_md` en `<pre>` (ponytail: sin renderer markdown; si sobra tiempo, `react-markdown` sin HTML raw). Botón "Restaurar oficina" → `scene.scene.restart()`.
 - [ ] Checklist: ejecutar 3 veces seguidas sin bugs.
@@ -212,9 +212,9 @@ export const durationMs = (_: State, r = Math.random()) => 4000 + r * 8000;
 
 **Files:** `src/game/scenarios/github.ts`, `roboPc.ts`, `generic.ts`, `index.ts`
 
-- [ ] `github.ts`: emitter de partículas gris sobre `server`, tint rojo en luces, personajes con `rol` dev `moveTo('server')` + `play('idle')`.
+- [ ] `github.ts`: emitter de partículas gris sobre `server`, tint rojo en luces, personajes con `rol` dev `walkTo('server')` + `play('idle')`.
 - [ ] `roboPc.ts`: ocultar sprite `cto_pc`, círculo rojo `alpha 0.3` rotando con tween `angle: 360, repeat: -1`, `alarm.ogg`.
-- [ ] `generic.ts`: overlay rojo parpadeando 3 veces. `incendio` añade `scene.cameras.main.shake(500)` y todos `moveTo('door')`. `apagon`: overlay negro `alpha 0.85` con las pantallas encima (depth mayor).
+- [ ] `generic.ts`: overlay rojo parpadeando 3 veces. `incendio` añade `scene.cameras.main.shake(500)` y todos `walkTo('door')`. `apagon`: overlay negro `alpha 0.85` con las pantallas encima (depth mayor).
 - [ ] `index.ts`: `export const SCENARIOS: Record<string, Runner> = { renuncia, github_caido, robo_pc }`; `export const getRunner = (id) => SCENARIOS[id] ?? generic`.
 - [ ] Commit: `feat(game): escenarios github, robo pc y genéricos`
 
