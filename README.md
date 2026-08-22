@@ -55,7 +55,7 @@ Slack · GitHub · Meet  →  Extracción con Claude  →  Mapa de conocimiento
 |---|---|---|
 | `cerebro/` | Extracción, riesgo, simulación y quests. Módulo importable, sin HTTP | Python + Claude API |
 | `backend/` | La API que consumen los frontends. Swagger en `/docs` | FastAPI |
-| `frontend/` | Oficina pixel art + dashboard | React, Phaser 3, Vite |
+| `frontend/` | Oficina pixel art + dashboard ([contrato y adaptaciones](./frontend/README.md)) | React, Phaser 3, Vite |
 | `data/raw/` | Eventos normalizados de la ingesta | JSON |
 | `bus-factor/` | Documentos de trabajo por rol | — |
 

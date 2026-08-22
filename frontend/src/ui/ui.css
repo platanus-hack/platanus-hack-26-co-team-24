@@ -1,0 +1,426 @@
+.risk-tooltip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  max-width: 280px;
+  padding: 12px;
+  border-radius: 6px;
+  background: #120f3a;
+  border: 2px solid #00e5ff;
+  border-left-width: 6px;
+  color: #ffffff;
+  font-family: monospace;
+}
+
+.risk-tooltip__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.risk-tooltip__name {
+  margin: 0;
+  font-size: 14px;
+}
+
+.risk-tooltip__rol {
+  margin: 2px 0 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.risk-tooltip__close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+}
+
+.risk-tooltip__score {
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.risk-tooltip__items {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+}
+
+.avatar-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b0b2b;
+  font-family: monospace;
+  color: #ffffff;
+}
+
+.avatar-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 32px;
+  border-radius: 8px;
+  background: #120f3a;
+  border: 2px solid #00e5ff;
+}
+
+.avatar-panel h1 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  text-align: center;
+}
+
+.avatar-preview-box {
+  width: 96px;
+  height: 144px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b0b2b;
+  border: 2px solid #00e5ff;
+  border-radius: 4px;
+}
+
+.avatar-preview-canvas {
+  width: 96px;
+  height: 144px;
+  image-rendering: pixelated;
+}
+
+.avatar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 200px;
+  font-size: 13px;
+}
+
+.avatar-field select {
+  font-family: monospace;
+  font-size: 13px;
+  padding: 4px;
+  background: #0b0b2b;
+  color: #ffffff;
+  border: 1px solid #00e5ff;
+  border-radius: 4px;
+}
+
+.avatar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.avatar-actions button {
+  font-family: monospace;
+  font-size: 13px;
+  padding: 8px 16px;
+  background: #00e5ff;
+  color: #0b0b2b;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.avatar-actions a {
+  color: #39ff14;
+  font-size: 13px;
+}
+
+.avatar-status {
+  margin: 0;
+  font-size: 13px;
+  color: #39ff14;
+}
+
+/* --- Mute --- */
+
+.mute-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 15;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #00e5ff;
+  border-radius: 6px;
+  background: #120f3a;
+  color: #ffffff;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 0 12px #00e5ff55;
+}
+
+/* --- Consola arcade (escenarios) --- */
+
+.arcade-open {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 15;
+  padding: 10px 16px;
+  border: 2px solid #00e5ff;
+  border-radius: 6px;
+  background: #ff00aa;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 12px #ff00aa88;
+}
+
+.arcade-open:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arcade-panel {
+  position: absolute;
+  right: 12px;
+  bottom: 60px;
+  z-index: 15;
+  width: 320px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-radius: 6px;
+  background: #120f3a;
+  border: 2px solid #00e5ff;
+  color: #ffffff;
+  font-family: monospace;
+}
+
+.arcade-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arcade-panel__title {
+  margin: 0;
+  font-size: 14px;
+  color: #39ff14;
+}
+
+.arcade-close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+}
+
+.arcade-list {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  /* Sólo la lista scrollea: el select de persona y "Simular" quedan siempre
+     visibles al fondo del panel. */
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.arcade-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: 1px solid #00e5ff55;
+  border-radius: 4px;
+  background: #0b0b2b;
+  color: #ffffff;
+  font-family: monospace;
+  cursor: pointer;
+}
+
+.arcade-item--active {
+  border-color: #39ff14;
+  box-shadow: 0 0 8px #39ff1466;
+}
+
+.arcade-item__name {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.arcade-item__desc {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.arcade-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.arcade-field select {
+  font-family: monospace;
+  font-size: 12px;
+  padding: 4px;
+  background: #0b0b2b;
+  color: #ffffff;
+  border: 1px solid #00e5ff;
+  border-radius: 4px;
+}
+
+.arcade-run {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  background: #00e5ff;
+  color: #0b0b2b;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.arcade-run:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Panel de resultado --- */
+
+.result-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  width: calc(100% - 32px);
+  max-width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-radius: 8px;
+  background: #120f3a;
+  border: 2px solid #00e5ff;
+  color: #ffffff;
+  font-family: monospace;
+  box-shadow: 0 0 24px #00e5ff55;
+}
+
+.result-panel__title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: #39ff14;
+}
+
+.result-panel__error {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #ff1744;
+}
+
+.result-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.result-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border: 1px solid #00e5ff55;
+  border-radius: 6px;
+  background: #0b0b2b;
+}
+
+.result-stat__value {
+  font-size: 22px;
+  font-weight: bold;
+  color: #00e5ff;
+}
+
+.result-stat__label {
+  font-size: 11px;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.result-panel__impacto {
+  /* Frase de impacto de la API real (el mock trae además los tiles). */
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #ffd166;
+}
+
+.result-items {
+  flex: none;
+  margin: 12px 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.result-playbook {
+  /* Sólo el playbook scrollea: los botones quedan pegados al fondo. */
+  overflow: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 10px;
+  border-radius: 6px;
+  background: #0b0b2b;
+  border: 1px solid #00e5ff33;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.result-panel__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.result-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #39ff14;
+  color: #0b0b2b;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.result-btn--ghost {
+  background: none;
+  border: 1px solid #00e5ff;
+  color: #ffffff;
+}

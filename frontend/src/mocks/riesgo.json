@@ -1,0 +1,148 @@
+{
+  "scores": [
+    {
+      "person_id": "p_ana",
+      "score": 87,
+      "items_criticos": [
+        {
+          "id": "k1",
+          "tipo": "tarea",
+          "descripcion": "Comprar vuelos del jefe"
+        },
+        {
+          "id": "k2",
+          "tipo": "tarea",
+          "descripcion": "Administrar el CRM de clientes"
+        },
+        {
+          "id": "k3",
+          "tipo": "conocimiento",
+          "descripcion": "Coordinar el onboarding de nuevos empleados"
+        },
+        {
+          "id": "k4",
+          "tipo": "acceso",
+          "descripcion": "Gestionar accesos y llaves de la oficina"
+        },
+        {
+          "id": "k5",
+          "tipo": "tarea",
+          "descripcion": "Pagar la nómina y a los proveedores"
+        },
+        {
+          "id": "k6",
+          "tipo": "conocimiento",
+          "descripcion": "Renovar contratos de proveedores (internet, limpieza, catering)"
+        },
+        {
+          "id": "k7",
+          "tipo": "tarea",
+          "descripcion": "Organizar viajes y logística del equipo"
+        }
+      ]
+    },
+    {
+      "person_id": "p_david",
+      "score": 58,
+      "items_criticos": [
+        {
+          "id": "k8",
+          "tipo": "acceso",
+          "descripcion": "Único con llaves de producción del backend"
+        },
+        {
+          "id": "k9",
+          "tipo": "conocimiento",
+          "descripcion": "Conoce la arquitectura de microservicios de pagos"
+        }
+      ]
+    },
+    {
+      "person_id": "p_andres",
+      "score": 62,
+      "items_criticos": [
+        {
+          "id": "k10",
+          "tipo": "acceso",
+          "descripcion": "Credenciales de infraestructura en la nube"
+        },
+        {
+          "id": "k11",
+          "tipo": "conocimiento",
+          "descripcion": "Mantiene el pipeline de CI/CD a mano"
+        }
+      ]
+    },
+    {
+      "person_id": "p_brayan",
+      "score": 45,
+      "items_criticos": [
+        {
+          "id": "k12",
+          "tipo": "conocimiento",
+          "descripcion": "Dueño del design system del frontend"
+        }
+      ]
+    },
+    {
+      "person_id": "p_jorge",
+      "score": 51,
+      "items_criticos": [
+        {
+          "id": "k13",
+          "tipo": "tarea",
+          "descripcion": "Actualiza los dashboards de métricas cada semana"
+        },
+        {
+          "id": "k14",
+          "tipo": "conocimiento",
+          "descripcion": "Conoce los pipelines de datos de principio a fin"
+        }
+      ]
+    },
+    {
+      "person_id": "p_samuel",
+      "score": 33,
+      "items_criticos": [
+        {
+          "id": "k15",
+          "tipo": "tarea",
+          "descripcion": "Da soporte técnico a todo el equipo"
+        }
+      ]
+    },
+    {
+      "person_id": "p_laura",
+      "score": 28,
+      "items_criticos": [
+        {
+          "id": "k16",
+          "tipo": "tarea",
+          "descripcion": "Gestiona las redes sociales de la empresa"
+        }
+      ]
+    },
+    {
+      "person_id": "p_camila",
+      "score": 40,
+      "items_criticos": [
+        {
+          "id": "k17",
+          "tipo": "tarea",
+          "descripcion": "Concilia las cuentas bancarias mensuales"
+        }
+      ]
+    },
+    {
+      "person_id": "p_mateo",
+      "score": 22,
+      "items_criticos": [
+        {
+          "id": "k18",
+          "tipo": "tarea",
+          "descripcion": "Sigue el pipeline de ventas en el CRM"
+        }
+      ]
+    }
+  ]
+}

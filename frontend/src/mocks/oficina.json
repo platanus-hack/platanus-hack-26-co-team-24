@@ -1,0 +1,113 @@
+{
+  "office": { "id": "off_1", "nombre": "Inerxia" },
+  "people": [
+    {
+      "id": "p_ana",
+      "nombre": "Ana",
+      "rol": "Ops",
+      "desk": 3,
+      "avatar_config": {
+        "cuerpo": "light",
+        "peinado": "long",
+        "ropa": "shirt",
+        "paleta": "blue"
+      }
+    },
+    {
+      "id": "p_david",
+      "nombre": "David",
+      "rol": "Backend",
+      "desk": 0,
+      "avatar_config": {
+        "cuerpo": "dark",
+        "peinado": "short",
+        "ropa": "shirt",
+        "paleta": "green"
+      }
+    },
+    {
+      "id": "p_andres",
+      "nombre": "Andrés",
+      "rol": "DevOps",
+      "desk": 1,
+      "avatar_config": {
+        "cuerpo": "light",
+        "peinado": "short",
+        "ropa": "suit",
+        "paleta": "gray"
+      }
+    },
+    {
+      "id": "p_brayan",
+      "nombre": "Brayan",
+      "rol": "Frontend",
+      "desk": 2,
+      "avatar_config": {
+        "cuerpo": "dark",
+        "peinado": "long",
+        "ropa": "shirt",
+        "paleta": "purple"
+      }
+    },
+    {
+      "id": "p_jorge",
+      "nombre": "Jorge",
+      "rol": "Data",
+      "desk": 4,
+      "avatar_config": {
+        "cuerpo": "light",
+        "peinado": "short",
+        "ropa": "shirt",
+        "paleta": "yellow"
+      }
+    },
+    {
+      "id": "p_samuel",
+      "nombre": "Samuel",
+      "rol": "Soporte TI",
+      "desk": 5,
+      "avatar_config": {
+        "cuerpo": "dark",
+        "peinado": "short",
+        "ropa": "shirt",
+        "paleta": "red"
+      }
+    },
+    {
+      "id": "p_laura",
+      "nombre": "Laura",
+      "rol": "Marketing",
+      "desk": 6,
+      "avatar_config": {
+        "cuerpo": "light",
+        "peinado": "long",
+        "ropa": "suit",
+        "paleta": "red"
+      }
+    },
+    {
+      "id": "p_camila",
+      "nombre": "Camila",
+      "rol": "Finanzas",
+      "desk": 7,
+      "avatar_config": {
+        "cuerpo": "dark",
+        "peinado": "long",
+        "ropa": "suit",
+        "paleta": "blue"
+      }
+    },
+    {
+      "id": "p_mateo",
+      "nombre": "Mateo",
+      "rol": "Ventas",
+      "desk": 8,
+      "avatar_config": {
+        "cuerpo": "light",
+        "peinado": "short",
+        "ropa": "shirt",
+        "paleta": "green"
+      }
+    }
+  ]
+}

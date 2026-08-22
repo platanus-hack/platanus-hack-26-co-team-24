@@ -1,0 +1,53 @@
+{
+  "scenarios": [
+    {
+      "id": "renuncia",
+      "tipo": "persona",
+      "nombre": "Renuncia / ausencia",
+      "descripcion": "Una persona clave renuncia o se ausenta sin aviso. ¿Quién sostiene sus tareas?",
+      "requiere_persona": true
+    },
+    {
+      "id": "caida_github",
+      "tipo": "infra",
+      "nombre": "GitHub caído",
+      "descripcion": "GitHub sufre una caída global y nadie puede hacer push, pull ni desplegar.",
+      "requiere_persona": false
+    },
+    {
+      "id": "robo_pc",
+      "tipo": "fisica",
+      "nombre": "Robo de laptop",
+      "descripcion": "Roban la laptop de trabajo de alguien del equipo con credenciales guardadas.",
+      "requiere_persona": true
+    },
+    {
+      "id": "apagon",
+      "tipo": "fisica",
+      "nombre": "Apagón en la oficina",
+      "descripcion": "Se va la luz en la oficina y con ella el internet y los servidores locales.",
+      "requiere_persona": false
+    },
+    {
+      "id": "evacuacion",
+      "tipo": "fisica",
+      "nombre": "Incendio en la oficina",
+      "descripcion": "Un conato de incendio obliga a evacuar la oficina durante varios días.",
+      "requiere_persona": false
+    },
+    {
+      "id": "caida_meet",
+      "tipo": "infra",
+      "nombre": "Meet / videollamadas caídas",
+      "descripcion": "La herramienta de videollamadas del equipo deja de funcionar en plena jornada.",
+      "requiere_persona": false
+    },
+    {
+      "id": "ransomware",
+      "tipo": "infra",
+      "nombre": "Ataque de ransomware",
+      "descripcion": "Un ataque de ransomware cifra archivos compartidos de la empresa.",
+      "requiere_persona": false
+    }
+  ]
+}
