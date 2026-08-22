@@ -1,6 +1,21 @@
 import Phaser from 'phaser';
+import { getOficina } from '../api';
+import { Character } from './Character';
+import { createPathfinder, type Pathfinder } from './pathfinding';
 
 const OBJECTS_KEY = 'objects';
+
+// Cada char_*.png es un spritesheet de 48x96: 3 columnas x 4 filas de
+// frames de 16x24 (filas: down, left, right, up; columnas: 3 poses de
+// caminata, la columna 1 es la pose de pie).
+const CHARACTER_SHEETS = [
+  'char_body_light',
+  'char_body_dark',
+  'char_hair_short',
+  'char_hair_long',
+  'char_clothes_shirt',
+  'char_clothes_suit',
+];
 
 // Frame indices in sprites/objects.png (see gen-assets.mjs / ATTRIBUTION.md):
 // 0 server_on, 1 server_off, 2 pc_on, 3 pc_off, 4 coffee_a, 5 coffee_b,
@@ -21,6 +36,8 @@ export class OfficeScene extends Phaser.Scene {
   map!: Phaser.Tilemaps.Tilemap;
   points: Record<string, { x: number; y: number }> = {};
   objects: Record<string, Phaser.GameObjects.Sprite> = {};
+  pathfinder!: Pathfinder;
+  characters: Record<string, Character> = {};
 
   constructor() {
     super('office');
@@ -33,6 +50,12 @@ export class OfficeScene extends Phaser.Scene {
       frameWidth: 16,
       frameHeight: 16,
     });
+    for (const key of CHARACTER_SHEETS) {
+      this.load.spritesheet(key, `/assets/sprites/${key}.png`, {
+        frameWidth: 16,
+        frameHeight: 24,
+      });
+    }
   }
 
   create(): void {
@@ -50,6 +73,20 @@ export class OfficeScene extends Phaser.Scene {
     this.createAnimations();
     this.placeObjects();
     this.setupCamera();
+
+    this.pathfinder = createPathfinder(this.map);
+    this.spawnCharacters();
+  }
+
+  private spawnCharacters(): void {
+    getOficina().then((oficina) => {
+      for (const person of oficina.people) {
+        const character = new Character(this, person, this.pathfinder);
+        this.add.existing(character);
+        this.characters[person.id] = character;
+        character.startBehavior();
+      }
+    });
   }
 
   private loadPoints(): void {
