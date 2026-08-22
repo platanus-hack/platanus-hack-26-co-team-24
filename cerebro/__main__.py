@@ -30,7 +30,7 @@ def main() -> int:
 
     objetivo = scores[0].persona_id
     print(f"\n── Simulando: renuncia de {objetivo} ──")
-    sim = simular("renuncia", items, objetivo)
+    sim = simular("renuncia", items, objetivo, eventos)
     print(f"  {sim.impacto}  [{sim.generado_por}]")
     for a in sim.advertencias:
         print(f"  ⚠ {a}")
@@ -38,7 +38,7 @@ def main() -> int:
     print("\n".join("  " + l for l in sim.playbook_md.splitlines()))
 
     print("\n── Quests del viernes ──")
-    for q in generar_digest(items, scores):
+    for q in generar_digest(items, scores, eventos):
         print(f"  [{q.puntos:2d} pts] {q.asignado_a}: {q.accion}")
     print()
     return 0

@@ -12,8 +12,9 @@ from pathlib import Path
 
 from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, calcular_riesgo, extraer,
                      generar_digest, resiliencia_equipo, simular)
-from cerebro.grafo import construir_grafo, es_puente, grado, intermediacion
-from cerebro.nucleo import PISO_NORMALIZACION, _afectados, _dedup_exacto, cobertura, peso_riesgo
+from cerebro.grafo import colaboradores, construir_grafo, es_puente, grado, intermediacion
+from cerebro.nucleo import (PISO_NORMALIZACION, _afectados, _bloque_colaboracion, _dedup_exacto,
+                            _emails_de, _formatear_eventos, cobertura, peso_riesgo)
 from cerebro.validacion import escenarios_sanos, monotonia, sensibilidad_pesos, spearman
 
 EVENTOS = [RawEvent.model_validate(e) for e in json.loads(Path("data/raw/mock_events.json").read_text(encoding="utf-8"))]
@@ -161,6 +162,43 @@ def test_playbook_de_respaldo_solo_usa_datos_reales():
     md = simular("renuncia", items, "ana@empresa.com").playbook_md
     reales = {i.dueño_principal for i in items} | {r for i in items for r in i.respaldos}
     assert set(re.findall(r"[\w.+-]+@[\w.-]+\.\w+", md)) <= reales
+
+
+def test_metadata_de_p1_llega_al_prompt():
+    """Los archivos tocados de un commit son la señal más fuerte de quién toca qué."""
+    commit = next(e for e in EVENTOS if e.metadata.get("archivos"))
+    prompt = _formatear_eventos([commit])
+    assert "metadata:" in prompt
+    assert commit.metadata["archivos"][0] in prompt
+
+
+def test_grafo_pesa_las_interacciones():
+    g = construir_grafo(EVENTOS)
+    cercanos = colaboradores(g, "ana@empresa.com")
+    assert cercanos[0][1] >= cercanos[-1][1], "debe venir ordenado de mayor a menor"
+    assert all(n >= 1 for _, n in cercanos)
+    assert dict(cercanos)["laura@empresa.com"] == g["ana@empresa.com"]["laura@empresa.com"]
+
+
+def test_el_playbook_recibe_co_participacion():
+    """El doc pide sugerir sucesor por cercanía; sin el grafo el modelo adivina."""
+    afectados = _afectados("renuncia", extraer([], mock=True), "ana@empresa.com")
+    assert _bloque_colaboracion(afectados, None) == "", "sin eventos, sin bloque"
+    bloque = _bloque_colaboracion(afectados, EVENTOS)
+    assert "ana@empresa.com trabaja sobre todo con" in bloque
+    assert "interacciones" in bloque
+
+
+def test_el_respaldo_propone_sucesor():
+    r = simular("renuncia", extraer([], mock=True), "ana@empresa.com", EVENTOS)
+    assert "candidato por cercanía" in r.playbook_md
+
+
+def test_extraer_filtra_emails_inventados():
+    """Un respaldo falso apaga la alarma: es peor que no tener respaldo."""
+    permitidos = _emails_de(EVENTOS)
+    assert "ana@empresa.com" in permitidos
+    assert "fantasma@empresa.com" not in permitidos
 
 
 def test_dedup_une_respaldos():

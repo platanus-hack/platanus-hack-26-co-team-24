@@ -132,15 +132,41 @@ def _id_item(dueno: str, descripcion: str) -> str:
     return "ki-" + hashlib.sha256(f"{dueno}|{descripcion}".encode()).hexdigest()[:10]
 
 
+def _formatear_metadata(metadata: dict, limite: int = 300) -> str:
+    """Los archivos tocados de un commit son la señal más fuerte de quién toca qué.
+
+    P1 los pone en `metadata`; descartarlos sería tirar su mejor dato.
+    """
+    if not metadata:
+        return ""
+    partes = []
+    for clave, valor in metadata.items():
+        texto = ", ".join(str(v) for v in valor) if isinstance(valor, list) else str(valor)
+        partes.append(f"{clave}={texto}")
+    linea = " | ".join(partes)
+    return f"\nmetadata: {linea[:limite]}"
+
+
 def _formatear_eventos(eventos: list[RawEvent]) -> str:
     lineas = []
     for ev in eventos:
         participantes = ", ".join(ev.participantes) or "—"
         lineas.append(
             f"[{ev.id}] fuente={ev.fuente} tipo={ev.tipo} autor={ev.autor_email} "
-            f"participantes={participantes} fecha={ev.timestamp}\n{ev.contenido}"
+            f"participantes={participantes} fecha={ev.timestamp}"
+            f"{_formatear_metadata(ev.metadata)}\n{ev.contenido}"
         )
     return "\n\n---\n\n".join(lineas)
+
+
+def _emails_de(eventos: list[RawEvent]) -> set[str]:
+    import re
+
+    return (
+        {e.autor_email for e in eventos}
+        | {p for e in eventos for p in e.participantes}
+        | {p for e in eventos for p in re.findall(r"[\w.+-]+@[\w.-]+\.\w+", e.contenido)}
+    )
 
 
 def extraer(raw_events: list[RawEvent | dict], *, fusionar: bool = True, mock: bool = False) -> list[KnowledgeItem]:
@@ -151,6 +177,9 @@ def extraer(raw_events: list[RawEvent | dict], *, fusionar: bool = True, mock: b
     eventos = [e if isinstance(e, RawEvent) else RawEvent.model_validate(e) for e in raw_events]
     if not eventos:
         return []
+
+    permitidos = _emails_de(eventos)
+    descartados = 0
 
     items: list[KnowledgeItem] = []
     for inicio in range(0, len(eventos), LOTE):
@@ -165,18 +194,27 @@ def extraer(raw_events: list[RawEvent | dict], *, fusionar: bool = True, mock: b
             print(f"[cerebro] lote {inicio // LOTE + 1} falló ({type(e).__name__}: {e}), se omite")
             continue
         for it in salida.items:
+            # El prompt lo pide, pero pedirlo no basta: si el dueño no existe en
+            # los eventos el item se cae entero, y los respaldos inventados se
+            # filtran. Un respaldo falso es peor que ninguno: apaga la alarma.
+            if it.dueno_principal not in permitidos:
+                descartados += 1
+                continue
             items.append(
                 KnowledgeItem(
                     id=_id_item(it.dueno_principal, it.descripcion),
                     tipo=it.tipo,
                     descripcion=it.descripcion,
                     dueño_principal=it.dueno_principal,
-                    respaldos=sorted(set(it.respaldos) - {it.dueno_principal}),
+                    respaldos=sorted((set(it.respaldos) & permitidos) - {it.dueno_principal}),
                     fuente=it.fuente,
                     evidencia=it.evidencia,
                     evento_ids=it.evento_ids,
                 )
             )
+
+    if descartados:
+        print(f"[cerebro] {descartados} elemento(s) descartados: dueño inventado")
 
     if not items:
         print("[cerebro] ningún lote produjo elementos; devolviendo mocks")
@@ -379,7 +417,12 @@ def _afectados(scenario_id: str, items: list[KnowledgeItem], objetivo_id: str | 
     return [i for i in items if filtro(i, objetivo_id)]
 
 
-def _playbook_de_respaldo(escenario, afectados: list[KnowledgeItem], objetivo_id: str | None) -> str:
+def _playbook_de_respaldo(
+    escenario,
+    afectados: list[KnowledgeItem],
+    objetivo_id: str | None,
+    sucesores: dict[str, list[str]] | None = None,
+) -> str:
     """Playbook determinista, sin LLM. Datos reales, sin narración.
 
     Se usa cuando no hay API key o cuando la llamada falla o se pasa del tiempo.
@@ -397,9 +440,15 @@ def _playbook_de_respaldo(escenario, afectados: list[KnowledgeItem], objetivo_id
         f"## Sin respaldo — {len(huerfanos)} elemento(s)",
         "",
     ]
+    sucesores = sucesores or {}
     partes += [
         f"- **{i.descripcion}** ({i.tipo}, dueño {i.dueño_principal})\n"
-        f'  - evidencia: «{i.evidencia}»'
+        f"  - evidencia: «{i.evidencia}»"
+        + (
+            f"\n  - candidato por cercanía: {sucesores[i.dueño_principal][0]}"
+            if sucesores.get(i.dueño_principal)
+            else ""
+        )
         for i in huerfanos
     ] or ["_Ninguno._"]
     partes += ["", f"## Con respaldo — {len(transferibles)} elemento(s)", ""]
@@ -412,7 +461,8 @@ def _playbook_de_respaldo(escenario, afectados: list[KnowledgeItem], objetivo_id
         "## Primeras 48 horas",
         "",
         "1. Cubrir primero los elementos sin respaldo de la lista de arriba.",
-        "2. Para cada uno, designar un segundo responsable y dejarlo por escrito.",
+        "2. El candidato por cercanía sale de co-participación real, no de que ya",
+        "   sepa hacerlo: hay que sentarlo con el dueño, no solo asignárselo.",
         "3. Verificar que el respaldo puede ejecutar la tarea, no solo que sabe de ella.",
         "",
         "_Documento generado sin narración: el servicio de IA no estaba disponible._",
@@ -435,11 +485,16 @@ def simular(
     scenario_id: str,
     items: list[KnowledgeItem],
     objetivo_id: str | None = None,
+    raw_events: list[RawEvent | dict] | None = None,
     *,
     timeout: float = 25.0,
     mock: bool = False,
 ) -> SimulationResult:
     """Ejecuta un escenario y genera el playbook de empalme en Markdown.
+
+    Con `raw_events` el prompt recibe además con quién colabora realmente cada
+    persona afectada, que es lo que permite proponer un sucesor cuando el item
+    no tiene respaldo. Sin ellos el modelo solo puede adivinar por el texto.
 
     Nunca levanta por culpa del LLM: si no hay API key, si la llamada falla o si
     se pasa de `timeout` segundos, cae a un playbook determinista construido con
@@ -478,12 +533,13 @@ def simular(
             playbook_md=f"# {escenario.nombre}\n\nNo hay conocimiento registrado que este escenario ponga en riesgo.",
         )
 
+    sucesores = _sucesores_por_cercania(afectados, raw_events)
     base = SimulationResult(
         scenario_id=scenario_id,
         objetivo_id=objetivo_id,
         items_huerfanos=huerfanos,
         impacto=impacto,
-        playbook_md=_playbook_de_respaldo(escenario, afectados, objetivo_id),
+        playbook_md=_playbook_de_respaldo(escenario, afectados, objetivo_id, sucesores),
         generado_por="respaldo",
     )
     if not llm.hay_api_key():
@@ -495,12 +551,15 @@ def simular(
         + (f"Persona afectada: {objetivo_id}\n" if objetivo_id else "")
         + f"\n## Conocimiento afectado\n{_catalogo_detallado(afectados)}\n"
         + f"\n## Resto del equipo y lo que ya saben\n{_catalogo_resumido(items, afectados)}\n"
-        "\n## Tu tarea\n"
+        + _bloque_colaboracion(afectados, raw_events)
+        + "\n## Tu tarea\n"
         "Escribe el playbook de empalme en Markdown. Estructura:\n"
         "1. Qué se pierde (tabla: elemento, tipo, respaldo actual)\n"
         "2. Reglas tácitas que nadie más conoce — nómbralas explícitamente\n"
-        "3. Quién asume qué, y por qué esa persona (usa los respaldos si existen; "
-        "si no hay respaldo, propone a quien más cerca esté por lo que ya sabe)\n"
+        "3. Quién asume qué, y por qué esa persona. Si el elemento tiene "
+        "respaldos, son ellos. Si no tiene, elige a quien más colabore con el "
+        "dueño según el grafo de arriba, y di explícitamente que es una "
+        "propuesta por cercanía, no alguien que ya sepa hacerlo\n"
         "4. Primeras 48 horas, en pasos numerados y accionables\n"
         "5. Riesgo residual: qué se pierde igual\n\n"
         "Usa solo emails que aparezcan arriba. No inventes datos."
@@ -533,6 +592,46 @@ def _catalogo_detallado(items: list[KnowledgeItem]) -> str:
     )
 
 
+def _sucesores_por_cercania(
+    afectados: list[KnowledgeItem], raw_events: list[RawEvent | dict] | None
+) -> dict[str, list[str]]:
+    """Dueño afectado -> personas con las que más colabora, de mayor a menor."""
+    if not raw_events:
+        return {}
+    eventos = [e if isinstance(e, RawEvent) else RawEvent.model_validate(e) for e in raw_events]
+    grafo = g.construir_grafo(eventos)
+    return {
+        dueño: [p for p, _ in g.colaboradores(grafo, dueño)]
+        for dueño in {i.dueño_principal for i in afectados}
+    }
+
+
+def _bloque_colaboracion(
+    afectados: list[KnowledgeItem], raw_events: list[RawEvent | dict] | None
+) -> str:
+    """Con quién trabaja de verdad cada dueño afectado, según los eventos.
+
+    Sin esto el modelo propone sucesores por intuición del texto. Con esto los
+    propone por co-participación medida, que es lo que pide el documento de P2.
+    """
+    if not raw_events:
+        return ""
+    eventos = [e if isinstance(e, RawEvent) else RawEvent.model_validate(e) for e in raw_events]
+    grafo = g.construir_grafo(eventos)
+    lineas = []
+    for dueño in sorted({i.dueño_principal for i in afectados}):
+        cercanos = g.colaboradores(grafo, dueño)
+        if cercanos:
+            detalle = ", ".join(f"{p} ({n} interacciones)" for p, n in cercanos)
+            lineas.append(f"- {dueño} trabaja sobre todo con: {detalle}")
+    if not lineas:
+        return ""
+    return (
+        "\n## Con quién colabora cada afectado (co-participación real en Slack, "
+        "GitHub y Meet)\n" + "\n".join(lineas) + "\n"
+    )
+
+
 def _catalogo_resumido(todos: list[KnowledgeItem], afectados: list[KnowledgeItem]) -> str:
     ids = {it.id for it in afectados}
     resto = [it for it in todos if it.id not in ids]
@@ -547,11 +646,17 @@ def _catalogo_resumido(todos: list[KnowledgeItem], afectados: list[KnowledgeItem
 def generar_digest(
     items: list[KnowledgeItem],
     scores: list[RiskScore],
+    raw_events: list[RawEvent | dict] | None = None,
     *,
     limite: int = 6,
     mock: bool = False,
 ) -> list[Quest]:
-    """Las misiones del viernes: una por cada punto único de falla."""
+    """Las misiones del viernes: una por cada punto único de falla.
+
+    Con `raw_events` la quest nombra a un receptor concreto, elegido por
+    co-participación real y no al azar: "comparte el acceso con Samuel" en vez
+    de "comparte el acceso con alguien".
+    """
     if mock or not llm.hay_api_key():
         return list(mocks.QUESTS)
 
@@ -573,7 +678,9 @@ def generar_digest(
         + "\n\nEste es el resto del equipo y lo que ya sabe (para elegir a quién "
         "traspasar conocimiento):\n"
         + _catalogo_resumido(items, criticos)
-        + "\n\nGenera una misión por elemento. `item_relacionado` debe ser el id "
+        + _bloque_colaboracion(criticos, raw_events)
+        + "\n\nGenera una misión por elemento. Nombra en la acción a la persona "
+        "que debe recibir el conocimiento, elegida por co-participación. `item_relacionado` debe ser el id "
         "exacto de la lista. `asignado_a` es el dueño actual: él o ella es quien "
         "tiene que soltar el conocimiento. `puntos` entre 10 y 30 según el riesgo."
     )

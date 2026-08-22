@@ -17,10 +17,10 @@ from cerebro import extraer, calcular_riesgo, simular, generar_digest, ESCENARIO
 
 raw_events = json.loads(Path("data/raw/mock_events.json").read_text())
 
-items  = extraer(raw_events)                       # list[KnowledgeItem]
-scores = calcular_riesgo(items, raw_events)        # list[RiskScore], ordenado desc
-sim    = simular("renuncia", items, "ana@empresa.com")  # SimulationResult
-quests = generar_digest(items, scores)             # list[Quest]
+items  = extraer(raw_events)                                        # list[KnowledgeItem]
+scores = calcular_riesgo(items, raw_events)                         # list[RiskScore], desc
+sim    = simular("renuncia", items, "ana@empresa.com", raw_events)  # SimulationResult
+quests = generar_digest(items, scores, raw_events)                  # list[Quest]
 ```
 
 Todo son modelos Pydantic: `.model_dump()` para el JSON de la API.
@@ -39,6 +39,10 @@ El playbook es el único punto donde el modelo escribe texto libre, así que al
 volver se revisa que **todo email que aparezca exista en los datos**; los
 inventados se reportan en `advertencias`.
 
+En `extraer()` el filtro es más duro: un item cuyo `dueño_principal` no aparece
+en los eventos se descarta entero, y los respaldos inventados se quitan. Un
+respaldo falso es peor que ninguno — apaga la alarma.
+
 ### Flag mock
 
 Cada función acepta `mock=True` y devuelve datos falsos que cumplen el contrato.
@@ -54,12 +58,18 @@ mock por su cuenta en vez de fallar.
 ```python
 extraer(raw_events, *, fusionar=True, mock=False) -> list[KnowledgeItem]
 calcular_riesgo(items, raw_events=None, *, mock=False) -> list[RiskScore]
-simular(scenario_id, items, objetivo_id=None, *, mock=False) -> SimulationResult
-generar_digest(items, scores, *, limite=6, mock=False) -> list[Quest]
+simular(scenario_id, items, objetivo_id=None, raw_events=None, *, timeout=25.0, mock=False) -> SimulationResult
+generar_digest(items, scores, raw_events=None, *, limite=6, mock=False) -> list[Quest]
 ```
 
-`raw_events` en `calcular_riesgo` es opcional: sin él el score sale solo del
-conocimiento; con él se suma la señal del grafo de colaboración.
+**Pásale `raw_events` a las cuatro.** Es opcional en tres de ellas y todo sigue
+funcionando sin él, pero se pierde la mitad de lo bueno:
+
+| Función | Sin `raw_events` | Con `raw_events` |
+|---|---|---|
+| `calcular_riesgo` | solo cuenta conocimiento | suma intermediación en el grafo |
+| `simular` | el modelo adivina el sucesor por el texto | lo propone por co-participación medida |
+| `generar_digest` | "comparte esto con alguien" | "comparte esto con Samuel" |
 
 ## Score de riesgo
 

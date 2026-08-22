@@ -23,19 +23,36 @@ from collections import deque
 
 from .esquemas import RawEvent
 
-Grafo = dict[str, set[str]]
+# persona -> {vecino: nº de eventos compartidos}. Iterarlo da los vecinos, así
+# que los algoritmos de abajo lo tratan como lista de adyacencia sin cambios.
+Grafo = dict[str, dict[str, int]]
 
 
 def construir_grafo(eventos: list[RawEvent]) -> Grafo:
-    """Une a autor y participantes de cada evento: cada evento es un 'pase'."""
+    """Une a autor y participantes de cada evento: cada evento es un 'pase'.
+
+    El peso de la arista es cuántas veces dos personas coincidieron: un hilo
+    suelto de Slack no es lo mismo que veinte reviews de PR.
+    """
     grafo: Grafo = {}
     for ev in eventos:
         personas = {p for p in [ev.autor_email, *ev.participantes] if p}
         for p in personas:
-            grafo.setdefault(p, set())
+            grafo.setdefault(p, {})
         for p in personas:
-            grafo[p] |= personas - {p}
+            for otro in personas - {p}:
+                grafo[p][otro] = grafo[p].get(otro, 0) + 1
     return grafo
+
+
+def colaboradores(grafo: Grafo, persona: str, limite: int = 4) -> list[tuple[str, int]]:
+    """Con quién trabaja más esta persona, de mayor a menor.
+
+    Es lo que responde "¿y si nadie la respalda, a quién le paso esto?": quien
+    ya está más cerca por co-participación real, no por organigrama.
+    """
+    vecinos = grafo.get(persona, {})
+    return sorted(vecinos.items(), key=lambda kv: (-kv[1], kv[0]))[:limite]
 
 
 def _componentes(grafo: Grafo, excluir: str | None = None) -> int:
