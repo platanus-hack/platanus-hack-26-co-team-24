@@ -4,17 +4,25 @@ import { wait } from './fx';
 
 const RED = 0xff1744;
 const SMOKE_KEY = 'smoke';
+const SMOKE_TINTS = [0x9e9e9e, 0xcfd8dc];
 const DEV_ROLES = /Backend|Frontend|DevOps/i;
 const LAMP_COUNT = 4;
 
-/** GitHub caído: el servidor "humea" (no hay incendio real, pero sí una
- * caída total de la plataforma), las luces titilan en rojo y los devs del
- * equipo corren hacia el server a intentar algo. Dura ~5-8 s. */
+/** GitHub caído: el servidor destella en rojo, "humea" (no hay incendio
+ * real, pero sí una caída total de la plataforma) con dos tonos de gris
+ * para que se note, las luces titilan en rojo y los devs del equipo corren
+ * hacia el server a intentar algo. Dura ~5-8 s. */
 export async function run(scene: OfficeScene): Promise<void> {
   const server = scene.objects['server'];
   if (server) {
+    // Destello rojo breve antes de quedar "apagado" (frame 1): más
+    // llamativo que un simple corte de frame.
     server.anims.stop();
+    server.setTint(RED);
+    await wait(scene, 200);
+    if (!scene.sys.isActive()) return;
     server.setFrame(1); // server_off
+    server.clearTint();
   }
 
   if (!scene.textures.exists(SMOKE_KEY)) {
@@ -29,12 +37,13 @@ export async function run(scene: OfficeScene): Promise<void> {
   if (server) {
     const smoke = scene.add
       .particles(server.x, server.y - 8, SMOKE_KEY, {
-        speedY: { min: -30, max: -15 },
-        speedX: { min: -8, max: 8 },
-        lifespan: 1200,
-        frequency: 90,
-        scale: { start: 1, end: 2.5 },
-        alpha: { start: 0.8, end: 0 },
+        speedY: { min: -40, max: -20 },
+        speedX: { min: -12, max: 12 },
+        lifespan: 1600,
+        frequency: 50,
+        scale: { start: 1.5, end: 4.5 },
+        alpha: { start: 0.95, end: 0 },
+        tint: SMOKE_TINTS,
       })
       .setDepth(500);
     scene.scenarioFx.push(smoke);
