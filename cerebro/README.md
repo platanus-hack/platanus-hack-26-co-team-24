@@ -25,6 +25,20 @@ quests = generar_digest(items, scores)             # list[Quest]
 
 Todo son modelos Pydantic: `.model_dump()` para el JSON de la API.
 
+### Nunca falla en vivo
+
+`simular()` no levanta por culpa del LLM. Si no hay API key, si la llamada falla
+o si se pasa de `timeout` (25 s por defecto), devuelve un **playbook de respaldo
+determinista** — los mismos datos reales, sin narración — y lo anota en
+`advertencias`. `generado_por` dice de dónde salió: `claude`, `respaldo` o `mock`.
+Lo único que sí levanta es un `scenario_id` inválido o un objetivo faltante.
+
+`extraer()` igual: un lote que revienta se omite y los demás siguen.
+
+El playbook es el único punto donde el modelo escribe texto libre, así que al
+volver se revisa que **todo email que aparezca exista en los datos**; los
+inventados se reportan en `advertencias`.
+
 ### Flag mock
 
 Cada función acepta `mock=True` y devuelve datos falsos que cumplen el contrato.

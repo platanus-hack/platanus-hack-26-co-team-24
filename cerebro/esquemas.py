@@ -85,6 +85,8 @@ class SimulationResult(BaseModel):
     items_huerfanos: list[KnowledgeItem] = Field(default_factory=list)
     impacto: str = ""
     playbook_md: str = ""
+    advertencias: list[str] = Field(default_factory=list)  # emails inventados, degradaciones
+    generado_por: Literal["claude", "respaldo", "mock"] = "claude"
 
 
 # --- Digest semanal -------------------------------------------------------------

@@ -10,11 +10,12 @@ sistema está funcionando.
 1. Anti-alucinación   ¿inventó personas que no existen en los eventos?
 2. Evidencia          ¿las citas son textuales o se las inventó?
 3. Casos sembrados    ¿encontró lo que sabemos que está ahí? (precisión/recall)
-4. Monotonía          ¿la fórmula se comporta como promete?
-5. Sensibilidad       ¿el ranking sobrevive si muevo los pesos inventados?
-6. Ranking humano     ¿coincide con lo que el equipo cree? (correlación de Spearman)
+4. Escenarios         ¿los 7 corren y dan resultados distintos entre sí?
+5. Monotonía          ¿la fórmula se comporta como promete?
+6. Sensibilidad       ¿el ranking sobrevive si muevo los pesos inventados?
+7. Ranking humano     ¿coincide con lo que el equipo cree? (correlación de Spearman)
 
-Las 1-5 corren sin red. La 6 necesita `data/ranking_humano.json`, que se llena
+Las 1-6 corren sin red. La 6 necesita `data/ranking_humano.json`, que se llena
 con una encuesta de cinco minutos al equipo.
 """
 
@@ -170,6 +171,40 @@ def cobertura_casos(items: list[KnowledgeItem]) -> tuple[list[str], list[str]]:
     return aciertos, fallos
 
 
+def escenarios_sanos(items: list[KnowledgeItem]) -> list[str]:
+    """Los 7 escenarios corren, devuelven cosas distintas y no inventan gente.
+
+    "Simular 3 escenarios sin que el JSON se rompa nunca" es un ítem del
+    checklist de P2; esto lo cubre para los 7.
+    """
+    from .esquemas import ESCENARIOS
+    from .nucleo import simular
+
+    fallos, firmas = [], {}
+    ids_validos = {i.id for i in items}
+    for esc in ESCENARIOS:
+        objetivo = "ana@empresa.com" if esc.requiere_objetivo else None
+        try:
+            r = simular(esc.id, items, objetivo)
+        except Exception as e:
+            fallos.append(f"{esc.id}: levantó {type(e).__name__}: {e}")
+            continue
+        if r.scenario_id != esc.id:
+            fallos.append(f"{esc.id}: devolvió scenario_id={r.scenario_id}")
+        if not r.playbook_md.strip().startswith("#"):
+            fallos.append(f"{esc.id}: el playbook no empieza con encabezado Markdown")
+        if huerfanos_raros := [i.id for i in r.items_huerfanos if i.id not in ids_validos]:
+            fallos.append(f"{esc.id}: huérfanos que no están en el catálogo: {huerfanos_raros}")
+        if inventados := [a for a in r.advertencias if "inventado" in a]:
+            fallos.extend(f"{esc.id}: {a}" for a in inventados)
+        firmas.setdefault(frozenset(i.id for i in r.items_huerfanos), []).append(esc.id)
+
+    for firma, ids in firmas.items():
+        if len(ids) > 1 and firma:
+            fallos.append(f"escenarios indistinguibles (mismos huérfanos): {ids}")
+    return fallos
+
+
 # --- 3. Monotonía: la fórmula tiene que cumplir lo que promete ------------------
 
 
@@ -316,7 +351,16 @@ def reporte(items: list[KnowledgeItem], eventos: list[RawEvent]) -> int:
         print(f"      {f}")
     graves += sum(1 for f in fallos if f.startswith(("NO ENCONTRADO", "DUEÑO ERRADO")))
 
-    print("\n── 3. Monotonía de la fórmula ──")
+    print("\n── 3. Los 7 escenarios ──")
+    fallos = escenarios_sanos(items)
+    if fallos:
+        graves += len(fallos)
+        for f in fallos:
+            print(f"  ✗ {f}")
+    else:
+        print("  ✓ los 7 corren, dan resultados distintos y no inventan personas")
+
+    print("\n── 4. Monotonía de la fórmula ──")
     fallos = monotonia(items, eventos)
     if fallos:
         graves += len(fallos)
@@ -325,7 +369,7 @@ def reporte(items: list[KnowledgeItem], eventos: list[RawEvent]) -> int:
     else:
         print("  ✓ respaldar baja el riesgo, acumular lo sube, cubrir sube la resiliencia")
 
-    print("\n── 4. Sensibilidad a los pesos (±50%, 200 corridas) ──")
+    print("\n── 5. Sensibilidad a los pesos (±50%, 200 corridas) ──")
     s = sensibilidad_pesos(items, eventos)
     print(f"  Spearman vs. ranking base: mediana {s['spearman_mediana']}, peor caso {s['spearman_minimo']}")
     print(f"  El primer puesto se conserva en el {s['lider_estable_pct']}% de las corridas")
@@ -333,7 +377,7 @@ def reporte(items: list[KnowledgeItem], eventos: list[RawEvent]) -> int:
         graves += 1
         print("  ✗ el ranking depende demasiado de los pesos elegidos a mano")
 
-    print("\n── 5. Contra el juicio del equipo ──")
+    print("\n── 6. Contra el juicio del equipo ──")
     h = vs_ranking_humano(scores)
     if h is None:
         print(f"  — falta {RUTA_RANKING_HUMANO}. Es la única verdad de referencia real:")

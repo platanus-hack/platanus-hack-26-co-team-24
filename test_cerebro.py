@@ -7,13 +7,14 @@ colaboración, el filtrado por escenario y que el contrato serialice.
 """
 
 import json
+import re
 from pathlib import Path
 
 from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, calcular_riesgo, extraer,
                      generar_digest, resiliencia_equipo, simular)
 from cerebro.grafo import construir_grafo, es_puente, grado, intermediacion
 from cerebro.nucleo import PISO_NORMALIZACION, _afectados, _dedup_exacto, cobertura, peso_riesgo
-from cerebro.validacion import monotonia, sensibilidad_pesos, spearman
+from cerebro.validacion import escenarios_sanos, monotonia, sensibilidad_pesos, spearman
 
 EVENTOS = [RawEvent.model_validate(e) for e in json.loads(Path("data/raw/mock_events.json").read_text(encoding="utf-8"))]
 
@@ -137,6 +138,29 @@ def test_escenarios_filtran_distinto():
     assert {i.id for i in _afectados("renuncia", items, "ana@e.com")} == {"a", "b"}
     assert {i.id for i in _afectados("robo_pc", items, "ana@e.com")} == {"a"}
     assert {i.id for i in _afectados("ransomware", items, None)} == {"a", "c"}
+
+
+def test_los_7_escenarios_dan_resultados_distintos():
+    """Sin esto, los siete botones de la consola hacen lo mismo y se nota."""
+    assert escenarios_sanos(extraer([], mock=True)) == []
+
+
+def test_sin_api_key_el_playbook_es_del_escenario_correcto():
+    """El plan B no puede devolver el playbook de otro escenario."""
+    items = extraer([], mock=True)
+    r = simular("caida_github", items)
+    assert r.generado_por == "respaldo"
+    assert "GitHub" in r.playbook_md.splitlines()[0]
+    assert r.advertencias and "API_KEY" in r.advertencias[0]
+    # mock=True sí devuelve el guion ensayado de Ana, a propósito
+    assert simular("caida_github", items, mock=True).generado_por == "mock"
+
+
+def test_playbook_de_respaldo_solo_usa_datos_reales():
+    items = extraer([], mock=True)
+    md = simular("renuncia", items, "ana@empresa.com").playbook_md
+    reales = {i.dueño_principal for i in items} | {r for i in items for r in i.respaldos}
+    assert set(re.findall(r"[\w.+-]+@[\w.-]+\.\w+", md)) <= reales
 
 
 def test_dedup_une_respaldos():

@@ -91,13 +91,20 @@ def parse_json(
     return resultado
 
 
-def texto(system: str, prompt: str, *, max_tokens: int = 8000) -> str:
-    """Respuesta en texto libre (Markdown). Para el playbook de empalme."""
+def texto(system: str, prompt: str, *, max_tokens: int = 8000, timeout: float | None = None) -> str:
+    """Respuesta en texto libre (Markdown). Para el playbook de empalme.
+
+    `timeout` en segundos: en el demo en vivo vale más un playbook degradado a
+    tiempo que uno perfecto que llega tarde.
+    """
     clave = _clave(MODELO, system, prompt, "texto", str(max_tokens))
     if (crudo := _leer_cache(clave)) is not None:
         return json.loads(crudo)
 
-    respuesta = _get_cliente().messages.create(
+    cliente = _get_cliente()
+    if timeout is not None:
+        cliente = cliente.with_options(timeout=timeout)
+    respuesta = cliente.messages.create(
         model=MODELO,
         max_tokens=max_tokens,
         system=system,
