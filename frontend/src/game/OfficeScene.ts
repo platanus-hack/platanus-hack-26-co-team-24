@@ -52,6 +52,12 @@ export class OfficeScene extends Phaser.Scene {
    * inspeccionarlos/limpiarlos sin reinicio completo. */
   scenarioFx: Phaser.GameObjects.GameObject[] = [];
   scenarioRunning = false;
+  /** "La sala respira" (guía, sección 05): cuántos personajes están
+   * caminando ambientalmente ahora mismo. `Character.tick()` lo incrementa
+   * antes de un `walkTo` ambiental y lo decrementa al terminar/cancelar;
+   * nunca sube de `MAX_MOVING` (ver `behavior.ts`). Los `walkTo` que llaman
+   * los runners de escenario no pasan por este contador. */
+  moving = 0;
 
   constructor() {
     super('office');
@@ -79,6 +85,7 @@ export class OfficeScene extends Phaser.Scene {
     this.points = {};
     this.objects = {};
     this.characters = {};
+    this.moving = 0;
 
     this.map = this.make.tilemap({ key: 'office' });
     const tileset = this.map.addTilesetImage('office', 'office-tiles');
@@ -157,30 +164,46 @@ export class OfficeScene extends Phaser.Scene {
     this.scene.restart();
   }
 
-  private spawnCharacters(): void {
-    getOficina()
-      .then((oficina) => {
-        // La escena pudo haberse cerrado mientras esperábamos la respuesta.
-        if (!this.sys.isActive()) return;
-        // El editor de avatar (/avatar) guarda la config del usuario demo en
-        // localStorage; la reflejamos aquí para que "crear avatar -> recargar
-        // -> el personaje lo luce" funcione. También en modo real: P3 aún no
-        // persiste avatares (no hay PUT /avatar) y su `avatar_config` viene en
-        // otro formato, así que localStorage es la única fuente del avatar
-        // que el usuario acaba de crear.
-        const localAvatar = loadAvatar();
-        for (const person of oficina.people) {
-          if (localAvatar && person.id === DEMO_USER_ID) {
-            person.avatar_config = localAvatar;
-          }
-          const character = new Character(this, person, this.pathfinder);
-          this.add.existing(character);
-          this.characters[person.id] = character;
-          character.startBehavior();
+  private async spawnCharacters(): Promise<void> {
+    try {
+      // Un `Phaser.GameObjects.Text` con una fuente web (VT323, la etiqueta
+      // flotante de riesgo alto) se crea con la fuente que esté cargada en
+      // ESE momento: si aún no cargó, el navegador la sustituye por el
+      // fallback y el layout inicial se calcula mal (el texto no re-mide
+      // solo cuando la fuente llega después). Esperamos su carga (en
+      // paralelo con `getOficina`, no en serie) antes de crear personajes;
+      // si falla (navegador sin Font Loading API, red, lo que sea) seguimos
+      // igual con el fallback monospace de la guía.
+      const fontReady = (async () => {
+        try {
+          await document.fonts.load('17px VT323');
+        } catch {
+          // best-effort: sin bloquear el spawn de personajes por esto.
         }
-        this.loadRisk();
-      })
-      .catch((err) => console.error('getOficina', err));
+      })();
+      const [oficina] = await Promise.all([getOficina(), fontReady]);
+      // La escena pudo haberse cerrado mientras esperábamos la respuesta.
+      if (!this.sys.isActive()) return;
+      // El editor de avatar (/avatar) guarda la config del usuario demo en
+      // localStorage; la reflejamos aquí para que "crear avatar -> recargar
+      // -> el personaje lo luce" funcione. También en modo real: P3 aún no
+      // persiste avatares (no hay PUT /avatar) y su `avatar_config` viene en
+      // otro formato, así que localStorage es la única fuente del avatar
+      // que el usuario acaba de crear.
+      const localAvatar = loadAvatar();
+      for (const person of oficina.people) {
+        if (localAvatar && person.id === DEMO_USER_ID) {
+          person.avatar_config = localAvatar;
+        }
+        const character = new Character(this, person, this.pathfinder);
+        this.add.existing(character);
+        this.characters[person.id] = character;
+        character.startBehavior();
+      }
+      this.loadRisk();
+    } catch (err) {
+      console.error('getOficina', err);
+    }
   }
 
   private loadRisk(): void {

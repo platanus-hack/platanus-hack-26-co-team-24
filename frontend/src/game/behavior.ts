@@ -21,6 +21,15 @@ export function nextState(r = Math.random()): State {
 
 export const durationMs = (_: State, r = Math.random()) => 4000 + r * 8000;
 
+// "La sala respira" (guía, sección 05 /OFICINA): nunca más de 3 personajes
+// caminando ambientalmente a la vez. `OfficeScene.moving` es el contador
+// compartido; `Character.tick()` sólo arranca un `walkTo` ambiental si hay
+// cupo, si no espera y reintenta. Los runners de escenario llaman `walkTo`
+// directamente (sin pasar por `tick()`), así que nunca quedan bloqueados por
+// este límite: deben poder correr siempre.
+export const MAX_MOVING = 3;
+export const canMove = (moving: number): boolean => moving < MAX_MOVING;
+
 // Puntos por los que un personaje "caminando" puede pasear.
 const WALK_TARGETS = ['coffee', 'meeting', 'door'] as const;
 

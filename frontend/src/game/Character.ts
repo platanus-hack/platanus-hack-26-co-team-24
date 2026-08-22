@@ -2,15 +2,22 @@ import Phaser from 'phaser';
 import type { ItemCritico, Person } from '../types';
 import type { OfficeScene } from './OfficeScene';
 import type { Pathfinder } from './pathfinding';
-import { PALETTE } from './palette';
-import { nextState, durationMs, pointFor } from './behavior';
-import { scoreToColor, isCritical } from './risk';
+import { PALETTE, HAIR_PALETTE, PAIRS, THEME } from './palette';
+import { nextState, durationMs, pointFor, canMove } from './behavior';
+import { riskLevel, RISK_LEVEL_COLOR } from './risk';
+import { DEMO_USER_ID } from '../api';
 import { bus } from '../bus';
 
 const TILE = 16;
 const SPEED = 64; // px/s, constante
 const CELL_DURATION_MS = (TILE / SPEED) * 1000;
-const SPAWN_DELAY_MAX_MS = 3000;
+// "La sala respira" (guía, sección 05): desfase inicial y espera de
+// reintento, ambos 2-4s. Mismo rango para las dos cosas -> una sola pareja
+// de constantes.
+const AMBIENT_DELAY_MIN_MS = 2000;
+const AMBIENT_DELAY_MAX_MS = 4000;
+const ambientDelay = (): number =>
+  AMBIENT_DELAY_MIN_MS + Math.random() * (AMBIENT_DELAY_MAX_MS - AMBIENT_DELAY_MIN_MS);
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 export type AnimName =
@@ -108,6 +115,8 @@ export class Character extends Phaser.GameObjects.Container {
   private cancelCurrentTween?: () => void;
   private walkGeneration = 0;
   private pulseTween?: Phaser.Tweens.Tween;
+  private label?: Phaser.GameObjects.Text;
+  private labelTween?: Phaser.Tweens.Tween;
 
   constructor(scene: OfficeScene, person: Person, pathfinder: Pathfinder) {
     const spawn = chairPixelFor(scene, person.desk);
@@ -127,7 +136,25 @@ export class Character extends Phaser.GameObjects.Container {
     this.bodySprite = new Phaser.GameObjects.Sprite(scene, 0, 0, bodyKey, 1);
     this.clothes = new Phaser.GameObjects.Sprite(scene, 0, 0, clothesKey, 1);
     this.hair = new Phaser.GameObjects.Sprite(scene, 0, 0, hairKey, 1);
-    this.clothes.setTint(PALETTE[person.avatar_config.paleta]);
+
+    // Pelo único + ropa única por personaje (guía, sección 04 · SPRITE
+    // SHEET): el par sale del escritorio, no se persiste. Si el escritorio
+    // cambiara de dueño el par cambiaría con él -- eso es intencional, no un
+    // bug: no hay ningún sitio hoy que persista "este par es de esta
+    // persona" más allá de `person.desk`.
+    const pair = PAIRS[person.desk % PAIRS.length];
+    this.hair.setTint(HAIR_PALETTE[pair[0]]);
+    // El editor de avatar (usuario demo) manda sobre el par para la ropa:
+    // `avatar_config.paleta` es sólo 6 colores (sin naranja), así que sigue
+    // siendo `PALETTE`. Para el resto, `pair[1]` puede ser 'orange' (slot 6
+    // de la guía, "ropa naranja"), que `PALETTE` no tiene -- se usa
+    // `HAIR_PALETTE` (superset con los mismos valores para las 6 claves
+    // compartidas) en vez de `PALETTE` para no perder ese slot.
+    this.clothes.setTint(
+      person.id === DEMO_USER_ID
+        ? PALETTE[person.avatar_config.paleta]
+        : HAIR_PALETTE[pair[1]],
+    );
 
     for (const sprite of [this.bodySprite, this.clothes, this.hair]) {
       sprite.setOrigin(0.5, 0.75);
@@ -152,30 +179,75 @@ export class Character extends Phaser.GameObjects.Container {
     scene.events.once('shutdown', () => this.stopBehavior());
   }
 
-  /** Actualiza el color/pulso del aura según el score de riesgo y guarda los
-   * items críticos para el tooltip (`bus.emit('person:click', ...)`). */
+  /** Actualiza el color/animación del aura según el nivel de riesgo (guía,
+   * sección 04 · AURAS DE RIESGO) y guarda los items críticos para el
+   * tooltip (`bus.emit('person:click', ...)`). Siempre reemplaza (nunca
+   * duplica) el tween del aura y la etiqueta flotante de riesgo alto:
+   * cualquier llamada anterior se limpia primero. */
   setRisk(score: number, items: ItemCritico[]): void {
     this.riskScore = score;
     this.riskItems = items;
 
-    this.aura.setFillStyle(scoreToColor(score), 0.55);
+    this.pulseTween?.stop();
+    this.pulseTween = undefined;
+    this.labelTween?.stop();
+    this.labelTween = undefined;
+    this.label?.destroy();
+    this.label = undefined;
 
-    if (isCritical(score)) {
-      this.aura.setRadius(9);
-      if (!this.pulseTween) {
+    const level = riskLevel(score);
+    this.aura.setFillStyle(RISK_LEVEL_COLOR[level]);
+
+    switch (level) {
+      case 'bajo':
+        this.aura.setRadius(7);
+        this.aura.setAlpha(0.55);
+        break;
+
+      case 'medio':
+        this.aura.setRadius(7);
         this.pulseTween = this.scene.tweens.add({
           targets: this.aura,
-          alpha: { from: 0.3, to: 0.9 },
-          duration: 600,
+          alpha: { from: 0.35, to: 0.8 },
+          duration: 3000,
           yoyo: true,
           repeat: -1,
           ease: 'Sine.easeInOut',
         });
+        break;
+
+      case 'alto': {
+        this.aura.setRadius(9);
+        this.pulseTween = this.scene.tweens.add({
+          targets: this.aura,
+          alpha: { from: 0.3, to: 0.9 },
+          duration: 700,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+
+        const label = this.scene.add
+          .text(0, -26, `${this.person.nombre.toUpperCase()} ${score}`, {
+            fontFamily: 'VT323, monospace',
+            fontSize: '17px',
+            color: THEME.rojo,
+            stroke: THEME.void,
+            strokeThickness: 3,
+          })
+          .setOrigin(0.5);
+        label.setResolution(2);
+        this.add(label);
+        this.label = label;
+        this.labelTween = this.scene.tweens.add({
+          targets: label,
+          y: '-=3',
+          duration: 1400,
+          yoyo: true,
+          repeat: -1,
+        });
+        break;
       }
-    } else {
-      this.pulseTween?.stop();
-      this.pulseTween = undefined;
-      this.aura.setAlpha(0.55);
     }
   }
 
@@ -285,16 +357,19 @@ export class Character extends Phaser.GameObjects.Container {
   }
 
   /** Arranca el loop de comportamiento ambiental con un delay inicial
-   * aleatorio (0-3s) para que los personajes no se muevan en bloque. */
+   * aleatorio (2-4s, guía sección 05 "la sala respira") para que los
+   * personajes no se muevan en bloque. */
   startBehavior(): void {
     if (this.running) return;
     this.running = true;
-    this.scheduleNext(Math.random() * SPAWN_DELAY_MAX_MS);
+    this.scheduleNext(ambientDelay());
   }
 
   /** Detiene el loop ambiental, cancela cualquier timer pendiente Y cualquier
    * walkTo en curso (para que p.ej. `stopBehavior(); await walkTo('door')`
-   * no compita con un tween-chain anterior todavía vivo). */
+   * no compita con un tween-chain anterior todavía vivo). También detiene el
+   * tween del aura y de la etiqueta flotante de riesgo alto (la etiqueta en
+   * sí se destruye con el container, ver `destroy()`/`Container.preDestroy`). */
   stopBehavior(): void {
     this.running = false;
     if (this.timer) {
@@ -304,6 +379,8 @@ export class Character extends Phaser.GameObjects.Container {
     this.cancelWalk();
     this.pulseTween?.stop();
     this.pulseTween = undefined;
+    this.labelTween?.stop();
+    this.labelTween = undefined;
   }
 
   /** Cualquier ruta de destrucción (no sólo el shutdown de la escena) debe
@@ -320,10 +397,27 @@ export class Character extends Phaser.GameObjects.Container {
     });
   }
 
+  /** Un tick del loop ambiental: si la sala ya tiene 3 personajes caminando
+   * (`OfficeScene.moving`), no arranca un `walkTo` nuevo -- espera 2-4s y
+   * reintenta ("la sala respira", guía sección 05). Los `walkTo` de los
+   * runners de escenario NO pasan por aquí (lo llaman directo), así que
+   * nunca se ven afectados por este límite. */
   private async tick(): Promise<void> {
     if (!this.running || !this.scene) return;
+    const scene = this.scene as OfficeScene;
+
+    if (!canMove(scene.moving)) {
+      this.scheduleNext(ambientDelay());
+      return;
+    }
+
     const state = nextState();
-    await this.walkTo(pointFor(state, this.person.desk));
+    scene.moving++;
+    try {
+      await this.walkTo(pointFor(state, this.person.desk));
+    } finally {
+      scene.moving--;
+    }
     if (!this.running || !this.scene) return;
     this.play(state === 'trabajando' ? 'type' : 'idle');
     this.scheduleNext(durationMs(state));
