@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Aplicar la guía de arte de Claude Design (`docs/design/guia-visual.dc.html`, texto en `docs/design/guia-visual.txt`) al frontend existente sin reescribir el motor: mismos 16 px de tile y sprites 16×24, nueva paleta, tipografía, HUD, auras, paneles y reglas de movimiento.
+**Goal:** Aplicar la guía de arte de Claude Design (`docs/design/guia-visual.dc.html`, texto en `docs/design/guia-visual.txt`) al frontend existente con fidelidad total: grilla de 32 px y sprites 32×52 como fija la guía (Task G), nueva paleta, tipografía, HUD, auras, paneles y reglas de movimiento.
 
 **Architecture:** Tokens únicos en `src/game/palette.ts` (THEME) y en `scripts/gen-assets.mjs` (COLORS, espejo). CSS de UI en `src/ui/ui.css` con variables `--dusk-*`. Fuentes Google (Workbench, Jersey 15, VT323) cargadas en `index.html`. Phaser usa `Phaser.GameObjects.Text` con `fontFamily: 'VT323'` para etiquetas en escena.
 
@@ -17,7 +17,7 @@
 - Auras: 0–39 lima estática; 40–69 oro "respiración" 3 s; 70–100 rojo pulso 1,4 s + etiqueta flotante `NOMBRE 87` (solo riesgo alto).
 - Movimiento: caminar 64 px/s lineal; nunca más de 3 personajes moviéndose a la vez, desfases 2–4 s; panel entra deslizando 24 px desde abajo, 220 ms ease-out, solo cuando terminó la animación (3–5 s); titileo de pantallas con `steps(2)`.
 - Cada personaje: pelo único + ropa única (pares de la guía). Sentado conserva el aura.
-- Fuera de alcance: `/login`, Digest (P5), cambio de grilla a 32 px.
+- Fuera de alcance: `/login`, Digest (P5). Orden de ejecución: A → B → **G** → C → D → E → F.
 
 ---
 
