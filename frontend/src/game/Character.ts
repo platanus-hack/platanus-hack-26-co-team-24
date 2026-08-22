@@ -8,7 +8,7 @@ import { scoreToColor, isCritical } from './risk';
 import { bus } from '../bus';
 
 const TILE = 16;
-const SPEED = 48; // px/s, constante
+const SPEED = 64; // px/s, constante
 const CELL_DURATION_MS = (TILE / SPEED) * 1000;
 const SPAWN_DELAY_MAX_MS = 3000;
 
