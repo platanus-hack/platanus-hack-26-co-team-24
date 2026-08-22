@@ -194,7 +194,7 @@ function genTiles() {
     { fill: col('chair') }, // 3 chair - hot pink
     { fill: col('coffee') }, // 4 coffee machine - electric yellow
     { fill: col('meeting') }, // 5 meeting table - neon green
-    { fill: col('server') }, // 6 server - cyan
+    { fill: col('serverAlt') }, // 6 server - purple housing (serverAlt), cyan core lives in objects.png
     { fill: col('console') }, // 7 console - magenta
   ];
 
@@ -225,8 +225,8 @@ function drawGlowCore(cv, x0, color, lit) {
 function genObjects() {
   const frames = [
     // [housingFill, extra(cv, x0)]
-    [darken(col('server'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), true)], // server_on
-    [darken(col('server'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), false)], // server_off
+    [darken(col('serverAlt'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), true)], // server_on
+    [darken(col('serverAlt'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), false)], // server_off
     [hexToRgba('#252538'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, col('server'))], // pc_on (screen glow)
     [
       hexToRgba('#252538'),
