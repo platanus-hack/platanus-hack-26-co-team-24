@@ -1,0 +1,12 @@
+{
+  "_instrucciones": "Copiar a data/ranking_humano.json. Preguntar a cada persona POR SEPARADO, sin mostrarle el tablero: 'si mañana no llega X, ¿qué se rompe y qué tan grave es?'. Ordenar de más crítico (1) a menos. Promediar las respuestas si hay varias. Es la única verdad de referencia real que vamos a tener.",
+  "ana@empresa.com": 1,
+  "david@empresa.com": 2,
+  "jorge@empresa.com": 3,
+  "valentina@empresa.com": 4,
+  "brayan@empresa.com": 5,
+  "laura@empresa.com": 6,
+  "andres@empresa.com": 7,
+  "samuel@empresa.com": 8,
+  "camilo@empresa.com": 9
+}

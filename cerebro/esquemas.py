@@ -61,7 +61,8 @@ class KnowledgeItem(BaseModel):
 
 class RiskScore(BaseModel):
     persona_id: str  # email
-    score: int = Field(ge=0, le=100)
+    score: int = Field(ge=0, le=100)  # relativo al equipo: para los colores de la oficina
+    riesgo_absoluto: float = 0.0  # comparable entre semanas, no normalizado
     items_criticos: list[str] = Field(default_factory=list)  # ids de KnowledgeItem
     total_items: int = 0
     detalle: str = ""  # explicación legible del score, para el dashboard de P5

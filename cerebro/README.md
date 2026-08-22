@@ -50,11 +50,29 @@ conocimiento; con él se suma la señal del grafo de colaboración.
 ## Score de riesgo
 
 ```
-peso(item) = {acceso: 3, proceso: 2, regla_tacita: 2, tarea: 1}[tipo]
-             × 2  si el item no tiene respaldos   ← el bus factor
-total(persona) = Σ peso × (1 + 0.5 × intermediación_en_el_grafo)
-score = 100 × total / max(total del equipo)
+cobertura(item) = min(1, nº respaldos / 2)         # 0 = nadie más lo sabe
+peso(item)      = {acceso:3, proceso:2, regla_tacita:2, tarea:1}[tipo]
+                  × (1 − 0.9 × cobertura)          # cubierto pesa el 10%
+riesgo(persona) = Σ peso × (1 + 0.5 × intermediación_en_el_grafo)
+score           = 100 × riesgo / max(riesgo del equipo, 6.0)
 ```
+
+Un respaldo único deja el peso en ~55%: bus factor 2 sigue siendo frágil, no se
+premia como si estuviera resuelto.
+
+### Dos números, y no son intercambiables
+
+| Campo | Qué es | Para quién |
+|---|---|---|
+| `RiskScore.score` | 0-100 **relativo al equipo** | P4: colores de la oficina |
+| `RiskScore.riesgo_absoluto` | riesgo crudo, comparable entre semanas | comparaciones temporales |
+| `resiliencia_equipo(items)` | 0-100 de cobertura del conocimiento | **P5: el puntaje del pitch** |
+
+El `score` relativo **no puede medir progreso** — si todo el equipo mejora, el
+máximo baja y los scores relativos se quedan igual o suben. El número que sube
+cuando alguien completa una quest es `resiliencia_equipo()`. El piso de 6.0 en la
+normalización (= un acceso sin ningún respaldo) evita que un equipo ya sano tenga
+igual a alguien en rojo.
 
 `RiskScore.detalle` trae la explicación en español, lista para el dashboard.
 `RiskScore.items_criticos` son los ids que P4 pinta en rojo.
@@ -76,5 +94,5 @@ Variables: `CEREBRO_MODELO` (default `claude-opus-5`), `CEREBRO_CACHE_DIR`,
 ## Verificar
 
 ```bash
-python test_cerebro.py    # 9 checks, sin red ni API key
+python test_cerebro.py    # 15 checks de unidad, sin red ni API key
 ```

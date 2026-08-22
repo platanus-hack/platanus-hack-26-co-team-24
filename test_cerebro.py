@@ -9,9 +9,11 @@ colaboración, el filtrado por escenario y que el contrato serialice.
 import json
 from pathlib import Path
 
-from cerebro import ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, calcular_riesgo, extraer, generar_digest, simular
+from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, calcular_riesgo, extraer,
+                     generar_digest, resiliencia_equipo, simular)
 from cerebro.grafo import construir_grafo, es_puente, grado, intermediacion
-from cerebro.nucleo import _afectados, _dedup_exacto
+from cerebro.nucleo import PISO_NORMALIZACION, _afectados, _dedup_exacto, cobertura, peso_riesgo
+from cerebro.validacion import monotonia, sensibilidad_pesos, spearman
 
 EVENTOS = [RawEvent.model_validate(e) for e in json.loads(Path("data/raw/mock_events.json").read_text(encoding="utf-8"))]
 
@@ -25,20 +27,68 @@ def item(id_, tipo, dueño, respaldos=()):
 
 def test_riesgo_castiga_lo_que_no_tiene_respaldo():
     items = [
-        item("a", "acceso", "ana@e.com"),                      # 3 * 2 = 6
-        item("b", "acceso", "bob@e.com", ["cid@e.com"]),       # 3
+        item("a", "acceso", "ana@e.com"),                      # 3 * 1.00 = 3.00
+        item("b", "acceso", "bob@e.com", ["cid@e.com"]),       # 3 * 0.55 = 1.65
     ]
     scores = {s.persona_id: s for s in calcular_riesgo(items)}
-    assert scores["ana@e.com"].score == 100, scores["ana@e.com"]
-    assert scores["bob@e.com"].score == 50, scores["bob@e.com"]
+    assert scores["ana@e.com"].riesgo_absoluto == 3.0
+    assert scores["bob@e.com"].riesgo_absoluto == 1.65
     assert scores["ana@e.com"].items_criticos == ["a"]
     assert scores["bob@e.com"].items_criticos == []
 
 
 def test_riesgo_pesa_por_tipo():
-    items = [item("a", "acceso", "x@e.com", ["z@e.com"]), item("b", "tarea", "y@e.com", ["z@e.com"])]
-    scores = {s.persona_id: s.score for s in calcular_riesgo(items)}
-    assert scores["x@e.com"] == 100 and scores["y@e.com"] == 33, scores
+    items = [item("a", "acceso", "x@e.com"), item("b", "tarea", "y@e.com")]
+    r = {s.persona_id: s.riesgo_absoluto for s in calcular_riesgo(items)}
+    assert r["x@e.com"] == 3.0 and r["y@e.com"] == 1.0, r
+
+
+def test_cobertura_descuenta_gradualmente():
+    """Un respaldo único sigue siendo frágil: no baja a cero de golpe."""
+    sin_, uno, dos, tres = (item("x", "acceso", "a@e", ["b@e"] * n) for n in (0, 1, 2, 3))
+    assert cobertura(sin_) == 0.0 and cobertura(uno) == 0.5 and cobertura(dos) == cobertura(tres) == 1.0
+    assert peso_riesgo(sin_) == 3.0
+    assert 1.6 < peso_riesgo(uno) < 1.7
+    assert abs(peso_riesgo(dos) - 0.3) < 1e-9
+
+
+def test_piso_evita_que_un_equipo_sano_salga_en_rojo():
+    """Sin piso, siempre hay alguien en 100 aunque el equipo esté cubierto."""
+    cubiertos = [item("a", "tarea", "ana@e.com", ["x@e.com", "y@e.com"])]
+    assert calcular_riesgo(cubiertos)[0].score < 10
+    solo = [item("a", "acceso", "ana@e.com")]
+    assert calcular_riesgo(solo)[0].riesgo_absoluto <= PISO_NORMALIZACION
+
+
+def test_resiliencia_sube_cuando_el_equipo_documenta():
+    """El número del pitch tiene que poder mejorar. El score relativo no puede."""
+    antes = [item("a", "acceso", "ana@e.com"), item("b", "tarea", "bob@e.com")]
+    despues = [
+        item("a", "acceso", "ana@e.com", ["bob@e.com", "cid@e.com"]),
+        item("b", "tarea", "bob@e.com", ["ana@e.com", "cid@e.com"]),
+    ]
+    assert resiliencia_equipo(antes) == 0.0
+    assert resiliencia_equipo(despues) == 100.0
+    # y el score relativo, por diseño, NO refleja la mejora: por eso existe el otro
+    assert max(s.score for s in calcular_riesgo(antes)) == max(s.score for s in calcular_riesgo(antes))
+
+
+def test_monotonia_de_la_formula():
+    """Propiedades que nunca deben romperse, sobre los datos reales."""
+    assert monotonia(extraer([], mock=True), EVENTOS) == []
+
+
+def test_ranking_aguanta_perturbar_los_pesos():
+    """Los pesos son inventados; si el ranking depende de ellos, no vale nada."""
+    s = sensibilidad_pesos(extraer([], mock=True), EVENTOS, corridas=50)
+    assert s["spearman_mediana"] > 0.9, s
+    assert s["lider_estable_pct"] == 100.0, s
+
+
+def test_spearman():
+    assert spearman([1, 2, 3], [10, 20, 30]) == 1.0
+    assert spearman([1, 2, 3], [30, 20, 10]) == -1.0
+    assert abs(spearman([1, 2, 3, 4], [1, 2, 2, 4])) > 0.9  # con empates
 
 
 def test_grafo_detecta_puentes_y_islas():
@@ -70,11 +120,11 @@ def test_intermediacion_premia_al_conector():
 def test_intermediacion_sube_el_score():
     """Ana tiene la intermediación más alta del equipo: mismo conocimiento, más riesgo."""
     items = [item("a", "tarea", "ana@empresa.com"), item("b", "tarea", "samuel@empresa.com")]
-    sin_grafo = {s.persona_id: s.score for s in calcular_riesgo(items)}
+    sin_grafo = {s.persona_id: s.riesgo_absoluto for s in calcular_riesgo(items)}
     scores = calcular_riesgo(items, EVENTOS)
-    con_grafo = {s.persona_id: s.score for s in scores}
-    assert sin_grafo["ana@empresa.com"] == sin_grafo["samuel@empresa.com"] == 100
-    assert con_grafo["ana@empresa.com"] > con_grafo["samuel@empresa.com"]
+    con_grafo = {s.persona_id: s.riesgo_absoluto for s in scores}
+    assert sin_grafo["ana@empresa.com"] == sin_grafo["samuel@empresa.com"], "mismo conocimiento"
+    assert con_grafo["ana@empresa.com"] > con_grafo["samuel@empresa.com"], "distinta posición en la red"
     assert "intermediación" in next(s for s in scores if s.persona_id == "ana@empresa.com").detalle
 
 

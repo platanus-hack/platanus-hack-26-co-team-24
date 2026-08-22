@@ -18,13 +18,14 @@ from .esquemas import (
     RiskScore,
     SimulationResult,
 )
-from .nucleo import calcular_riesgo, extraer, generar_digest, simular
+from .nucleo import calcular_riesgo, extraer, generar_digest, resiliencia_equipo, simular
 
 __all__ = [
     "extraer",
     "calcular_riesgo",
     "simular",
     "generar_digest",
+    "resiliencia_equipo",
     "RawEvent",
     "KnowledgeItem",
     "RiskScore",

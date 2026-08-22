@@ -30,7 +30,7 @@ ITEMS: list[KnowledgeItem] = [
         dueño_principal="ana@empresa.com",
         respaldos=[],
         fuente="slack",
-        evidencia="yo me encargo de los vuelos, ya reservé el de la próxima semana",
+        evidencia="Ya quedó reservado el vuelo del jefe para Santiago",
     ),
     KnowledgeItem(
         id="ki-002",
@@ -48,7 +48,7 @@ ITEMS: list[KnowledgeItem] = [
         dueño_principal="ana@empresa.com",
         respaldos=[],
         fuente="slack",
-        evidencia="el único admin del CRM soy yo, pídanme a mí los usuarios nuevos",
+        evidencia="El único admin del CRM soy yo, así que cualquier alta me la piden por acá",
     ),
     KnowledgeItem(
         id="ki-004",

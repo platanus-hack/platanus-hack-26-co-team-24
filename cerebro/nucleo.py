@@ -31,8 +31,26 @@ from .esquemas import (
 LOTE = 20  # eventos por llamada: contexto manejable y evidencia rastreable
 
 PESOS = {"acceso": 3, "proceso": 2, "tarea": 1, "regla_tacita": 2}
-MULTIPLICADOR_SIN_RESPALDO = 2
 BONO_INTERMEDIACION = 0.5  # la persona mas central del grafo pesa 1.5x
+RESPALDOS_PARA_CUBRIR = 2  # dos respaldos = conocimiento cubierto
+RIESGO_RESIDUAL = 0.1      # lo cubierto igual pesa algo: la gente olvida
+PISO_NORMALIZACION = 6.0   # = un acceso sin ningun respaldo. Ver `cobertura`.
+
+
+def cobertura(item: KnowledgeItem) -> float:
+    """0.0 = nadie mas lo sabe, 1.0 = dos o mas personas lo respaldan."""
+    return min(1.0, len(item.respaldos) / RESPALDOS_PARA_CUBRIR)
+
+
+def peso_riesgo(item: KnowledgeItem, pesos: dict[str, float] | None = None) -> float:
+    """Cuanto riesgo aporta un item: su peso por tipo, descontado por cobertura.
+
+    Sin respaldos vale el peso completo; con uno vale ~55%; con dos o mas cae al
+    10%. Un respaldo unico sigue siendo fragil (bus factor 2), por eso no baja a
+    cero de golpe.
+    """
+    base = (pesos or PESOS)[item.tipo]
+    return base * (1 - (1 - RIESGO_RESIDUAL) * cobertura(item))
 
 
 # --- Modelos internos de salida del LLM (ASCII puro, sin ñ ni tildes en las
@@ -215,16 +233,23 @@ def calcular_riesgo(
     items: list[KnowledgeItem],
     raw_events: list[RawEvent | dict] | None = None,
     *,
+    pesos: dict[str, float] | None = None,
     mock: bool = False,
 ) -> list[RiskScore]:
     """Score 0-100 por persona. Fórmula explicable, sin LLM.
 
-    peso(item) = PESOS[tipo], duplicado si el item no tiene respaldos.
-    El total se multiplica por (1 + 0.5 * intermediación), donde la
-    intermediación viene del grafo de colaboración de P1: quien hace circular
-    más información del equipo es más caro de perder. Sin `raw_events` el
-    multiplicador es 1 y el score es solo conocimiento.
-    Se normaliza sobre el máximo del equipo.
+    riesgo(persona) = Σ peso_riesgo(item) × (1 + 0.5 × intermediación)
+
+    `peso_riesgo` descuenta por cobertura: lo que dos personas saben casi no
+    pesa. La intermediación sale del grafo de colaboración de P1 — quien hace
+    circular más información es más caro de perder. Sin `raw_events` el
+    multiplicador es 1.
+
+    El `score` 0-100 es **relativo al equipo** (es lo que P4 necesita para pintar
+    la oficina), pero se normaliza contra `max(máximo del equipo,
+    PISO_NORMALIZACION)`: si nadie acumula más riesgo que un solo acceso sin
+    respaldo, nadie sale en rojo. `riesgo_absoluto` es el número comparable
+    entre semanas; para el puntaje del equipo usar `resiliencia_equipo()`.
     """
     if mock:
         return list(mocks.SCORES)
@@ -249,21 +274,20 @@ def calcular_riesgo(
 
     for it in items:
         dueño = it.dueño_principal
-        peso = PESOS[it.tipo]
         if it.es_critico:
-            peso *= MULTIPLICADOR_SIN_RESPALDO
             criticos[dueño].append(it.id)
-        brutos[dueño] += peso
+        brutos[dueño] += peso_riesgo(it, pesos)
         totales[dueño] += 1
 
     for persona in brutos:
         brutos[persona] *= 1 + BONO_INTERMEDIACION * central.get(persona, 0.0)
 
-    maximo = max(brutos.values()) or 1.0
+    maximo = max(max(brutos.values(), default=0.0), PISO_NORMALIZACION)
     scores = [
         RiskScore(
             persona_id=persona,
             score=round(100 * bruto / maximo),
+            riesgo_absoluto=round(bruto, 2),
             items_criticos=criticos[persona],
             total_items=totales[persona],
             detalle=_detalle(persona, totales[persona], criticos[persona], puentes, grados, central),
@@ -294,6 +318,20 @@ def _detalle(
     if persona in central:
         partes.append(f"intermediación {central[persona]:.0%} del máximo del equipo")
     return ". ".join(partes) + "."
+
+
+def resiliencia_equipo(items: list[KnowledgeItem]) -> float:
+    """0-100: qué porcentaje del conocimiento del equipo está cubierto.
+
+    Este SÍ es el número del pitch: absoluto, comparable entre semanas y sube
+    cuando alguien completa una quest. El `score` individual es relativo al
+    equipo y por diseño no sirve para medir progreso.
+    """
+    if not items:
+        return 100.0
+    total = sum(PESOS[it.tipo] for it in items)
+    cubierto = sum(PESOS[it.tipo] * cobertura(it) for it in items)
+    return round(100 * cubierto / total, 1)
 
 
 # --- 3. Simulación --------------------------------------------------------------
