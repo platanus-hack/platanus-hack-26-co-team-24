@@ -1,0 +1,462 @@
+[
+  {
+    "id": "slack-ops-1721001",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["laura@empresa.com"],
+    "timestamp": "2026-07-14T13:02:00Z",
+    "contenido": "Ya quedó reservado el vuelo del jefe para Santiago. Recuerden que al jefe solo le gusta viajar en LATAM, no le compren en otra aerolínea porque toca cancelar y rehacer todo.",
+    "metadata": { "canal": "#operaciones" }
+  },
+  {
+    "id": "slack-ops-1721002",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "laura@empresa.com",
+    "participantes": ["ana@empresa.com"],
+    "timestamp": "2026-07-14T13:05:00Z",
+    "contenido": "Perfecto Ana. Yo ni sé entrar al portal de la agencia, eso siempre lo has manejado tú.",
+    "metadata": { "canal": "#operaciones" }
+  },
+  {
+    "id": "slack-ops-1721003",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["camilo@empresa.com"],
+    "timestamp": "2026-07-16T09:40:00Z",
+    "contenido": "Camilo, el usuario nuevo del CRM ya te lo creé. El único admin del CRM soy yo, así que cualquier alta me la piden por acá y yo la hago.",
+    "metadata": { "canal": "#operaciones" }
+  },
+  {
+    "id": "slack-ops-1721004",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "camilo@empresa.com",
+    "participantes": ["ana@empresa.com", "laura@empresa.com"],
+    "timestamp": "2026-07-16T09:47:00Z",
+    "contenido": "Gracias. Ojo que si Ana está de vacaciones nadie puede crear usuarios, la vez pasada esperamos tres días.",
+    "metadata": { "canal": "#operaciones" }
+  },
+  {
+    "id": "slack-ops-1721005",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "laura@empresa.com",
+    "participantes": ["camilo@empresa.com"],
+    "timestamp": "2026-07-31T16:20:00Z",
+    "contenido": "Camilo, el último viernes del mes hacemos la conciliación de facturación con el proveedor de pagos. Tú y yo la sacamos como siempre.",
+    "metadata": { "canal": "#operaciones" }
+  },
+  {
+    "id": "slack-ops-1721006",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "camilo@empresa.com",
+    "participantes": ["laura@empresa.com"],
+    "timestamp": "2026-07-31T16:24:00Z",
+    "contenido": "Listo, yo saco el reporte del proveedor y tú cruzas contra el CRM. Ya lo hemos hecho juntos varias veces.",
+    "metadata": { "canal": "#operaciones" }
+  },
+  {
+    "id": "slack-ops-1721007",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "valentina@empresa.com",
+    "participantes": ["ana@empresa.com"],
+    "timestamp": "2026-08-03T22:10:00Z",
+    "contenido": "Cerré soporte por hoy. Recuerden que yo cubro el canal hasta las 8pm, después de esa hora no queda nadie atendiendo.",
+    "metadata": { "canal": "#soporte" }
+  },
+  {
+    "id": "slack-ops-1721008",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["valentina@empresa.com"],
+    "timestamp": "2026-08-03T22:15:00Z",
+    "contenido": "Gracias Vale. Si te enfermas avísame con tiempo porque no tenemos a nadie más entrenado en el guion de soporte.",
+    "metadata": { "canal": "#soporte" }
+  },
+  {
+    "id": "slack-dev-1722001",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "david@empresa.com",
+    "participantes": ["samuel@empresa.com"],
+    "timestamp": "2026-07-20T11:00:00Z",
+    "contenido": "La llave SSH del servidor de producción la tenemos Samuel y yo. Si necesitan entrar pídannos a cualquiera de los dos.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-dev-1722002",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "samuel@empresa.com",
+    "participantes": ["david@empresa.com"],
+    "timestamp": "2026-07-20T11:06:00Z",
+    "contenido": "Confirmo, yo tengo la llave y ya entré esta mañana a revisar los logs.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-dev-1722003",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "david@empresa.com",
+    "participantes": ["andres@empresa.com", "samuel@empresa.com"],
+    "timestamp": "2026-07-22T18:30:00Z",
+    "contenido": "Deploy a producción: primero corro las migraciones, después el build, y si algo falla hago rollback a mano con el script viejo. No está documentado en ninguna parte, lo tengo en la cabeza.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-dev-1722004",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "andres@empresa.com",
+    "participantes": ["david@empresa.com"],
+    "timestamp": "2026-07-22T18:35:00Z",
+    "contenido": "David, deberíamos escribir eso. Si te vas de vacaciones nadie sabe hacer rollback.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-dev-1722005",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "andres@empresa.com",
+    "participantes": ["david@empresa.com", "samuel@empresa.com"],
+    "timestamp": "2026-07-24T10:15:00Z",
+    "contenido": "Regla de la casa: nada entra a main sin review de alguien de plataforma. No es negociable aunque el PR sea de una línea.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-dev-1722006",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "samuel@empresa.com",
+    "participantes": ["andres@empresa.com"],
+    "timestamp": "2026-07-24T10:20:00Z",
+    "contenido": "De acuerdo, yo también reviso cuando Andrés no está.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-dev-1722007",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "jorge@empresa.com",
+    "participantes": ["andres@empresa.com"],
+    "timestamp": "2026-07-28T09:05:00Z",
+    "contenido": "El pipeline de reportes semanales lo armé yo desde cero. Si se cae un lunes avísenme a mí, nadie más lo ha tocado.",
+    "metadata": { "canal": "#datos" }
+  },
+  {
+    "id": "slack-dev-1722008",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "jorge@empresa.com",
+    "participantes": ["brayan@empresa.com"],
+    "timestamp": "2026-08-04T14:50:00Z",
+    "contenido": "El pipeline usa el bucket de reportes y las credenciales están en mi .env local. Sí, ya sé que está mal.",
+    "metadata": { "canal": "#datos" }
+  },
+  {
+    "id": "slack-dev-1722009",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "brayan@empresa.com",
+    "participantes": ["valentina@empresa.com"],
+    "timestamp": "2026-08-05T08:30:00Z",
+    "contenido": "El admin del Google Workspace lo manejo yo, y Valentina tiene el segundo acceso por si acaso.",
+    "metadata": { "canal": "#general" }
+  },
+  {
+    "id": "slack-dev-1722010",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "valentina@empresa.com",
+    "participantes": ["brayan@empresa.com"],
+    "timestamp": "2026-08-05T08:36:00Z",
+    "contenido": "Confirmo, yo también puedo crear cuentas de correo y activar las grabaciones de Meet.",
+    "metadata": { "canal": "#general" }
+  },
+  {
+    "id": "slack-dev-1722011",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "david@empresa.com",
+    "participantes": ["samuel@empresa.com", "andres@empresa.com"],
+    "timestamp": "2026-08-06T17:00:00Z",
+    "contenido": "Los viernes después de las 4pm no se despliega. Aprendimos por las malas en marzo.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-dev-1722012",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "samuel@empresa.com",
+    "participantes": ["david@empresa.com"],
+    "timestamp": "2026-08-06T17:04:00Z",
+    "contenido": "Jajaja sí, esa noche no la olvido. Confirmado, nada de viernes en la tarde.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-mixto-1723001",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["david@empresa.com"],
+    "timestamp": "2026-08-07T11:20:00Z",
+    "contenido": "David, necesito que el reporte de facturación salga antes del cierre de mes. Yo le paso los datos del CRM a Laura.",
+    "metadata": { "canal": "#general" }
+  },
+  {
+    "id": "slack-mixto-1723002",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["jorge@empresa.com"],
+    "timestamp": "2026-08-10T09:00:00Z",
+    "contenido": "Jorge, ¿el reporte semanal puede incluir la columna de altas del CRM? Yo soy la única que exporta ese archivo.",
+    "metadata": { "canal": "#datos" }
+  },
+  {
+    "id": "slack-mixto-1723003",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["brayan@empresa.com"],
+    "timestamp": "2026-08-11T15:30:00Z",
+    "contenido": "Brayan, necesito acceso a la carpeta de grabaciones de las reuniones de operaciones.",
+    "metadata": { "canal": "#general" }
+  },
+  {
+    "id": "slack-noise-1724001",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "samuel@empresa.com",
+    "participantes": [],
+    "timestamp": "2026-08-12T12:00:00Z",
+    "contenido": "Buenos días equipo ☕",
+    "metadata": { "canal": "#general" }
+  },
+  {
+    "id": "slack-noise-1724002",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "camilo@empresa.com",
+    "participantes": [],
+    "timestamp": "2026-08-12T12:02:00Z",
+    "contenido": "buenos días! quién trajo dona",
+    "metadata": { "canal": "#general" }
+  },
+  {
+    "id": "github-commit-a1b2c3",
+    "fuente": "github",
+    "tipo": "commit",
+    "autor_email": "david@empresa.com",
+    "participantes": [],
+    "timestamp": "2026-07-25T14:12:00Z",
+    "contenido": "fix(deploy): corregir orden de migraciones antes del build\n\nEl script de deploy corría el build antes de migrar y rompía producción.",
+    "metadata": { "repo": "empresa/plataforma", "archivos": ["scripts/deploy.sh", "scripts/rollback.sh"] }
+  },
+  {
+    "id": "github-commit-d4e5f6",
+    "fuente": "github",
+    "tipo": "commit",
+    "autor_email": "david@empresa.com",
+    "participantes": [],
+    "timestamp": "2026-07-29T10:41:00Z",
+    "contenido": "chore(infra): rotar credenciales del servidor de produccion",
+    "metadata": { "repo": "empresa/plataforma", "archivos": ["infra/ssh_config", "scripts/deploy.sh"] }
+  },
+  {
+    "id": "github-pr-142",
+    "fuente": "github",
+    "tipo": "pr",
+    "autor_email": "samuel@empresa.com",
+    "participantes": ["andres@empresa.com"],
+    "timestamp": "2026-08-01T16:00:00Z",
+    "contenido": "Agregar healthcheck al servicio de pagos\n\nAñade un endpoint /health y lo cablea al monitor. Requiere review de plataforma antes de mergear.",
+    "metadata": { "repo": "empresa/plataforma", "numero": 142, "archivos": ["services/pagos/health.py"] }
+  },
+  {
+    "id": "github-review-142",
+    "fuente": "github",
+    "tipo": "review",
+    "autor_email": "andres@empresa.com",
+    "participantes": ["samuel@empresa.com"],
+    "timestamp": "2026-08-01T17:30:00Z",
+    "contenido": "Aprobado. Recordatorio: el healthcheck no debe tocar la base de datos directamente, esa es la convención que seguimos acá.",
+    "metadata": { "repo": "empresa/plataforma", "numero": 142 }
+  },
+  {
+    "id": "github-pr-147",
+    "fuente": "github",
+    "tipo": "pr",
+    "autor_email": "jorge@empresa.com",
+    "participantes": [],
+    "timestamp": "2026-08-08T09:20:00Z",
+    "contenido": "Pipeline de reportes: agregar retry y alertas\n\nSi la extracción falla reintenta 3 veces. Las credenciales siguen en variables de entorno locales, pendiente moverlas al secret manager.",
+    "metadata": { "repo": "empresa/datos", "numero": 147, "archivos": ["pipeline/extract.py", "pipeline/schedule.py"] }
+  },
+  {
+    "id": "github-commit-g7h8i9",
+    "fuente": "github",
+    "tipo": "commit",
+    "autor_email": "jorge@empresa.com",
+    "participantes": [],
+    "timestamp": "2026-08-13T11:05:00Z",
+    "contenido": "feat(reportes): nueva vista semanal de altas",
+    "metadata": { "repo": "empresa/datos", "archivos": ["pipeline/transform.py", "pipeline/reportes.sql"] }
+  },
+  {
+    "id": "github-pr-150",
+    "fuente": "github",
+    "tipo": "pr",
+    "autor_email": "andres@empresa.com",
+    "participantes": ["david@empresa.com"],
+    "timestamp": "2026-08-14T13:40:00Z",
+    "contenido": "Refactor del cliente de pagos\n\nSepara el cliente HTTP de la lógica de negocio.",
+    "metadata": { "repo": "empresa/plataforma", "numero": 150, "archivos": ["services/pagos/cliente.py"] }
+  },
+  {
+    "id": "github-review-150",
+    "fuente": "github",
+    "tipo": "review",
+    "autor_email": "david@empresa.com",
+    "participantes": ["andres@empresa.com"],
+    "timestamp": "2026-08-14T15:10:00Z",
+    "contenido": "Cambios pedidos: el rollback del deploy asume la estructura vieja del cliente, si mergeas esto hay que actualizar scripts/rollback.sh y solo yo lo he tocado.",
+    "metadata": { "repo": "empresa/plataforma", "numero": 150 }
+  },
+  {
+    "id": "github-commit-j1k2l3",
+    "fuente": "github",
+    "tipo": "commit",
+    "autor_email": "brayan@empresa.com",
+    "participantes": [],
+    "timestamp": "2026-08-17T10:00:00Z",
+    "contenido": "docs: actualizar guia de onboarding del workspace",
+    "metadata": { "repo": "empresa/plataforma", "archivos": ["docs/onboarding.md"] }
+  },
+  {
+    "id": "meet-ops-0801-b1",
+    "fuente": "meet",
+    "tipo": "transcripcion",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["laura@empresa.com", "camilo@empresa.com", "valentina@empresa.com"],
+    "timestamp": "2026-08-01T15:00:00Z",
+    "contenido": "Ana: el proceso de altas de cliente es así: entra la solicitud por soporte, yo la meto al CRM, genero el usuario y le aviso a facturación. Laura: y si tú no estás? Ana: pues se acumula, no hay de otra hoy por hoy.",
+    "metadata": { "reunion_id": "ops-0801", "bloque": 1 }
+  },
+  {
+    "id": "meet-ops-0801-b2",
+    "fuente": "meet",
+    "tipo": "transcripcion",
+    "autor_email": "laura@empresa.com",
+    "participantes": ["ana@empresa.com", "camilo@empresa.com"],
+    "timestamp": "2026-08-01T15:08:00Z",
+    "contenido": "Laura: para la conciliación mensual Camilo baja el extracto del proveedor y yo cruzo contra el CRM. Nos toma como dos horas. Camilo: sí, y si alguno falta el otro lo puede sacar solo, ya lo hicimos en junio.",
+    "metadata": { "reunion_id": "ops-0801", "bloque": 2 }
+  },
+  {
+    "id": "meet-ops-0801-b3",
+    "fuente": "meet",
+    "tipo": "transcripcion",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["valentina@empresa.com"],
+    "timestamp": "2026-08-01T15:16:00Z",
+    "contenido": "Ana: otra cosa de viajes, el jefe pide siempre pasillo y nunca escala en Lima si se puede evitar. Y ya saben, LATAM. Valentina: eso no está escrito en ningún lado verdad? Ana: no, está en mi cabeza.",
+    "metadata": { "reunion_id": "ops-0801", "bloque": 3 }
+  },
+  {
+    "id": "meet-dev-0805-b1",
+    "fuente": "meet",
+    "tipo": "transcripcion",
+    "autor_email": "david@empresa.com",
+    "participantes": ["samuel@empresa.com", "andres@empresa.com", "jorge@empresa.com"],
+    "timestamp": "2026-08-05T14:00:00Z",
+    "contenido": "David: repasemos el runbook de incidentes. Si se cae producción, primero miramos el healthcheck, después los logs del servidor y si toca revertimos. Samuel: yo tengo acceso al servidor así que puedo hacer los dos primeros pasos. David: el rollback sí lo tengo que hacer yo, el script es frágil.",
+    "metadata": { "reunion_id": "dev-0805", "bloque": 1 }
+  },
+  {
+    "id": "meet-dev-0805-b2",
+    "fuente": "meet",
+    "tipo": "transcripcion",
+    "autor_email": "jorge@empresa.com",
+    "participantes": ["david@empresa.com", "andres@empresa.com"],
+    "timestamp": "2026-08-05T14:11:00Z",
+    "contenido": "Jorge: si el pipeline de datos falla mientras estoy de vacaciones, lo único que pueden hacer es apagarlo. Andrés: no hay documentación? Jorge: hay un README de tres líneas.",
+    "metadata": { "reunion_id": "dev-0805", "bloque": 2 }
+  },
+  {
+    "id": "meet-dev-0805-b3",
+    "fuente": "meet",
+    "tipo": "transcripcion",
+    "autor_email": "andres@empresa.com",
+    "participantes": ["david@empresa.com", "samuel@empresa.com"],
+    "timestamp": "2026-08-05T14:20:00Z",
+    "contenido": "Andrés: dejemos la regla clara, todo PR pasa por review de plataforma. Hoy eso somos David, Samuel y yo. Si ninguno está, se espera, no se mergea.",
+    "metadata": { "reunion_id": "dev-0805", "bloque": 3 }
+  },
+  {
+    "id": "meet-general-0812-b1",
+    "fuente": "meet",
+    "tipo": "transcripcion",
+    "autor_email": "brayan@empresa.com",
+    "participantes": ["ana@empresa.com", "david@empresa.com"],
+    "timestamp": "2026-08-12T16:00:00Z",
+    "contenido": "Brayan: sobre el workspace de Google, las grabaciones se guardan automáticamente en la carpeta compartida. Valentina y yo somos admin. Ana: perfecto, yo solo necesito lectura de la carpeta de operaciones.",
+    "metadata": { "reunion_id": "general-0812", "bloque": 1 }
+  },
+  {
+    "id": "slack-ops-1725001",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "valentina@empresa.com",
+    "participantes": ["camilo@empresa.com"],
+    "timestamp": "2026-08-18T19:45:00Z",
+    "contenido": "Camilo, si mañana no llego, el guion de respuestas de soporte está en un doc personal mío. Te lo comparto por si acaso.",
+    "metadata": { "canal": "#soporte" }
+  },
+  {
+    "id": "slack-dev-1725002",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "david@empresa.com",
+    "participantes": ["andres@empresa.com"],
+    "timestamp": "2026-08-19T10:30:00Z",
+    "contenido": "Subí el certificado nuevo al servidor. La contraseña del keystore la tengo yo, no está en el gestor de secretos todavía.",
+    "metadata": { "canal": "#dev" }
+  },
+  {
+    "id": "slack-ops-1725003",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "ana@empresa.com",
+    "participantes": ["laura@empresa.com", "camilo@empresa.com", "valentina@empresa.com"],
+    "timestamp": "2026-08-20T08:15:00Z",
+    "contenido": "Equipo, la próxima semana estoy fuera dos días. Dejen las altas del CRM y las reservas para cuando vuelva.",
+    "metadata": { "canal": "#operaciones" }
+  },
+  {
+    "id": "slack-dev-1725004",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "samuel@empresa.com",
+    "participantes": ["jorge@empresa.com"],
+    "timestamp": "2026-08-21T09:00:00Z",
+    "contenido": "Jorge, ¿me pasas cómo correr el pipeline localmente? Quiero poder cubrirte.",
+    "metadata": { "canal": "#datos" }
+  },
+  {
+    "id": "slack-dev-1725005",
+    "fuente": "slack",
+    "tipo": "mensaje",
+    "autor_email": "jorge@empresa.com",
+    "participantes": ["samuel@empresa.com"],
+    "timestamp": "2026-08-21T09:12:00Z",
+    "contenido": "Te lo explico el lunes en una llamada, no hay nada escrito.",
+    "metadata": { "canal": "#datos" }
+  }
+]
