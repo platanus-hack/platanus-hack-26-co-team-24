@@ -8,6 +8,12 @@ _env
 !.env.example
 .DS_Store
 .cache_cerebro/
+# P3 — snapshot de la última corrida de /admin/procesar. Se regenera solo.
+# Cuando haya una corrida buena con Claude, forzar su commit (git add -f) como
+# plan B del demo sin red.
+data/estado.json
+
+# P1 — credenciales y volcados de las fuentes reales
 /config/github_users.json
 /data/source_raw/
 /data/raw/slack_events.json
