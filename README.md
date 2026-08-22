@@ -107,3 +107,27 @@ Cambiar este contrato = avisar en el canal del equipo + bump de versión (`v1` �
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, etc.
 - `.env` nunca se commitea; `.env.example` siempre actualizado.
 - Solo se llama a la API de P3 desde el frontend (`/oficina`, `/riesgo`, `/escenarios`, `/simular`, `/avatar`) — nunca Slack/Claude/Supabase directo desde el cliente.
+
+### Cita H4 — cambiar a la API real
+
+**Pasos:**
+1. Copiar `frontend/.env.example` → `frontend/.env`
+2. Establecer `VITE_API_URL=https://<host-de-p3>` (sin trailing slash)
+3. Reiniciar `npm run dev` (Vite solo lee env al arrancar)
+4. Abrir `/oficina`
+
+**Nota para P3:**
+- Habilitar CORS para `http://localhost:5173` y el origen de Vercel
+- Endpoints consumidos deben retornar JSON exactamente como en "Contratos v1": `GET /oficina`, `GET /riesgo`, `GET /escenarios`, `POST /simular`, `PUT /avatar`
+- Cualquier diferencia de contrato se reporta a P3 (P3 se adapta)
+
+**Checklist de humo:**
+- [ ] 9 personajes spawn en la oficina
+- [ ] Las auras cambian al cambiar scores
+- [ ] `/avatar` → Guardar → reload mantiene el avatar (ahora via `PUT /avatar` + `GET /oficina`, localStorage ignorado)
+- [ ] "Renuncia" 3× seguidas muestra animación y panel con playbook
+- [ ] Fallo de API muestra panel de error y la oficina se restaura
+- [ ] Mute funciona
+
+**Plan B:**
+Si la API está caída durante la demo: vaciar `VITE_API_URL` → modo mock (todo funciona offline).
