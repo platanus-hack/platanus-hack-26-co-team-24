@@ -11,7 +11,7 @@ export type Runner = (scene: OfficeScene, personId?: string) => Promise<void>;
  * `generic.ts`). */
 export const SCENARIOS: Record<string, Runner> = {
   renuncia: (scene, personId) => renuncia.run(scene, personId ?? ''),
-  github_caido: (scene) => github.run(scene),
+  caida_github: (scene) => github.run(scene),
   robo_pc: (scene) => roboPc.run(scene),
 };
 

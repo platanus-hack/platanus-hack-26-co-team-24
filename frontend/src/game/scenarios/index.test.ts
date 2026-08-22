@@ -18,7 +18,7 @@ describe('SCENARIOS', () => {
 
   it('el catálogo incluye los escenarios con animación propia', () => {
     expect(IDS).toEqual(
-      expect.arrayContaining(['renuncia', 'github_caido', 'robo_pc']),
+      expect.arrayContaining(['renuncia', 'caida_github', 'robo_pc']),
     );
   });
 });

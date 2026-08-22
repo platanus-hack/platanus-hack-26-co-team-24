@@ -6,8 +6,8 @@ const RED = 0xff1744;
 const DESK_COUNT = 9;
 
 /** Runner por defecto: la oficina parpadea en rojo 3 veces (~1.5 s). Los
- * escenarios "físicos"/"infra" sin animación propia (`apagon`, `incendio`,
- * `meet_caido`, `ransomware`) suman un extra específico via `id` — el resto
+ * escenarios "físicos"/"infra" sin animación propia (`apagon`, `evacuacion`,
+ * `caida_meet`, `ransomware`) suman un extra específico via `id` — el resto
  * cae solo al parpadeo. */
 export async function run(
   scene: OfficeScene,
@@ -45,7 +45,7 @@ export async function run(
   if (fxIdx >= 0) scene.scenarioFx.splice(fxIdx, 1);
 
   switch (id) {
-    case 'incendio':
+    case 'evacuacion':
       sfx('shake');
       await runIncendio(scene);
       break;
@@ -53,7 +53,7 @@ export async function run(
       sfx('blackout');
       await runApagon(scene);
       break;
-    case 'meet_caido':
+    case 'caida_meet':
       sfx('alarm');
       await runMeetCaido(scene);
       break;
