@@ -1,13 +1,9 @@
-import Phaser from 'phaser';
 import type { OfficeScene } from '../OfficeScene';
+import { floatIcon, wait } from './fx';
 
 const TILE = 16;
 const GRAY = 0x777777;
-const QUESTION_FRAME = 11; // sprites/objects.png -> icono "?"
 const QUESTION_OFFSETS = [-10, 0, 10];
-
-const wait = (scene: OfficeScene, ms: number) =>
-  new Promise<void>((r) => scene.time.delayedCall(ms, r));
 
 /** Escenario ⭐ del demo: la persona se levanta, camina a la puerta, se
  * desvanece y deja su escritorio apagado (gris) con tres "?" flotando.
@@ -47,21 +43,9 @@ export async function run(scene: OfficeScene, personId: string): Promise<void> {
     );
     if (tile) tile.tint = GRAY;
     QUESTION_OFFSETS.forEach((dx, i) => {
-      const icon = scene.add
-        // -14 px: justo encima del PC (que ocupa desk.y-8 .. desk.y+8), para
-        // que los "?" no tapen el escritorio apagado.
-        .sprite(desk.x + TILE / 2 + dx, desk.y - 14, 'objects', QUESTION_FRAME)
-        .setDepth(1000);
-      scene.tweens.add({
-        targets: icon,
-        y: '-=6',
-        duration: 700,
-        delay: i * 150,
-        yoyo: true,
-        repeat: -1,
-        ease: Phaser.Math.Easing.Sine.InOut,
-      });
-      scene.scenarioFx.push(icon);
+      // -14 px: justo encima del PC (que ocupa desk.y-8 .. desk.y+8), para
+      // que los "?" no tapen el escritorio apagado.
+      floatIcon(scene, desk.x + TILE / 2 + dx, desk.y - 14, undefined, i * 150);
     });
   }
 }
