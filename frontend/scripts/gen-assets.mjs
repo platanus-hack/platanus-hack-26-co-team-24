@@ -116,30 +116,50 @@ function writePNG(relPath, cv) {
   console.log('wrote', relPath, `${cv.w}x${cv.h}`);
 }
 
-// ---------- vibrant cartoon sci-fi palette ----------
-// keep in sync with src/game/palette.ts THEME
+// ---------- Synth Dusk palette ----------
+// keep in sync with src/game/palette.ts THEME (11 colores + texto).
 const COLORS = {
-  bg: '#0b0b2b',
-  floorA: '#2b2d7a',
-  floorB: '#34378f',
-  wall: '#120f3a',
-  wallEdge: '#00e5ff',
-  desk: '#ff7a00',
-  deskEdge: '#3a1a00',
-  chair: '#ff2e88',
-  server: '#00e5ff',
-  serverAlt: '#7c4dff',
-  coffee: '#ffd600',
-  meeting: '#39ff14',
-  console: '#ff00aa',
-  skinLight: '#ffcc99',
-  skinDark: '#8d5524',
-  hairDark: '#1a1a1a',
-  hairRed: '#ff3d00',
+  void: '#120A20',
+  base: '#1A0F2E',
+  surface: '#241543',
+  line: '#43276B',
+  turquesa: '#2BD9D0',
+  rosa: '#FF4D9D',
+  lima: '#B6FF3C',
+  oro: '#FFD166',
+  naranja: '#FF7A2F',
+  lila: '#A98BFF',
+  morado: '#7B3FE4',
+  rojo: '#FF2E63',
+  texto: '#F3E8FF',
+  texto2: '#A98CD6',
+
+  // --- Alias semánticos usados por los dibujos de abajo ---
+  bg: '#1A0F2E', // = base
+  floorA: '#1A0F2E', // = base
+  floorB: '#1E1140', // damero del piso, segundo tono
+  wall: '#43276B', // = line
+  wallEdge: '#241543', // = surface (borde del muro)
+  desk: '#A98BFF', // = lila
+  deskEdge: '#120A20', // = void (borde del escritorio)
+  chair: '#7B3FE4', // = morado
+  monitorOn: '#2BD9D0', // = turquesa
+  monitorOff: '#3A1959', // pantalla apagada
+  rackHousing: '#241543', // = surface
+  rackOn: '#B6FF3C', // = lima (LEDs sanos)
+  rackOff: '#FF2E63', // = rojo (LEDs caídos)
+  coffee: '#FF7A2F', // = naranja
+  meeting: '#7B3FE4', // = morado
+  console: '#FF4D9D', // = rosa
+  consoleEdge: '#F3E8FF', // = texto
+  lamp: '#FFD166', // = oro
+  skinLight: '#E8B98A',
+  skinDark: '#8A5C3E',
+  hairPlaceholder: '#d8d8d8', // pelo gris claro tintable (igual que ropa)
   clothesBase: '#d8d8d8',
-  riskLow: '#00ff88',
-  riskMid: '#ffea00',
-  riskHigh: '#ff1744',
+  riskLow: '#B6FF3C',
+  riskMid: '#FFD166',
+  riskHigh: '#FF2E63',
 };
 
 function hexToRgba(hex, a = 255) {
@@ -157,9 +177,10 @@ const TILE = 16;
 
 // Generic "cartoon" bevel: fill + 1px dark outline (all sides) + 1px light
 // highlight on the inner top/left edge, so every tile/object reads as a
-// raised, outlined block instead of a flat rectangle.
+// raised, outlined block instead of a flat rectangle. Default outline is
+// VOID (Synth Dusk) unless a piece needs a specific border color.
 function drawBeveledCell(cv, x0, y0, w, h, fill, opts = {}) {
-  const outline = opts.outline || darken(fill, 0.45);
+  const outline = opts.outline || col('void');
   const highlight = opts.highlight || lighten(fill, 0.35);
   fillRect(cv, x0, y0, w, h, fill);
   for (let x = x0; x < x0 + w; x++) {
@@ -189,13 +210,13 @@ function drawFloorTile(cv, ix) {
 function genTiles() {
   const specs = [
     null, // 0 floor - handled separately (checkerboard)
-    { fill: col('wall'), outline: col('wallEdge') }, // 1 wall - dark navy, neon cyan trim
-    { fill: col('desk'), outline: col('deskEdge') }, // 2 desk - orange, dark umber trim
-    { fill: col('chair') }, // 3 chair - hot pink
-    { fill: col('coffee') }, // 4 coffee machine - electric yellow
-    { fill: col('meeting') }, // 5 meeting table - neon green
-    { fill: col('serverAlt') }, // 6 server - purple housing (serverAlt), cyan core lives in objects.png
-    { fill: col('console') }, // 7 console - magenta
+    { fill: col('wall'), outline: col('wallEdge') }, // 1 wall - LINE, borde SURFACE
+    { fill: col('desk'), outline: col('deskEdge') }, // 2 desk - LILA, borde VOID
+    { fill: col('chair') }, // 3 chair - MORADO
+    { fill: col('coffee') }, // 4 coffee machine - NARANJA
+    { fill: col('meeting') }, // 5 meeting table - MORADO
+    { fill: col('rackHousing') }, // 6 rack GitHub - housing SURFACE, LEDs viven en objects.png
+    { fill: col('console'), outline: col('consoleEdge') }, // 7 console - ROSA, borde texto
   ];
 
   const cv = makeCanvas(TILE * specs.length, TILE);
@@ -224,31 +245,34 @@ function drawGlowCore(cv, x0, color, lit) {
 
 function genObjects() {
   const frames = [
-    // [housingFill, extra(cv, x0)]
-    [darken(col('serverAlt'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), true)], // server_on
-    [darken(col('serverAlt'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), false)], // server_off
-    [hexToRgba('#252538'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, col('server'))], // pc_on (screen glow)
-    [
-      hexToRgba('#252538'),
-      (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, desaturate(hexToRgba('#111118'), 0.3)),
-    ], // pc_off (dark screen)
+    // [housingFill, extra(cv, x0), outlineOverride]
+    // server_on/off = rack GitHub: housing SURFACE, LEDs LIMA sanas / ROJO caídas.
+    [col('rackHousing'), (cv, x0) => drawGlowCore(cv, x0, col('rackOn'), true)], // server_on
+    [col('rackHousing'), (cv, x0) => drawGlowCore(cv, x0, col('rackOff'), true)], // server_off
+    // pc_on/off = monitor: pantalla turquesa con core claro / apagada #3A1959.
+    [hexToRgba('#252538'), (cv, x0) => drawGlowCore(cv, x0, col('monitorOn'), true)], // pc_on
+    [hexToRgba('#252538'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, col('monitorOff'))], // pc_off
     [hexToRgba('#3a2a1a'), (cv, x0) => fillRect(cv, x0 + 6, 3, 4, 4, col('coffee'))], // coffee_a (lit)
     [
       hexToRgba('#3a2a1a'),
       (cv, x0) => fillRect(cv, x0 + 6, 3, 4, 4, desaturate(darken(col('coffee'), 0.6), 0.5)),
     ], // coffee_b (dim)
-    [lighten(col('coffee'), 0.25), null], // lamp_a (bright)
-    [desaturate(darken(col('coffee'), 0.5), 0.6), null], // lamp_b (dim)
+    [lighten(col('lamp'), 0.25), null], // lamp_a (bright, ORO)
+    [desaturate(darken(col('lamp'), 0.5), 0.6), null], // lamp_b (dim)
     [darken(col('meeting'), 0.5), (cv, x0) => drawGlowCore(cv, x0, col('meeting'), true)], // meet_on
     [darken(col('meeting'), 0.5), (cv, x0) => drawGlowCore(cv, x0, col('meeting'), false)], // meet_off
-    [darken(col('console'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('console'), true)], // console (always lit)
+    [
+      darken(col('console'), 0.4),
+      (cv, x0) => drawGlowCore(cv, x0, col('console'), true),
+      col('consoleEdge'),
+    ], // console (always lit), borde texto
     [col('riskMid'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, darken(col('riskMid'), 0.4))], // question
   ];
 
   const cv = makeCanvas(TILE * frames.length, TILE);
-  frames.forEach(([bg, extra], i) => {
+  frames.forEach(([bg, extra, outline], i) => {
     const x0 = i * TILE;
-    drawBeveledCell(cv, x0, 0, TILE, TILE, bg);
+    drawBeveledCell(cv, x0, 0, TILE, TILE, bg, outline ? { outline } : undefined);
     if (extra) extra(cv, x0);
   });
   writePNG('sprites/objects.png', cv);
@@ -269,11 +293,11 @@ function makeCharSheet() {
   return makeCanvas(CW * COLS, CH * ROWS.length);
 }
 
-// Fill a rect and outline it with a 1px darkened border, approximating a
-// silhouette outline around each body part (cartoon look).
+// Fill a rect and outline it with a 1px VOID border, approximating a
+// silhouette outline around each body part (cartoon look, Synth Dusk).
 function fillRectOutlined(cv, x, y, w, h, fill) {
   fillRect(cv, x, y, w, h, fill);
-  const outline = darken(fill, 0.45);
+  const outline = col('void');
   for (let xx = x; xx < x + w; xx++) {
     setPixel(cv, xx, y, ...outline);
     setPixel(cv, xx, y + h - 1, ...outline);
@@ -324,8 +348,10 @@ function genCharLayer(name, drawFn) {
 function genCharacters() {
   genCharLayer('char_body_light', (cv, r, c) => drawBody(cv, r, c, col('skinLight')));
   genCharLayer('char_body_dark', (cv, r, c) => drawBody(cv, r, c, col('skinDark')));
-  genCharLayer('char_hair_short', (cv, r, c) => drawHair(cv, r, c, col('hairDark'), false));
-  genCharLayer('char_hair_long', (cv, r, c) => drawHair(cv, r, c, col('hairRed'), true));
+  // light-gray placeholder hair (same as clothes) so the runtime tint
+  // (HAIR_PALETTE) reads cleanly and vividly, same as clothing.
+  genCharLayer('char_hair_short', (cv, r, c) => drawHair(cv, r, c, col('hairPlaceholder'), false));
+  genCharLayer('char_hair_long', (cv, r, c) => drawHair(cv, r, c, col('hairPlaceholder'), true));
   // light-gray base clothing so the runtime tint (paleta) reads cleanly and vividly
   genCharLayer('char_clothes_shirt', (cv, r, c) => drawClothes(cv, r, c, col('clothesBase')));
   genCharLayer('char_clothes_suit', (cv, r, c) => drawClothes(cv, r, c, col('clothesBase')));

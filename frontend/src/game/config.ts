@@ -8,7 +8,7 @@ export const config: Phaser.Types.Core.GameConfig = {
   zoom: 2,
   width: 640,
   height: 400,
-  backgroundColor: THEME.bg,
+  backgroundColor: THEME.void,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

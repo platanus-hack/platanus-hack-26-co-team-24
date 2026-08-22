@@ -1,3 +1,24 @@
+/* Paleta Synth Dusk (ver src/game/palette.ts THEME, fuente de verdad). CSS
+   no puede importar TS, así que estos valores se mantienen sincronizados a
+   mano. Componentes se restylean en Tasks C/D; aquí sólo se reemplazan los
+   hex navy/cyan viejos por la variable más cercana. */
+:root {
+  --void: #120a20;
+  --base: #1a0f2e;
+  --surface: #241543;
+  --line: #43276b;
+  --turquesa: #2bd9d0;
+  --rosa: #ff4d9d;
+  --lima: #b6ff3c;
+  --oro: #ffd166;
+  --naranja: #ff7a2f;
+  --lila: #a98bff;
+  --morado: #7b3fe4;
+  --rojo: #ff2e63;
+  --texto: #f3e8ff;
+  --texto2: #a98cd6;
+}
+
 .risk-tooltip {
   position: absolute;
   top: 12px;
@@ -6,10 +27,10 @@
   max-width: 280px;
   padding: 12px;
   border-radius: 6px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
+  background: var(--surface);
+  border: 2px solid var(--turquesa);
   border-left-width: 6px;
-  color: #ffffff;
+  color: var(--texto);
   font-family: monospace;
 }
 
@@ -34,7 +55,7 @@
 .risk-tooltip__close {
   background: none;
   border: none;
-  color: #ffffff;
+  color: var(--texto);
   font-family: monospace;
   font-size: 16px;
   line-height: 1;
@@ -58,9 +79,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0b0b2b;
+  background: var(--base);
   font-family: monospace;
-  color: #ffffff;
+  color: var(--texto);
 }
 
 .avatar-panel {
@@ -70,8 +91,8 @@
   gap: 12px;
   padding: 24px 32px;
   border-radius: 8px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
+  background: var(--surface);
+  border: 2px solid var(--turquesa);
 }
 
 .avatar-panel h1 {
@@ -86,8 +107,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0b0b2b;
-  border: 2px solid #00e5ff;
+  background: var(--base);
+  border: 2px solid var(--turquesa);
   border-radius: 4px;
 }
 
@@ -109,9 +130,9 @@
   font-family: monospace;
   font-size: 13px;
   padding: 4px;
-  background: #0b0b2b;
-  color: #ffffff;
-  border: 1px solid #00e5ff;
+  background: var(--base);
+  color: var(--texto);
+  border: 1px solid var(--turquesa);
   border-radius: 4px;
 }
 
@@ -126,8 +147,8 @@
   font-family: monospace;
   font-size: 13px;
   padding: 8px 16px;
-  background: #00e5ff;
-  color: #0b0b2b;
+  background: var(--turquesa);
+  color: var(--base);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -135,14 +156,14 @@
 }
 
 .avatar-actions a {
-  color: #39ff14;
+  color: var(--lima);
   font-size: 13px;
 }
 
 .avatar-status {
   margin: 0;
   font-size: 13px;
-  color: #39ff14;
+  color: var(--lima);
 }
 
 /* --- Mute --- */
@@ -157,13 +178,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #00e5ff;
+  border: 2px solid var(--turquesa);
   border-radius: 6px;
-  background: #120f3a;
-  color: #ffffff;
+  background: var(--surface);
+  color: var(--texto);
   font-size: 16px;
   cursor: pointer;
-  box-shadow: 0 0 12px #00e5ff55;
+  box-shadow: 0 0 12px #2bd9d055;
 }
 
 /* --- Consola arcade (escenarios) --- */
@@ -174,15 +195,15 @@
   bottom: 12px;
   z-index: 15;
   padding: 10px 16px;
-  border: 2px solid #00e5ff;
+  border: 2px solid var(--turquesa);
   border-radius: 6px;
-  background: #ff00aa;
-  color: #ffffff;
+  background: var(--rosa);
+  color: var(--texto);
   font-family: monospace;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 0 12px #ff00aa88;
+  box-shadow: 0 0 12px #ff4d9d88;
 }
 
 .arcade-open:disabled {
@@ -201,9 +222,9 @@
   flex-direction: column;
   padding: 12px;
   border-radius: 6px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
-  color: #ffffff;
+  background: var(--surface);
+  border: 2px solid var(--turquesa);
+  color: var(--texto);
   font-family: monospace;
 }
 
@@ -216,13 +237,13 @@
 .arcade-panel__title {
   margin: 0;
   font-size: 14px;
-  color: #39ff14;
+  color: var(--lima);
 }
 
 .arcade-close {
   background: none;
   border: none;
-  color: #ffffff;
+  color: var(--texto);
   font-family: monospace;
   font-size: 16px;
   line-height: 1;
@@ -250,17 +271,17 @@
   width: 100%;
   text-align: left;
   padding: 6px 8px;
-  border: 1px solid #00e5ff55;
+  border: 1px solid #2bd9d055;
   border-radius: 4px;
-  background: #0b0b2b;
-  color: #ffffff;
+  background: var(--base);
+  color: var(--texto);
   font-family: monospace;
   cursor: pointer;
 }
 
 .arcade-item--active {
-  border-color: #39ff14;
-  box-shadow: 0 0 8px #39ff1466;
+  border-color: var(--lima);
+  box-shadow: 0 0 8px #b6ff3c66;
 }
 
 .arcade-item__name {
@@ -285,9 +306,9 @@
   font-family: monospace;
   font-size: 12px;
   padding: 4px;
-  background: #0b0b2b;
-  color: #ffffff;
-  border: 1px solid #00e5ff;
+  background: var(--base);
+  color: var(--texto);
+  border: 1px solid var(--turquesa);
   border-radius: 4px;
 }
 
@@ -296,8 +317,8 @@
   padding: 8px;
   border: none;
   border-radius: 4px;
-  background: #00e5ff;
-  color: #0b0b2b;
+  background: var(--turquesa);
+  color: var(--base);
   font-family: monospace;
   font-size: 13px;
   font-weight: bold;
@@ -324,23 +345,23 @@
   flex-direction: column;
   padding: 16px;
   border-radius: 8px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
-  color: #ffffff;
+  background: var(--surface);
+  border: 2px solid var(--turquesa);
+  color: var(--texto);
   font-family: monospace;
-  box-shadow: 0 0 24px #00e5ff55;
+  box-shadow: 0 0 24px #2bd9d055;
 }
 
 .result-panel__title {
   margin: 0 0 12px;
   font-size: 16px;
-  color: #39ff14;
+  color: var(--lima);
 }
 
 .result-panel__error {
   margin: 0 0 12px;
   font-size: 12px;
-  color: #ff1744;
+  color: var(--rojo);
 }
 
 .result-stats {
@@ -355,15 +376,15 @@
   align-items: center;
   gap: 2px;
   padding: 10px 6px;
-  border: 1px solid #00e5ff55;
+  border: 1px solid #2bd9d055;
   border-radius: 6px;
-  background: #0b0b2b;
+  background: var(--base);
 }
 
 .result-stat__value {
   font-size: 22px;
   font-weight: bold;
-  color: #00e5ff;
+  color: var(--turquesa);
 }
 
 .result-stat__label {
@@ -377,7 +398,7 @@
   margin: 12px 0 0;
   font-size: 12px;
   line-height: 1.5;
-  color: #ffd166;
+  color: var(--oro);
 }
 
 .result-items {
@@ -395,8 +416,8 @@
   margin: 0;
   padding: 10px;
   border-radius: 6px;
-  background: #0b0b2b;
-  border: 1px solid #00e5ff33;
+  background: var(--base);
+  border: 1px solid #2bd9d033;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -411,8 +432,8 @@
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  background: #39ff14;
-  color: #0b0b2b;
+  background: var(--lima);
+  color: var(--base);
   font-family: monospace;
   font-size: 13px;
   font-weight: bold;
@@ -421,6 +442,6 @@
 
 .result-btn--ghost {
   background: none;
-  border: 1px solid #00e5ff;
-  color: #ffffff;
+  border: 1px solid var(--turquesa);
+  color: var(--texto);
 }
