@@ -2,14 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { putAvatar } from '../api';
 import { PALETTE } from '../game/palette';
-import { loadAvatar, saveAvatar } from '../avatarStorage';
+import { loadAvatar, saveAvatar, CUERPOS, PEINADOS, ROPAS, PALETAS } from '../avatarStorage';
 import type { AvatarConfig } from '../types';
 import './ui.css';
-
-const CUERPOS: AvatarConfig['cuerpo'][] = ['light', 'dark'];
-const PEINADOS: AvatarConfig['peinado'][] = ['short', 'long'];
-const ROPAS: AvatarConfig['ropa'][] = ['shirt', 'suit'];
-const PALETAS: AvatarConfig['paleta'][] = ['blue', 'red', 'green', 'yellow', 'purple', 'gray'];
 
 const LABELS = {
   cuerpo: { light: 'Claro', dark: 'Oscuro' },
@@ -53,6 +48,8 @@ export function AvatarEditor() {
   const frameRef = useRef(0);
 
   useEffect(() => {
+    let cancelled = false;
+    let loaded = false;
     const bodyImg = loadImg(`/assets/sprites/char_body_${cfg.cuerpo}.png`);
     const hairImg = loadImg(`/assets/sprites/char_hair_${cfg.peinado}.png`);
     const clothesImg = loadImg(`/assets/sprites/char_clothes_${cfg.ropa}.png`);
@@ -71,17 +68,30 @@ export function AvatarEditor() {
 
     let ready = 0;
     const onLoad = () => {
-      if (++ready === 3) draw();
+      // Un cfg nuevo puede llegar antes de que las imágenes del cfg
+      // anterior terminen de cargar; ese onload ya no debe pintar nada.
+      if (cancelled) return;
+      if (++ready === 3) {
+        loaded = true;
+        draw();
+      }
     };
     bodyImg.onload = onLoad;
     hairImg.onload = onLoad;
     clothesImg.onload = onLoad;
 
     const interval = setInterval(() => {
+      // Sin las 3 capas cargadas, tintedFrame() con un clothesImg
+      // incompleto no recorta nada (destination-in no-opea) y se ve un
+      // bloque sólido del color; esperamos a que las 3 estén listas.
+      if (!loaded) return;
       frameRef.current = (frameRef.current + 1) % 3;
       draw();
     }, 200);
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [cfg]);
 
   async function handleSave() {

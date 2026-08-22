@@ -5,10 +5,10 @@ import type { AvatarConfig } from './types';
 
 const KEY = 'avatar';
 
-const CUERPOS: AvatarConfig['cuerpo'][] = ['light', 'dark'];
-const PEINADOS: AvatarConfig['peinado'][] = ['short', 'long'];
-const ROPAS: AvatarConfig['ropa'][] = ['shirt', 'suit'];
-const PALETAS: AvatarConfig['paleta'][] = [
+export const CUERPOS: AvatarConfig['cuerpo'][] = ['light', 'dark'];
+export const PEINADOS: AvatarConfig['peinado'][] = ['short', 'long'];
+export const ROPAS: AvatarConfig['ropa'][] = ['shirt', 'suit'];
+export const PALETAS: AvatarConfig['paleta'][] = [
   'blue',
   'red',
   'green',
