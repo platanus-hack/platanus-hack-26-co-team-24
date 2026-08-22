@@ -11,7 +11,10 @@ const QUESTION_OFFSETS = [-10, 0, 10];
  * Dura ~6-8 s según lo largo que sea el camino hasta la puerta. */
 export async function run(scene: OfficeScene, personId: string): Promise<void> {
   const char = scene.characters[personId];
-  if (!char) return;
+  if (!char) {
+    console.warn('renuncia: persona no encontrada', personId);
+    return;
+  }
 
   char.stopBehavior();
   char.play('stand');

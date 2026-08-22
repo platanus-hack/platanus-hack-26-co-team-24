@@ -13,6 +13,10 @@ import simularMock from './mocks/simular.json';
 
 const BASE = import.meta.env.VITE_API_URL as string | undefined;
 
+/** Sin VITE_API_URL corremos contra los mocks locales: lo que dependa de eso
+ * (avatar en localStorage, etc.) se guía por esta bandera. */
+export const IS_MOCK = !BASE;
+
 async function req<T>(path: string, mock: T, init?: RequestInit): Promise<T> {
   if (!BASE) return structuredClone(mock); // ponytail: sin VITE_API_URL = modo demo offline
   const r = await fetch(BASE + path, {

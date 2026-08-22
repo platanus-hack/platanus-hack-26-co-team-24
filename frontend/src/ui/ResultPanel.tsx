@@ -31,16 +31,25 @@ export function ResultPanel() {
     setError(null);
   };
 
+  /** Salir del resultado siempre restaura la oficina: si no, los personajes
+   * quedan congelados (stopBehavior) con la consola ya rehabilitada. En la
+   * vista de error `restore()` ya corrió en la escena, así que basta cerrar. */
+  const closeResult = () => {
+    bus.emit('scenario:restore');
+    close();
+  };
+
   const visible = result !== null || error !== null;
+  const isError = error !== null;
 
   useEffect(() => {
     if (!visible) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') (isError ? close : closeResult)();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [visible]);
+  }, [visible, isError]);
 
   if (!visible) return null;
 
@@ -96,22 +105,8 @@ export function ResultPanel() {
       </pre>
 
       <div className="result-panel__actions">
-        <button
-          type="button"
-          className="result-btn"
-          onClick={() => {
-            bus.emit('scenario:restore');
-            close();
-          }}
-        >
+        <button type="button" className="result-btn" onClick={closeResult}>
           Restaurar oficina
-        </button>
-        <button
-          type="button"
-          className="result-btn result-btn--ghost"
-          onClick={close}
-        >
-          Cerrar
         </button>
       </div>
     </div>

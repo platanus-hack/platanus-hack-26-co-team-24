@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getOficina, getRiesgo, simular } from '../api';
+import { getOficina, getRiesgo, simular, IS_MOCK } from '../api';
 import type { Riesgo } from '../types';
 import { Character } from './Character';
 import { createPathfinder, type Pathfinder } from './pathfinding';
@@ -104,10 +104,15 @@ export class OfficeScene extends Phaser.Scene {
     this.scenarioRunning = false;
     bus.on('scenario:start', this.onScenarioStart, this);
     bus.on('scenario:restore', this.restore, this);
-    this.events.once('shutdown', () => {
+    const unhook = () => {
       bus.off('scenario:start', this.onScenarioStart, this);
       bus.off('scenario:restore', this.restore, this);
-    });
+    };
+    // `restart()` emite 'shutdown'; `game.destroy()` emite 'destroy' (ver
+    // Phaser Systems.destroy). Sin el segundo, al navegar /oficina -> /avatar
+    // -> /oficina la escena muerta seguiría atendiendo el bus.
+    this.events.once('shutdown', unhook);
+    this.events.once('destroy', unhook);
   }
 
   /** Corre en paralelo la simulación (API) y su animación en la oficina, para
@@ -123,15 +128,24 @@ export class OfficeScene extends Phaser.Scene {
     if (this.scenarioRunning) return;
     this.scenarioRunning = true;
     try {
-      const [result] = await Promise.all([
+      // allSettled (y no all): si la API falla primero, el runner sigue
+      // mutando la escena; restaurar antes de que termine haría que sus
+      // continuaciones re-vandalizaran la escena nueva.
+      const [sim, anim] = await Promise.allSettled([
         simular({ scenario_id, person_id }),
         getRunner(scenario_id)(this, person_id),
       ]);
-      bus.emit('scenario:result', result);
-    } catch (err) {
-      console.error('scenario:start', err);
-      bus.emit('scenario:error', String(err));
-      this.restore();
+      if (sim.status === 'fulfilled' && anim.status === 'fulfilled') {
+        bus.emit('scenario:result', sim.value);
+      } else {
+        const err =
+          sim.status === 'rejected'
+            ? sim.reason
+            : (anim as PromiseRejectedResult).reason;
+        console.error('scenario:start', err);
+        bus.emit('scenario:error', String(err));
+        this.restore();
+      }
     } finally {
       this.scenarioRunning = false;
     }
@@ -139,8 +153,8 @@ export class OfficeScene extends Phaser.Scene {
 
   /** Deshace cualquier escenario simulado. ponytail: en vez de revertir cada
    * efecto a mano, reiniciamos la escena (re-spawnea personajes y recarga el
-   * riesgo). El handler de `shutdown` desengancha el bus para no duplicar
-   * listeners al volver a `create()`. */
+   * riesgo). Los handlers de `shutdown`/`destroy` desenganchan el bus para no
+   * duplicar listeners al volver a `create()`. */
   restore(): void {
     this.scene.restart();
   }
@@ -153,7 +167,7 @@ export class OfficeScene extends Phaser.Scene {
         // Sin backend real, el editor de avatar (/avatar) guarda la config
         // del usuario demo en localStorage; la reflejamos aquí para que
         // "crear avatar -> recargar -> el personaje lo luce" funcione.
-        const localAvatar = !import.meta.env.VITE_API_URL ? loadAvatar() : null;
+        const localAvatar = IS_MOCK ? loadAvatar() : null;
         for (const person of oficina.people) {
           if (localAvatar && person.id === DEMO_USER_ID) {
             person.avatar_config = localAvatar;

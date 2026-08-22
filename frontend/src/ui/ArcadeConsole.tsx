@@ -23,7 +23,15 @@ export function ArcadeConsole() {
       .then((r) => setScenarios(r.scenarios))
       .catch((err) => console.error('getEscenarios', err));
     getOficina()
-      .then((o) => setPeople(o.people))
+      .then((o) => {
+        setPeople(o.people);
+        // Con una API real los ids pueden no incluir el demo `p_ana`: el
+        // select mostraría la primera persona mientras el estado apunta a
+        // alguien inexistente y la simulación no haría nada.
+        setPersonId((p) =>
+          o.people.some((x) => x.id === p) ? p : (o.people[0]?.id ?? p),
+        );
+      })
       .catch((err) => console.error('getOficina', err));
   }, []);
 
