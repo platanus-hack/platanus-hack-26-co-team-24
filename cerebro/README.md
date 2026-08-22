@@ -4,11 +4,16 @@ Módulo importable. P3 lo consume directamente; no expone HTTP.
 
 ## De dónde salen los eventos
 
-`cargar_eventos()` lee todos los `.json` de `data/raw/` **menos** `fixture_p2.json`,
-que es nuestro relleno. En cuanto P1 deje ahí cualquier archivo — `mock_events.json`,
-`slack_events.json`, `github_events.json` — el cerebro pasa a usar esos y deja de
-leer el fixture, sin tocar código y sin mezclar datos reales con inventados.
-Deduplica por `id`.
+`cargar_eventos()` aplica una precedencia explícita dentro de `data/raw/`:
+
+1. Si existen archivos reales de P1 — `slack_events.json`, `github_events.json`,
+   `meet_events.json` u otros normalizados — carga esos archivos y omite todos
+   los mocks.
+2. Si no hay archivos reales, usa `mock_events.json`, el dataset de demo de P1.
+3. Si tampoco existe ese mock, cae a `fixture_p2.json`, el respaldo interno de P2.
+
+Nunca mezcla eventos reales con conocimiento ficticio. En el nivel seleccionado,
+deduplica por `id`.
 
 ## Instalación
 
