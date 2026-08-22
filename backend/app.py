@@ -17,7 +17,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import Body, FastAPI, HTTPException, Query, Request
+from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from cerebro import simular
@@ -25,10 +25,16 @@ from cerebro.esquemas import ESCENARIOS, Escenario, KnowledgeItem
 from cerebro.llm import hay_api_key
 
 from . import FORZAR_MOCK
+from . import auth
+from . import bd
 from . import estado as st
+from . import seed
 from .esquemas import (
     Miembro,
     Oficina,
+    PeticionAuth,
+    PeticionAvatar,
+    PeticionConexion,
     PeticionQuest,
     PeticionSimular,
     RespuestaDigest,
@@ -46,10 +52,13 @@ log = logging.getLogger("api")
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI):
-    if st.cargar_snapshot():
+    if st.cargar_desde_bd():
+        log.info("estado cargado de supabase: %d items", len(st._real.items))
+    elif st.cargar_snapshot():
         log.info("estado cargado del snapshot: %d items", len(st._real.items))
     else:
         log.info("sin snapshot: sirviendo mocks hasta que corran POST /admin/procesar")
+        st.cargar_usuarios()
     if FORZAR_MOCK:
         log.warning("BUSFACTOR_MOCK=1: todos los endpoints responden en mock")
     yield
@@ -93,6 +102,7 @@ def salud() -> Salud:
     estado = st._real
     return Salud(
         hay_api_key=hay_api_key(),
+        hay_supabase=bd.hay_bd(),
         fuente_datos=estado.fuente if estado.items else "mock",
         items=len(estado.items),
         forzar_mock=FORZAR_MOCK,
@@ -215,6 +225,69 @@ def put_quest(
         raise HTTPException(404, f"No existe la quest {quest_id}") from e
 
 
+def _avatar_del_cuerpo(cuerpo: PeticionAvatar) -> dict:
+    if cuerpo.avatar_config:
+        return cuerpo.avatar_config
+    extra = dict(cuerpo.model_extra or {})
+    extra.pop("email", None)
+    extra.pop("avatar_config", None)
+    return extra
+
+
+# --- Usuario --------------------------------------------------------------------
+
+
+@app.post("/auth/registro", tags=["auth"])
+def registro(cuerpo: PeticionAuth) -> dict:
+    if not cuerpo.nombre:
+        raise HTTPException(422, "El registro pide nombre.")
+    return auth.registrar(cuerpo.email, cuerpo.password, cuerpo.nombre)
+
+
+@app.post("/auth/login", tags=["auth"])
+def login(cuerpo: PeticionAuth) -> dict:
+    return auth.entrar(cuerpo.email, cuerpo.password)
+
+
+@app.get("/usuarios/me", tags=["auth"])
+def yo(actual: dict = Depends(auth.usuario_del_token)) -> dict:
+    email = actual["email"]
+    persona = PERSONAS.get(email, {})
+    return {
+        "email": email,
+        "nombre": persona.get("nombre") or email,
+        "rol": persona.get("rol", "Equipo"),
+        "sprite": persona.get("sprite", "lpc-00"),
+        "avatar_config": persona.get("avatar_config") or {},
+    }
+
+
+@app.put("/usuarios/me/avatar", tags=["auth"])
+def put_mi_avatar(cuerpo: PeticionAvatar, actual: dict = Depends(auth.usuario_del_token)) -> dict:
+    return auth.guardar_avatar(actual["email"], _avatar_del_cuerpo(cuerpo))
+
+
+@app.put("/avatar", tags=["auth"])
+def put_avatar(cuerpo: PeticionAvatar, email: str | None = Query(None)) -> dict:
+    """Lo que P4 llama hoy. Sin token: el email va en query o en el body (default Ana)."""
+    destino = email or cuerpo.email or "ana@empresa.com"
+    config = _avatar_del_cuerpo(cuerpo)
+    if not config:
+        raise HTTPException(422, "Manda avatar_config o las capas (cuerpo, peinado, ropa, paleta).")
+    return auth.guardar_avatar(destino, config)
+
+
+@app.post("/conexiones", tags=["auth"])
+def post_conexion(
+    cuerpo: PeticionConexion,
+    authorization: str | None = Header(None),
+) -> dict:
+    email = cuerpo.email or "ana@empresa.com"
+    if authorization:
+        email = auth.usuario_del_token(authorization)["email"]
+    return auth.marcar_conexion(email, cuerpo.tipo)
+
+
 # --- Admin ----------------------------------------------------------------------
 
 
@@ -232,4 +305,14 @@ def admin_procesar() -> RespuestaProcesar:
 def admin_reset() -> dict:
     """Vuelve al estado demo perfecto. Para los ensayos de P5."""
     st.reset()
+    if bd.hay_bd():
+        return {"ok": True, **seed.sembrar()}
     return {"ok": True, "mensaje": "Estado limpio. Corre POST /admin/procesar para repoblar."}
+
+
+@app.post("/admin/sembrar", tags=["admin"])
+def admin_sembrar() -> dict:
+    """9 usuarios + cadena de P2 persistida en Supabase."""
+    if not bd.hay_bd():
+        raise HTTPException(503, "Sin credenciales de Supabase.")
+    return seed.sembrar()

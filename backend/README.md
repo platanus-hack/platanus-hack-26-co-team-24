@@ -163,11 +163,22 @@ Dos cosas del plan gratuito que hay que tener en cuenta **antes** del demo:
   minuto. Pegarle a `/salud` unos minutos antes de salir a presentar.
 - **El disco es efímero.** `data/estado.json` y la caché de P2 no sobreviven un
   reinicio, así que tras cada deploy hay que correr `POST /admin/procesar` — o
-  mejor, commitear un snapshot bueno con `git add -f data/estado.json` para que el
-  arranque en frío ya traiga la oficina poblada.
+  Tras cada deploy estable hay que sembrar (el disco de Render arranca vacío):
 
-## Pendiente
+```
+curl -X POST https://bus-factor-hq.onrender.com/admin/sembrar
+```
 
-Auth (Supabase), `PUT /usuarios/me/avatar` y `POST /conexiones`. Van después
-porque los frontends están bloqueados por datos, no por login. El contrato de esas
-rutas está en `bus-factor/P3-plan-de-trabajo.md`.
+## Usuario
+
+| Método | Ruta | Auth | Devuelve |
+|---|---|---|---|
+| POST | `/auth/registro` | no | `{token, user}` |
+| POST | `/auth/login` | no | `{token, user}` |
+| GET | `/usuarios/me` | Bearer | User |
+| PUT | `/usuarios/me/avatar` | Bearer | `{ok, email, avatar_config}` |
+| PUT | `/avatar` | no (P4) | igual. `?email=` o body; default Ana |
+| POST | `/conexiones` | opcional | `{tipo, estado: "activa"}` simulado |
+
+`PUT /avatar` acepta el body de P4 tal cual: `{cuerpo, peinado, ropa, paleta}`.
+

@@ -34,7 +34,8 @@ from cerebro.esquemas import KnowledgeItem, Quest, RawEvent, RiskScore
 from cerebro.llm import hay_api_key
 
 from . import ARCHIVO_ESTADO, DIR_EVENTOS
-from .personas import buscar_por_nombre
+from . import bd
+from .personas import OFICINA, PERSONAS, buscar_por_nombre, nombre_de
 
 EMAIL = re.compile(r"[\w.+-]+@[\w.-]+\.\w+")
 
@@ -110,6 +111,7 @@ def procesar() -> dict:
     _real.fuente = "procesado"
     _real.con_claude = hay_api_key()
     guardar_snapshot()
+    persistir_en_bd(_real)
 
     return {
         "eventos": len(evs),
@@ -200,6 +202,7 @@ def completar_quest(quest_id: str, respaldo: str | None, mock: bool) -> dict:
             estado.recalcular(eventos())
             if estado is _real:
                 guardar_snapshot()
+                persistir_en_bd(estado)
 
     despues = estado.resiliencia
     return {
@@ -209,6 +212,100 @@ def completar_quest(quest_id: str, respaldo: str | None, mock: bool) -> dict:
         "resiliencia_equipo": despues,
         "delta": round(despues - antes, 1),
     }
+
+
+def persistir_en_bd(estado: Estado) -> None:
+    """Espejo en Supabase. Si no hay credenciales o la red falla, el disco basta."""
+    if not bd.hay_bd():
+        return
+    oficina = OFICINA["id"]
+    try:
+        if estado.items:
+            bd.upsert(
+                "knowledge_items",
+                [
+                    {
+                        "id": i.id,
+                        "office_id": oficina,
+                        "dueno_principal": i.dueño_principal,
+                        "tipo": i.tipo,
+                        "payload": i.model_dump(),
+                    }
+                    for i in estado.items
+                ],
+                "id",
+            )
+        if estado.scores:
+            bd.upsert(
+                "risk_scores",
+                [
+                    {"persona_id": s.persona_id, "office_id": oficina, "payload": s.model_dump()}
+                    for s in estado.scores
+                ],
+                "office_id,persona_id",
+            )
+        if estado.quests:
+            bd.upsert(
+                "quests",
+                [
+                    {
+                        "id": q.id,
+                        "office_id": oficina,
+                        "asignado_a": q.asignado_a,
+                        "estado": q.estado,
+                        "payload": q.model_dump(),
+                    }
+                    for q in estado.quests
+                ],
+                "id",
+            )
+    except Exception as e:
+        print(f"[backend] persistir_en_bd falló ({type(e).__name__}: {e}); seguimos con disco")
+
+
+def cargar_usuarios() -> int:
+    """Trae avatares y nombres de la BD encima de la semilla en memoria."""
+    if not bd.hay_bd():
+        return 0
+    try:
+        filas = bd.rest("GET", "users", params={"select": "email,nombre,rol,sprite,avatar_config"}) or []
+    except Exception as e:
+        print(f"[backend] cargar_usuarios falló ({type(e).__name__}: {e})")
+        return 0
+    if not isinstance(filas, list):
+        filas = []
+    for fila in filas:
+        email = fila["email"]
+        base = PERSONAS.setdefault(
+            email, {"nombre": nombre_de(email), "rol": "Equipo", "sprite": "lpc-00", "avatar_config": {}}
+        )
+        for campo in ("nombre", "rol", "sprite", "avatar_config"):
+            if fila.get(campo):
+                base[campo] = fila[campo]
+    return len(filas)
+
+
+def cargar_desde_bd() -> bool:
+    """Arranque en frío desde Supabase. Si está vacío, el caller prueba el disco."""
+    if not bd.hay_bd():
+        bd.aviso_si_falta()
+        return False
+    oficina = OFICINA["id"]
+    try:
+        items = bd.rest("GET", "knowledge_items", params={"office_id": f"eq.{oficina}", "select": "payload"}) or []
+        scores = bd.rest("GET", "risk_scores", params={"office_id": f"eq.{oficina}", "select": "payload"}) or []
+        quests = bd.rest("GET", "quests", params={"office_id": f"eq.{oficina}", "select": "payload"}) or []
+    except Exception as e:
+        print(f"[backend] cargar_desde_bd falló ({type(e).__name__}: {e})")
+        return False
+    cargar_usuarios()
+    if not items:
+        return False
+    _real.items = [KnowledgeItem.model_validate(f["payload"]) for f in items]
+    _real.scores = [RiskScore.model_validate(f["payload"]) for f in scores]
+    _real.quests = [Quest.model_validate(f["payload"]) for f in quests]
+    _real.fuente = "supabase"
+    return True
 
 
 def reset() -> None:

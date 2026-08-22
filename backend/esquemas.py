@@ -79,6 +79,26 @@ class RespuestaProcesar(BaseModel):
 class Salud(BaseModel):
     ok: bool = True
     hay_api_key: bool
+    hay_supabase: bool = False
     fuente_datos: str
     items: int
     forzar_mock: bool
+
+
+class PeticionAuth(BaseModel):
+    email: str
+    password: str
+    nombre: str | None = None
+
+
+class PeticionAvatar(BaseModel):
+    """P4 manda las capas en el root; el contrato viejo las anida en avatar_config."""
+
+    model_config = {"extra": "allow"}
+    email: str | None = None
+    avatar_config: dict | None = None
+
+
+class PeticionConexion(BaseModel):
+    tipo: str
+    email: str | None = None

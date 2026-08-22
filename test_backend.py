@@ -8,6 +8,9 @@ una quest mueva de verdad el puntaje del equipo.
 """
 
 import os
+
+os.environ["BUSFACTOR_SIN_BD"] = "1"
+
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -32,7 +35,8 @@ def test_las_rutas_no_dependen_del_cwd():
     desde la raíz del repo — que es justo lo que pasa en Render.
 
     Mientras el PR #2 siga abierto, `cerebro` resuelve estas rutas contra el CWD
-    y `backend/__init__` las corrige desde afuera.
+    y `backend/__init__` las corrige desde afuera. Ya mergeado, el parche es
+    redundante y esta aserción sigue guardando el invariante.
     """
     from cerebro import nucleo
 
@@ -44,7 +48,7 @@ def test_las_rutas_no_dependen_del_cwd():
 def test_salud_responde():
     r = cliente.get("/salud")
     assert r.status_code == 200, r.text
-    assert set(r.json()) == {"ok", "hay_api_key", "fuente_datos", "items", "forzar_mock"}
+    assert set(r.json()) == {"ok", "hay_api_key", "hay_supabase", "fuente_datos", "items", "forzar_mock"}
 
 
 def test_los_7_escenarios_estan_en_la_consola():
@@ -165,6 +169,25 @@ def test_procesar_corre_la_cadena_completa():
     assert datos["items"] > 0 and datos["personas"] > 0
     assert 0 < datos["resiliencia_equipo"] < 100
     assert cliente.get("/salud").json()["fuente_datos"] == "procesado"
+
+
+def test_avatar_se_guarda_y_aparece_en_la_oficina():
+    """P4 manda las capas en el root, sin token. Default: Ana."""
+    r = cliente.put(
+        "/avatar",
+        json={"cuerpo": "light", "peinado": "long", "ropa": "shirt", "paleta": "blue"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["email"] == "ana@empresa.com"
+    assert r.json()["avatar_config"]["peinado"] == "long"
+    ana = next(m for m in cliente.get("/oficina?mock=true").json()["miembros"] if m["email"] == "ana@empresa.com")
+    assert ana["avatar_config"]["paleta"] == "blue"
+
+
+def test_conexion_simulada_no_pide_oauth():
+    r = cliente.post("/conexiones", json={"tipo": "slack", "email": "david@empresa.com"})
+    assert r.status_code == 200, r.text
+    assert r.json()["estado"] == "activa"
 
 
 if __name__ == "__main__":

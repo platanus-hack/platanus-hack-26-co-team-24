@@ -13,3 +13,9 @@ services:
       # narración. Se pone a mano en el dashboard, no se versiona.
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
