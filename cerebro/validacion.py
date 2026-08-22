@@ -32,7 +32,7 @@ from .nucleo import PESOS, calcular_riesgo, peso_riesgo
 
 RUTA_RANKING_HUMANO = Path("data/ranking_humano.json")
 
-# Lo que sabemos que está sembrado en data/raw/mock_events.json. Es el gold set:
+# Lo que sabemos que está sembrado en data/raw/fixture_p2.json. Es el gold set:
 # si P1 cambia los datos, esta lista se actualiza con él.
 CASOS_SEMBRADOS = [
     {"nombre": "regla de LATAM", "palabras": ["latam"], "dueño": "ana@empresa.com", "tipo": "regla_tacita", "critico": True},
@@ -397,9 +397,9 @@ def reporte(items: list[KnowledgeItem], eventos: list[RawEvent]) -> int:
 
 
 def main() -> int:
-    from .nucleo import extraer
+    from .nucleo import cargar_eventos, extraer
 
-    eventos = [RawEvent.model_validate(e) for e in json.loads(Path("data/raw/mock_events.json").read_text(encoding="utf-8"))]
+    eventos = cargar_eventos()
     items = extraer(eventos)  # usa la caché; sin API key valida los mocks
     return 1 if reporte(items, eventos) else 0
 

@@ -13,6 +13,8 @@ vez de reventar.
 from __future__ import annotations
 
 import hashlib
+import json
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -29,6 +31,27 @@ from .esquemas import (
 )
 
 LOTE = 20  # eventos por llamada: contexto manejable y evidencia rastreable
+
+DIR_EVENTOS = Path("data/raw")
+FIXTURE_P2 = DIR_EVENTOS / "fixture_p2.json"  # el nuestro, hasta que P1 publique
+
+
+def cargar_eventos(directorio: Path = DIR_EVENTOS) -> list[RawEvent]:
+    """Los eventos de P1 si ya existen; si no, nuestro fixture.
+
+    P1 escribe un archivo por fuente en `data/raw/` (mock_events.json,
+    slack_events.json, github_events.json...). En cuanto aparezca cualquiera de
+    ellos, esto deja de leer el fixture solo — sin tocar código y sin mezclar
+    datos reales con inventados. Deduplica por `id`, que P1 genera determinista.
+    """
+    reales = sorted(p for p in directorio.glob("*.json") if p.name != FIXTURE_P2.name)
+    archivos = reales or ([FIXTURE_P2] if FIXTURE_P2.exists() else [])
+    por_id: dict[str, RawEvent] = {}
+    for archivo in archivos:
+        for crudo in json.loads(archivo.read_text(encoding="utf-8")):
+            ev = RawEvent.model_validate(crudo)
+            por_id.setdefault(ev.id, ev)
+    return sorted(por_id.values(), key=lambda e: e.timestamp)
 
 PESOS = {"acceso": 3, "proceso": 2, "tarea": 1, "regla_tacita": 2}
 BONO_INTERMEDIACION = 0.5  # la persona mas central del grafo pesa 1.5x

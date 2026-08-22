@@ -6,17 +6,11 @@ Para el ensayo del demo (P5) y para que P3 vea qué forma tiene la salida.
 Sin API key funciona igual, con playbook sin narración.
 """
 
-import json
-from pathlib import Path
-
-from . import calcular_riesgo, extraer, generar_digest, resiliencia_equipo, simular
-from .esquemas import RawEvent
-
-RUTA = Path("data/raw/mock_events.json")
+from . import calcular_riesgo, cargar_eventos, extraer, generar_digest, resiliencia_equipo, simular
 
 
 def main() -> int:
-    eventos = [RawEvent.model_validate(e) for e in json.loads(RUTA.read_text(encoding="utf-8"))]
+    eventos = cargar_eventos()
     items = extraer(eventos)
     scores = calcular_riesgo(items, eventos)
 

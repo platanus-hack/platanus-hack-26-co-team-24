@@ -2,6 +2,14 @@
 
 Módulo importable. P3 lo consume directamente; no expone HTTP.
 
+## De dónde salen los eventos
+
+`cargar_eventos()` lee todos los `.json` de `data/raw/` **menos** `fixture_p2.json`,
+que es nuestro relleno. En cuanto P1 deje ahí cualquier archivo — `mock_events.json`,
+`slack_events.json`, `github_events.json` — el cerebro pasa a usar esos y deja de
+leer el fixture, sin tocar código y sin mezclar datos reales con inventados.
+Deduplica por `id`.
+
 ## Instalación
 
 ```bash
@@ -13,9 +21,9 @@ export ANTHROPIC_API_KEY=sk-...   # sin esto todo cae a datos mock
 ## Uso desde P3
 
 ```python
-from cerebro import extraer, calcular_riesgo, simular, generar_digest, ESCENARIOS
+from cerebro import cargar_eventos, extraer, calcular_riesgo, simular, generar_digest, ESCENARIOS
 
-raw_events = json.loads(Path("data/raw/mock_events.json").read_text())
+raw_events = cargar_eventos()   # lo de P1 si existe; si no, nuestro fixture
 
 items  = extraer(raw_events)                                        # list[KnowledgeItem]
 scores = calcular_riesgo(items, raw_events)                         # list[RiskScore], desc

@@ -10,14 +10,14 @@ import json
 import re
 from pathlib import Path
 
-from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, calcular_riesgo, extraer,
-                     generar_digest, resiliencia_equipo, simular)
+from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, calcular_riesgo, cargar_eventos,
+                     extraer, generar_digest, resiliencia_equipo, simular)
 from cerebro.grafo import colaboradores, construir_grafo, es_puente, grado, intermediacion
 from cerebro.nucleo import (PISO_NORMALIZACION, _afectados, _bloque_colaboracion, _dedup_exacto,
                             _emails_de, _formatear_eventos, cobertura, peso_riesgo)
 from cerebro.validacion import escenarios_sanos, monotonia, sensibilidad_pesos, spearman
 
-EVENTOS = [RawEvent.model_validate(e) for e in json.loads(Path("data/raw/mock_events.json").read_text(encoding="utf-8"))]
+EVENTOS = cargar_eventos()
 
 
 def item(id_, tipo, dueño, respaldos=()):
