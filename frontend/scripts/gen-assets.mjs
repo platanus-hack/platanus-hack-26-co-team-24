@@ -145,10 +145,12 @@ const COLORS = {
   chair: '#7B3FE4', // = morado
   monitorOn: '#2BD9D0', // = turquesa
   monitorOff: '#3A1959', // pantalla apagada
+  pcHousing: '#241543', // = surface (bisel del monitor)
   rackHousing: '#241543', // = surface
   rackOn: '#B6FF3C', // = lima (LEDs sanos)
   rackOff: '#FF2E63', // = rojo (LEDs caídos)
   coffee: '#FF7A2F', // = naranja
+  coffeeHousing: '#43276B', // = line (carcasa de la cafetera)
   meeting: '#7B3FE4', // = morado
   console: '#FF4D9D', // = rosa
   consoleEdge: '#F3E8FF', // = texto
@@ -249,12 +251,13 @@ function genObjects() {
     // server_on/off = rack GitHub: housing SURFACE, LEDs LIMA sanas / ROJO caídas.
     [col('rackHousing'), (cv, x0) => drawGlowCore(cv, x0, col('rackOn'), true)], // server_on
     [col('rackHousing'), (cv, x0) => drawGlowCore(cv, x0, col('rackOff'), true)], // server_off
-    // pc_on/off = monitor: pantalla turquesa con core claro / apagada #3A1959.
-    [hexToRgba('#252538'), (cv, x0) => drawGlowCore(cv, x0, col('monitorOn'), true)], // pc_on
-    [hexToRgba('#252538'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, col('monitorOff'))], // pc_off
-    [hexToRgba('#3a2a1a'), (cv, x0) => fillRect(cv, x0 + 6, 3, 4, 4, col('coffee'))], // coffee_a (lit)
+    // pc_on/off = monitor: bisel SURFACE, pantalla turquesa con core claro / apagada #3A1959.
+    [col('pcHousing'), (cv, x0) => drawGlowCore(cv, x0, col('monitorOn'), true)], // pc_on
+    [col('pcHousing'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, col('monitorOff'))], // pc_off
+    // coffee_a/b: carcasa LINE, luz NARANJA encendida / apagada.
+    [col('coffeeHousing'), (cv, x0) => fillRect(cv, x0 + 6, 3, 4, 4, col('coffee'))], // coffee_a (lit)
     [
-      hexToRgba('#3a2a1a'),
+      col('coffeeHousing'),
       (cv, x0) => fillRect(cv, x0 + 6, 3, 4, 4, desaturate(darken(col('coffee'), 0.6), 0.5)),
     ], // coffee_b (dim)
     [lighten(col('lamp'), 0.25), null], // lamp_a (bright, ORO)
