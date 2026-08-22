@@ -99,6 +99,9 @@ export class Character extends Phaser.GameObjects.Container {
 
   private running = false;
   private timer?: Phaser.Time.TimerEvent;
+  private walkTween?: Phaser.Tweens.Tween;
+  private cancelCurrentTween?: () => void;
+  private walkGeneration = 0;
 
   constructor(scene: OfficeScene, person: Person, pathfinder: Pathfinder) {
     const spawn = chairPixelFor(scene, person.desk);
@@ -153,17 +156,36 @@ export class Character extends Phaser.GameObjects.Container {
     return isBlocked(scene.map, tile.x, tile.y) ? { x: tile.x, y: tile.y + 1 } : tile;
   }
 
-  private tweenTo(x: number, y: number): Promise<void> {
+  private tweenTo(x: number, y: number): Promise<'done' | 'cancelled'> {
     return new Promise((resolve) => {
-      this.scene.tweens.add({
+      const finish = (result: 'done' | 'cancelled') => {
+        this.walkTween = undefined;
+        this.cancelCurrentTween = undefined;
+        resolve(result);
+      };
+      this.cancelCurrentTween = () => {
+        this.walkTween?.stop(); // Tween#stop() does NOT fire onComplete, so
+        finish('cancelled'); // we resolve by hand or the walk hangs forever.
+      };
+      this.walkTween = this.scene.tweens.add({
         targets: this,
         x,
         y,
         duration: CELL_DURATION_MS,
         ease: 'Linear',
-        onComplete: () => resolve(),
+        onComplete: () => finish('done'),
       });
     });
+  }
+
+  /** Cancela cualquier `walkTo` en curso: detiene el tween activo (si hay) y
+   * resuelve su promesa pendiente, e invalida cualquier llamada a `walkTo`
+   * que siga esperando un `findPath` (vía `walkGeneration`). Se usa al
+   * arrancar un `walkTo` nuevo, en `stopBehavior()` y en el shutdown de la
+   * escena (a través de `stopBehavior()`). */
+  private cancelWalk(): void {
+    this.walkGeneration++;
+    this.cancelCurrentTween?.();
   }
 
   /** Camina hasta `point` (nombre en `scene.points`) siguiendo el path del
@@ -172,6 +194,10 @@ export class Character extends Phaser.GameObjects.Container {
    * `Container.moveTo(child, index)` (reordenar hijos) con una firma
    * incompatible. */
   async walkTo(point: string): Promise<void> {
+    this.cancelWalk(); // un walkTo nuevo siempre reemplaza uno en curso
+    const myGen = this.walkGeneration;
+    const isStale = () => myGen !== this.walkGeneration || !this.scene?.sys?.isActive();
+
     const scene = this.scene as OfficeScene;
     const target = this.resolveTargetTile(point, scene);
     const from = { x: Math.floor(this.x / TILE), y: Math.floor(this.y / TILE) };
@@ -182,6 +208,7 @@ export class Character extends Phaser.GameObjects.Container {
     }
 
     const path = await this.pathfinder.findPath(from, target);
+    if (isStale()) return;
     if (path.length === 0) {
       this.play('idle');
       return;
@@ -204,7 +231,8 @@ export class Character extends Phaser.GameObjects.Container {
       const isLast = i === steps.length - 1;
       const targetX = step.x * TILE + TILE / 2 + (isLast ? offsetX : 0);
       const targetY = step.y * TILE + TILE / 2;
-      await this.tweenTo(targetX, targetY);
+      const result = await this.tweenTo(targetX, targetY);
+      if (result === 'cancelled' || isStale()) return;
       prev = step;
     }
 
@@ -219,13 +247,16 @@ export class Character extends Phaser.GameObjects.Container {
     this.scheduleNext(Math.random() * SPAWN_DELAY_MAX_MS);
   }
 
-  /** Detiene el loop ambiental y cancela cualquier timer pendiente. */
+  /** Detiene el loop ambiental, cancela cualquier timer pendiente Y cualquier
+   * walkTo en curso (para que p.ej. `stopBehavior(); await walkTo('door')`
+   * no compita con un tween-chain anterior todavía vivo). */
   stopBehavior(): void {
     this.running = false;
     if (this.timer) {
       this.timer.remove();
       this.timer = undefined;
     }
+    this.cancelWalk();
   }
 
   private scheduleNext(delayMs: number): void {

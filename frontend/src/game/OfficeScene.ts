@@ -79,14 +79,18 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private spawnCharacters(): void {
-    getOficina().then((oficina) => {
-      for (const person of oficina.people) {
-        const character = new Character(this, person, this.pathfinder);
-        this.add.existing(character);
-        this.characters[person.id] = character;
-        character.startBehavior();
-      }
-    });
+    getOficina()
+      .then((oficina) => {
+        // La escena pudo haberse cerrado mientras esperábamos la respuesta.
+        if (!this.sys.isActive()) return;
+        for (const person of oficina.people) {
+          const character = new Character(this, person, this.pathfinder);
+          this.add.existing(character);
+          this.characters[person.id] = character;
+          character.startBehavior();
+        }
+      })
+      .catch((err) => console.error('getOficina', err));
   }
 
   private loadPoints(): void {
