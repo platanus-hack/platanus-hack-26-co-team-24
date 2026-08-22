@@ -221,6 +221,39 @@ def test_autocritica_sin_api_key_no_revienta():
     assert r.generado_por == "respaldo" and r.puntaje_playbook is None
 
 
+def test_autocritica_conserva_el_bueno_y_reescribe_el_malo():
+    """Las cuatro ramas del ciclo, sin red: es la ruta que corre en vivo."""
+    from cerebro import llm, nucleo
+
+    original_parse, original_texto = llm.parse_json, llm.texto
+    try:
+        # aprobado: se conserva el texto y se reporta el puntaje
+        llm.parse_json = lambda *a, **k: nucleo._Critica(puntaje=9)
+        texto, puntaje, avisos = nucleo._pulir_playbook("# bueno", "ctx", 25.0)
+        assert (texto, puntaje, avisos) == ("# bueno", 9, [])
+
+        # reprobado: se reescribe y el puntaje viejo NO viaja con el texto nuevo
+        llm.parse_json = lambda *a, **k: nucleo._Critica(puntaje=4, faltantes=["reglas tácitas"])
+        llm.texto = lambda *a, **k: "# reescrito"
+        texto, puntaje, avisos = nucleo._pulir_playbook("# malo", "ctx", 25.0)
+        assert texto == "# reescrito" and puntaje is None
+        assert "4/10" in avisos[0]
+
+        # la reescritura falla: se queda el original, con el puntaje del borrador
+        def revienta(*a, **k):
+            raise TimeoutError("tarde")
+
+        llm.texto = revienta
+        texto, puntaje, avisos = nucleo._pulir_playbook("# malo", "ctx", 25.0)
+        assert texto == "# malo" and puntaje == 4 and "omitida" in avisos[0]
+
+        # la crítica falla: nada cambia
+        llm.parse_json = revienta
+        assert nucleo._pulir_playbook("# tal cual", "ctx", 25.0)[:2] == ("# tal cual", None)
+    finally:
+        llm.parse_json, llm.texto = original_parse, original_texto
+
+
 def test_metadata_de_p1_llega_al_prompt():
     """Los archivos tocados de un commit son la señal más fuerte de quién toca qué."""
     commit = next(e for e in EVENTOS if e.metadata.get("archivos"))

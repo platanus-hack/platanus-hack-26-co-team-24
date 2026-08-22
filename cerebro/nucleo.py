@@ -454,6 +454,8 @@ def bus_factor(items: list[KnowledgeItem], *, umbral: float = 0.5) -> BusFactor:
     pasos: list[PasoBusFactor] = []
     fraccion, _ = _fraccion_huerfana(items, presentes)
 
+    # ponytail: O(n²·m) — recalcula la fracción para cada candidato en cada vuelta.
+    # Con 9-200 personas es instantáneo; a escala de miles, cachear por persona.
     while presentes and fraccion <= umbral:
         # la persona cuya salida deja más peso sin dueño
         victima = max(presentes, key=lambda p: (_fraccion_huerfana(items, presentes - {p})[0], p))
@@ -704,6 +706,10 @@ def _pulir_playbook(playbook: str, prompt: str, timeout: float) -> tuple[str, in
     Adaptado de Zuin et al. (IJCNN 2025), recortado a una sola iteración: el playbook
     corre en vivo delante del jurado y cada llamada extra son segundos.
 
+    Devuelve `(playbook, puntaje, advertencias)`. El puntaje describe **la versión
+    devuelta**: si hubo reescritura viene `None`, porque evaluarla otra vez sería una
+    tercera llamada en vivo y el número del borrador no aplica al texto nuevo.
+
     Si la crítica o la reescritura fallan, devuelve el playbook original — nunca deja
     el resultado peor de como llegó.
     """
@@ -713,6 +719,7 @@ def _pulir_playbook(playbook: str, prompt: str, timeout: float) -> tuple[str, in
             f"## Documento a evaluar\n\n{playbook}\n\n## Contexto del que salió\n\n{prompt}",
             _Critica,
             max_tokens=2000,
+            timeout=timeout,
         )
     except Exception as e:
         return playbook, None, [f"Autocrítica omitida ({type(e).__name__})"]
@@ -733,7 +740,10 @@ def _pulir_playbook(playbook: str, prompt: str, timeout: float) -> tuple[str, in
     except Exception as e:
         return playbook, critica.puntaje, [f"Reescritura omitida ({type(e).__name__}); playbook en {critica.puntaje}/10"]
 
-    return mejorado, critica.puntaje, [f"Playbook reescrito tras autocrítica ({critica.puntaje}/10)"]
+    # El puntaje era del borrador, no de esta versión, y volver a evaluarla
+    # costaría una tercera llamada en vivo. Devolver el número viejo junto al
+    # texto nuevo sería mentirle al dashboard de P5.
+    return mejorado, None, [f"Playbook reescrito tras autocrítica del borrador ({critica.puntaje}/10)"]
 
 
 def _catalogo_detallado(items: list[KnowledgeItem]) -> str:

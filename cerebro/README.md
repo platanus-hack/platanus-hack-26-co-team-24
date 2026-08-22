@@ -57,8 +57,11 @@ especulación baja el puntaje.
 
 Adaptado del ciclo de [Zuin et al., IJCNN 2025](https://arxiv.org/abs/2507.03811), recortado
 a una sola iteración por presupuesto de latencia. El puntaje viaja en
-`SimulationResult.puntaje_playbook`. Si la crítica o la reescritura fallan, se queda el
-playbook original: nunca deja el resultado peor de como llegó.
+`SimulationResult.puntaje_playbook`, que describe **la versión devuelta**: viene `None` si
+hubo reescritura, porque volver a evaluarla costaría una tercera llamada en vivo y el
+número del borrador no aplica al texto nuevo. La advertencia dice qué pasó. Si la crítica o
+la reescritura fallan, se queda el playbook original: nunca deja el resultado peor de como
+llegó.
 
 Para el demo en vivo: ensaya una vez con `autocritica=True` (la caché guarda el resultado) y
 en el escenario responde instantáneo. Si vas a simular algo no ensayado, considera
