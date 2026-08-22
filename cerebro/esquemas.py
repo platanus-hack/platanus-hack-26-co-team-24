@@ -8,9 +8,15 @@ conoce emails (es lo único consistente entre Slack, GitHub y Meet); P3 mapea
 email -> user_id de Supabase.
 """
 
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
+
+# Raíz del repositorio. Todas las rutas por defecto cuelgan de aquí y no del
+# directorio desde el que se lanzó el proceso: cuando P3 arranque uvicorn desde
+# /backend, `data/raw` relativo apuntaría a la nada.
+RAIZ = Path(__file__).resolve().parent.parent
 
 Fuente = Literal["slack", "github", "meet", "notion"]
 TipoConocimiento = Literal["tarea", "acceso", "regla_tacita", "proceso"]

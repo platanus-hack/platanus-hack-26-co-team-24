@@ -27,10 +27,10 @@ import re
 import unicodedata
 from pathlib import Path
 
-from .esquemas import KnowledgeItem, RawEvent, RiskScore
+from .esquemas import RAIZ, KnowledgeItem, RawEvent, RiskScore
 from .nucleo import PESOS, calcular_riesgo, peso_riesgo
 
-RUTA_RANKING_HUMANO = Path("data/ranking_humano.json")
+RUTA_RANKING_HUMANO = RAIZ / "data" / "ranking_humano.json"
 
 # Lo que sabemos que está sembrado en data/raw/fixture_p2.json. Es el gold set:
 # si P1 cambia los datos, esta lista se actualiza con él.
