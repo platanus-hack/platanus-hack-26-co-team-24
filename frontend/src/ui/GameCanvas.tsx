@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { config } from '../game/config';
 import { RiskTooltip } from './RiskTooltip';
+import { ArcadeConsole } from './ArcadeConsole';
+import { ResultPanel } from './ResultPanel';
 
 declare global {
   interface Window {
@@ -25,6 +27,8 @@ export function GameCanvas() {
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       <div ref={ref} style={{ width: '100%', height: '100%' }} />
       <RiskTooltip />
+      <ArcadeConsole />
+      <ResultPanel />
     </div>
   );
 }

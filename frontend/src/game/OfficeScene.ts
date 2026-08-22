@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
-import { getOficina, getRiesgo } from '../api';
+import { getOficina, getRiesgo, simular } from '../api';
 import type { Riesgo } from '../types';
 import { Character } from './Character';
 import { createPathfinder, type Pathfinder } from './pathfinding';
 import { loadAvatar } from '../avatarStorage';
+import { bus } from '../bus';
+import { getRunner } from './scenarios';
 
 const DEMO_USER_ID = 'p_ana';
 
@@ -24,7 +26,12 @@ const CHARACTER_SHEETS = [
 // Frame indices in sprites/objects.png (see gen-assets.mjs / ATTRIBUTION.md):
 // 0 server_on, 1 server_off, 2 pc_on, 3 pc_off, 4 coffee_a, 5 coffee_b,
 // 6 lamp_a, 7 lamp_b, 8 meet_on, 9 meet_off, 10 console, 11 question.
-const ANIMS: Array<{ key: string; start: number; end: number; frameRate: number }> = [
+const ANIMS: Array<{
+  key: string;
+  start: number;
+  end: number;
+  frameRate: number;
+}> = [
   { key: 'server', start: 0, end: 1, frameRate: 2 },
   { key: 'pc', start: 2, end: 3, frameRate: 1 },
   { key: 'coffee', start: 4, end: 5, frameRate: 2 },
@@ -42,6 +49,11 @@ export class OfficeScene extends Phaser.Scene {
   objects: Record<string, Phaser.GameObjects.Sprite> = {};
   pathfinder!: Pathfinder;
   characters: Record<string, Character> = {};
+  /** Objetos creados por el runner de escenario (iconos "?", overlays...).
+   * `restore()` reinicia la escena, así que sólo se usan para poder
+   * inspeccionarlos/limpiarlos sin reinicio completo. */
+  scenarioFx: Phaser.GameObjects.GameObject[] = [];
+  scenarioRunning = false;
 
   constructor() {
     super('office');
@@ -63,6 +75,13 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   create(): void {
+    // `restart()` reutiliza la instancia de la escena: limpiamos los registros
+    // para no quedarnos con referencias a objetos ya destruidos mientras
+    // `spawnCharacters()` (async) repuebla `characters`.
+    this.points = {};
+    this.objects = {};
+    this.characters = {};
+
     this.map = this.make.tilemap({ key: 'office' });
     const tileset = this.map.addTilesetImage('office', 'office-tiles');
     if (!tileset) throw new Error('office tileset failed to load');
@@ -80,6 +99,50 @@ export class OfficeScene extends Phaser.Scene {
 
     this.pathfinder = createPathfinder(this.map);
     this.spawnCharacters();
+
+    this.scenarioFx = [];
+    this.scenarioRunning = false;
+    bus.on('scenario:start', this.onScenarioStart, this);
+    bus.on('scenario:restore', this.restore, this);
+    this.events.once('shutdown', () => {
+      bus.off('scenario:start', this.onScenarioStart, this);
+      bus.off('scenario:restore', this.restore, this);
+    });
+  }
+
+  /** Corre en paralelo la simulación (API) y su animación en la oficina, para
+   * que el resultado nunca llegue antes de que termine el show. Si la API
+   * falla, se restaura la oficina: en el demo nunca se queda a medias. */
+  private async onScenarioStart({
+    scenario_id,
+    person_id,
+  }: {
+    scenario_id: string;
+    person_id?: string;
+  }): Promise<void> {
+    if (this.scenarioRunning) return;
+    this.scenarioRunning = true;
+    try {
+      const [result] = await Promise.all([
+        simular({ scenario_id, person_id }),
+        getRunner(scenario_id)(this, person_id),
+      ]);
+      bus.emit('scenario:result', result);
+    } catch (err) {
+      console.error('scenario:start', err);
+      bus.emit('scenario:error', String(err));
+      this.restore();
+    } finally {
+      this.scenarioRunning = false;
+    }
+  }
+
+  /** Deshace cualquier escenario simulado. ponytail: en vez de revertir cada
+   * efecto a mano, reiniciamos la escena (re-spawnea personajes y recarga el
+   * riesgo). El handler de `shutdown` desengancha el bus para no duplicar
+   * listeners al volver a `create()`. */
+  restore(): void {
+    this.scene.restart();
   }
 
   private spawnCharacters(): void {
@@ -145,7 +208,10 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   /** Places a 16x16 sprite so it's centered on the tile at `point`, with an optional vertical pixel offset. */
-  private spriteAt(point: { x: number; y: number }, offsetY = 0): Phaser.GameObjects.Sprite {
+  private spriteAt(
+    point: { x: number; y: number },
+    offsetY = 0,
+  ): Phaser.GameObjects.Sprite {
     return this.add.sprite(point.x + 8, point.y + 8 + offsetY, OBJECTS_KEY);
   }
 
@@ -172,6 +238,9 @@ export class OfficeScene extends Phaser.Scene {
 
     const console_ = this.spriteAt(this.points['console']);
     console_.setFrame(10); // console: static frame, no blink animation
+    console_
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => bus.emit('console:open'));
     this.objects['console'] = console_;
 
     LAMP_COLUMNS.forEach((col, i) => {
