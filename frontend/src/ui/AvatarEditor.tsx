@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { putAvatar, IS_MOCK } from '../api';
+import { putAvatar } from '../api';
 import { PALETTE } from '../game/palette';
 import { loadAvatar, saveAvatar, CUERPOS, PEINADOS, ROPAS, PALETAS } from '../avatarStorage';
 import type { AvatarConfig } from '../types';
@@ -42,8 +42,12 @@ function loadImg(src: string): HTMLImageElement {
 // Editor de avatar: 4 selects nativos + preview animado (16x24 a 6x) en
 // canvas, compuesto de las 3 capas LPC de Character.ts, ropa tintada por PALETTE.
 export function AvatarEditor() {
-  // El localStorage sólo manda en modo demo; con API real el avatar vive allá.
-  const [cfg, setCfg] = useState<AvatarConfig>(() => (IS_MOCK ? loadAvatar() : null) ?? DEFAULT_CONFIG);
+  // El localStorage manda en ambos modos: P3 todavía no tiene `PUT /avatar`,
+  // así que el avatar guardado aquí es el único que existe (y es el que
+  // `OfficeScene` reaplica al usuario demo al spawnear).
+  const [cfg, setCfg] = useState<AvatarConfig>(
+    () => loadAvatar() ?? DEFAULT_CONFIG,
+  );
   const [status, setStatus] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef(0);
