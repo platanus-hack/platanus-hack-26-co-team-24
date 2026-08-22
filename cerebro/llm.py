@@ -74,17 +74,24 @@ def parse_json(
     modelo_salida: type[T],
     *,
     max_tokens: int = 16000,
+    timeout: float | None = None,
 ) -> T:
     """Pide a Claude una respuesta que cumpla `modelo_salida` y la devuelve validada.
 
     Usa structured outputs (`messages.parse`), no parseo manual de texto: la API
     garantiza el JSON, así que no hay que limpiar fences ``` ni reintentar.
+
+    `timeout` en segundos, para las llamadas que corren en vivo. Sin él vale el
+    default del cliente, que son diez minutos: aceptable offline, letal en el demo.
     """
     clave = _clave(MODELO, system, prompt, modelo_salida.__name__, str(modelo_salida.model_json_schema()))
     if (crudo := _leer_cache(clave)) is not None:
         return modelo_salida.model_validate_json(crudo)
 
-    respuesta = _get_cliente().messages.parse(
+    cliente = _get_cliente()
+    if timeout is not None:
+        cliente = cliente.with_options(timeout=timeout)
+    respuesta = cliente.messages.parse(
         model=MODELO,
         max_tokens=max_tokens,
         system=system,

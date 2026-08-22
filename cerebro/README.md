@@ -52,6 +52,26 @@ El playbook es el único punto donde el modelo escribe texto libre, así que al
 volver se revisa que **todo email que aparezca exista en los datos**; los
 inventados se reportan en `advertencias`.
 
+### Autocrítica del playbook
+
+Con `autocritica=True` (por defecto), el playbook se evalúa de 0 a 10 antes de devolverse y
+se reescribe una vez si no llega a 8. Los criterios son duros: tiene que nombrar las reglas
+tácitas explícitamente, asignar cada huérfano a una persona concreta con justificación,
+tener pasos de 48 horas verificables y no afirmar nada fuera de la evidencia. La
+especulación baja el puntaje.
+
+Adaptado del ciclo de [Zuin et al., IJCNN 2025](https://arxiv.org/abs/2507.03811), recortado
+a una sola iteración por presupuesto de latencia. El puntaje viaja en
+`SimulationResult.puntaje_playbook`, que describe **la versión devuelta**: viene `None` si
+hubo reescritura, porque volver a evaluarla costaría una tercera llamada en vivo y el
+número del borrador no aplica al texto nuevo. La advertencia dice qué pasó. Si la crítica o
+la reescritura fallan, se queda el playbook original: nunca deja el resultado peor de como
+llegó.
+
+Para el demo en vivo: ensaya una vez con `autocritica=True` (la caché guarda el resultado) y
+en el escenario responde instantáneo. Si vas a simular algo no ensayado, considera
+`autocritica=False`.
+
 En `extraer()` el filtro es más duro: un item cuyo `dueño_principal` no aparece
 en los eventos se descarta entero, y los respaldos inventados se quitan. Un
 respaldo falso es peor que ninguno — apaga la alarma.
@@ -71,7 +91,9 @@ mock por su cuenta en vez de fallar.
 ```python
 extraer(raw_events, *, fusionar=True, mock=False) -> list[KnowledgeItem]
 calcular_riesgo(items, raw_events=None, *, mock=False) -> list[RiskScore]
-simular(scenario_id, items, objetivo_id=None, raw_events=None, *, timeout=25.0, mock=False) -> SimulationResult
+bus_factor(items, *, umbral=0.5) -> BusFactor
+resiliencia_equipo(items) -> float
+simular(scenario_id, items, objetivo_id=None, raw_events=None, *, timeout=25.0, autocritica=True, mock=False) -> SimulationResult
 generar_digest(items, scores, raw_events=None, *, limite=6, mock=False) -> list[Quest]
 ```
 
@@ -97,6 +119,25 @@ score           = 100 × riesgo / max(riesgo del equipo, 6.0)
 Un respaldo único deja el peso en ~55%: bus factor 2 sigue siendo frágil, no se
 premia como si estuviera resuelto.
 
+### El bus factor del equipo
+
+```python
+bf = bus_factor(items)
+bf.numero              # 3 — el titular del pitch
+bf.personas            # ['ana@…', 'valentina@…', 'brayan@…'] en orden de criticidad
+bf.fraccion_huerfana   # 0.52 — peso del conocimiento sin dueño al terminar
+bf.pasos               # qué se rompe tras cada salida, para el dashboard
+```
+
+Heurístico greedy de [Avelino et al.](https://arxiv.org/pdf/1604.06766) portado de archivos
+de código a elementos de conocimiento: en cada vuelta sale la persona cuya ausencia deja
+más conocimiento sin nadie que lo sepa, hasta superar el `umbral` (0.5, el mismo de la
+literatura). Sin LLM.
+
+`pasos` es lo que hace el número creíble: muestra la **cascada**. En los datos de prueba,
+Brayan aparece tercero porque su respaldo era Valentina, que ya salió en el paso 2 — un
+respaldo que ya se fue no respalda a nadie.
+
 ### Dos números, y no son intercambiables
 
 | Campo | Qué es | Para quién |
@@ -104,6 +145,7 @@ premia como si estuviera resuelto.
 | `RiskScore.score` | 0-100 **relativo al equipo** | P4: colores de la oficina |
 | `RiskScore.riesgo_absoluto` | riesgo crudo, comparable entre semanas | comparaciones temporales |
 | `resiliencia_equipo(items)` | 0-100 de cobertura del conocimiento | **P5: el puntaje del pitch** |
+| `bus_factor(items).numero` | cuánta gente puede faltar antes de romperse | el titular del demo |
 
 El `score` relativo **no puede medir progreso** — si todo el equipo mejora, el
 máximo baja y los scores relativos se quedan igual o suben. El número que sube

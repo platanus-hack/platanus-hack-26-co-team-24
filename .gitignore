@@ -2,6 +2,10 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
+.env.*
+_env
+*_env
+!.env.example
 .DS_Store
 .cache_cerebro/
 /config/github_users.json
