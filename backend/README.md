@@ -139,6 +139,33 @@ item, recalcula el riesgo y devuelve el puntaje nuevo con su delta. Es idempoten
 - El resultado se guarda en `data/estado.json`, así que reiniciar el proceso no
   vacía la oficina.
 
+## Deploy
+
+Render no puede conectarse al repo de la organización, así que se despliega desde
+un espejo personal. El remoto ya está configurado para empujar a los dos a la vez:
+
+```
+origin  git@github.com:platanus-hack/platanus-hack-26-co-team-24.git  (fetch, push)
+origin  git@github.com:Jhosgun/bus-factor-hq.git                      (push)
+```
+
+Un `git push` normal actualiza ambos. En el dashboard de Render: **New → Web
+Service → Jhosgun/bus-factor-hq**, rama `feat/p3-backend` (es la rama por
+defecto del espejo). `render.yaml` ya trae build, start y healthcheck; lo único
+que se pone a mano es `ANTHROPIC_API_KEY`.
+
+El build (`pip install -e ".[api]"`) está verificado en un venv limpio, y la app
+arranca desde cualquier directorio — se probó con el CWD en `/tmp`.
+
+Dos cosas del plan gratuito que hay que tener en cuenta **antes** del demo:
+
+- **El servicio se duerme** a los 15 minutos sin tráfico y despertar tarda casi un
+  minuto. Pegarle a `/salud` unos minutos antes de salir a presentar.
+- **El disco es efímero.** `data/estado.json` y la caché de P2 no sobreviven un
+  reinicio, así que tras cada deploy hay que correr `POST /admin/procesar` — o
+  mejor, commitear un snapshot bueno con `git add -f data/estado.json` para que el
+  arranque en frío ya traiga la oficina poblada.
+
 ## Pendiente
 
 Auth (Supabase), `PUT /usuarios/me/avatar` y `POST /conexiones`. Van después
