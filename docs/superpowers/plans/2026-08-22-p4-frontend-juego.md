@@ -20,6 +20,7 @@
 - Prioridad: 🥇 oficina viva + riesgo en colores → 🥈 renuncia → 🥉 editor avatar → 🏅 GitHub/robo PC → ❌ resto.
 - Commits pequeños cada ≤2h, rama `p4/<tema>`, PR a `main`. Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`).
 - Assets solo CC0/CC-BY (Kenney, LPC) con `ATTRIBUTION.md`.
+- **Dirección de arte (pedido del usuario 2026-08-22):** colores súper llamativos y originales, estilo caricatura sci-fi (referencia de *sensación*: cartoons de Halo — saturación alta, contraste fuerte, contornos oscuros marcados, luces neón cian/magenta/naranja sobre fondos azul-violeta profundos). Nada de beige/gris apagado. Paleta única en `src/game/palette.ts` (sprites, tints, auras, UI) — sin copiar arte de terceros.
 
 ---
 
@@ -166,11 +167,21 @@ export const durationMs = (_: State, r = Math.random()) => 4000 + r * 8000;
 - [ ] Checklist hora 6: nadie atraviesa muebles; si dos comparten celda, offset de 2px por índice (ponytail: sin evitación dinámica; añadir si se ve feo en el demo).
 - [ ] Commit: `feat(game): personajes con pathfinding y comportamiento ambiental`
 
+### Task 3b: Paleta vibrante (dirección de arte)
+
+**Files:** `src/game/palette.ts`, `scripts/gen-assets.mjs`, `scripts/gen-map.mjs` (solo colores), `src/game/config.ts` (backgroundColor), `src/index.css`
+
+- [ ] `palette.ts`: exportar `THEME` con bg `#0b0b2b`, floor `#2b2d7a` / `#34378f` (tablero de 2 tonos), wall `#120f3a` con borde `#00e5ff`, desk `#ff7a00` borde `#3a1a00`, chair `#ff2e88`, server `#00e5ff`/`#7c4dff`, coffee `#ffd600`, meeting table `#39ff14`, console `#ff00aa`; personajes: skins `#ffcc99`/`#8d5524`, pelo `#1a1a1a`/`#ff3d00`, ropa base gris claro para tint; PALETTE de tints: blue `#00b3ff`, red `#ff1744`, green `#00e676`, yellow `#ffea00`, purple `#d500f9`, gray `#b0bec5`. Riesgo: verde `#00ff88`, amarillo `#ffea00`, rojo `#ff1744`.
+- [ ] Regenerar assets con esos colores (contorno 1px oscuro en cada tile/sprite, highlight 1px claro arriba-izquierda = look "cartoon").
+- [ ] `config.ts` backgroundColor = THEME.bg; `index.css` body = THEME.bg.
+- [ ] Screenshot de verificación: debe verse vibrante, no beige.
+- [ ] Commit: `feat(art): paleta vibrante estilo cartoon sci-fi`
+
 ### Task 4: Riesgo visible + tooltip (Fase 3a, hora 5-6)
 
 **Files:** `src/game/risk.ts`, `src/game/risk.test.ts`, `src/ui/RiskTooltip.tsx`
 
-- [ ] `risk.ts`: `scoreToColor(s)` → `0x4ade80` (≤40), `0xfacc15` (≤70), `0xef4444`; `isCritical = (s) => s > 70`. Test de bordes 40/41/70/71.
+- [ ] `risk.ts`: `scoreToColor(s)` → `0x00ff88` (≤40), `0xffea00` (≤70), `0xff1744` (importar de `palette.ts`); `isCritical = (s) => s > 70`. Test de bordes 40/41/70/71.
 - [ ] Character: aura tint según score; si crítico, tween `alpha 0.3↔0.9, yoyo, repeat:-1`.
 - [ ] Click en personaje → `bus.emit('person:click', { id, nombre, score, items_criticos })` → `RiskTooltip` lo muestra; cerrar con Esc/click fuera. Texto plano, nunca `dangerouslySetInnerHTML`.
 - [ ] Checklist: cambiar score en `riesgo.json` cambia el color.
