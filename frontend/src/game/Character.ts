@@ -302,6 +302,16 @@ export class Character extends Phaser.GameObjects.Container {
       this.timer = undefined;
     }
     this.cancelWalk();
+    this.pulseTween?.stop();
+    this.pulseTween = undefined;
+  }
+
+  /** Cualquier ruta de destrucción (no sólo el shutdown de la escena) debe
+   * detener el loop ambiental y el tween de pulso del aura, para no dejar
+   * un tween corriendo sobre un GameObject ya destruido. */
+  destroy(fromScene?: boolean): void {
+    this.stopBehavior();
+    super.destroy(fromScene);
   }
 
   private scheduleNext(delayMs: number): void {
