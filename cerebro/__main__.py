@@ -6,7 +6,8 @@ Para el ensayo del demo (P5) y para que P3 vea qué forma tiene la salida.
 Sin API key funciona igual, con playbook sin narración.
 """
 
-from . import calcular_riesgo, cargar_eventos, extraer, generar_digest, resiliencia_equipo, simular
+from . import (bus_factor, calcular_riesgo, cargar_eventos, extraer, generar_digest,
+               resiliencia_equipo, simular)
 
 
 def main() -> int:
@@ -14,8 +15,12 @@ def main() -> int:
     items = extraer(eventos)
     scores = calcular_riesgo(items, eventos)
 
+    bf = bus_factor(items)
     print(f"\n{len(eventos)} eventos → {len(items)} elementos de conocimiento")
-    print(f"Resiliencia del equipo: {resiliencia_equipo(items):.1f}/100\n")
+    print(f"\n  BUS FACTOR: {bf.numero}")
+    for i, paso in enumerate(bf.pasos, start=1):
+        print(f"    {i}. sin {paso.persona_id:24} → {paso.fraccion_huerfana:.0%} del conocimiento sin dueño")
+    print(f"\nResiliencia del equipo: {resiliencia_equipo(items):.1f}/100\n")
 
     print("── Oficina ──")
     for s in scores:

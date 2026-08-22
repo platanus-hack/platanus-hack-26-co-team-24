@@ -24,7 +24,9 @@ from . import llm, mocks
 from .esquemas import (
     ESCENARIOS_POR_ID,
     RAIZ,
+    BusFactor,
     KnowledgeItem,
+    PasoBusFactor,
     Quest,
     RawEvent,
     RiskScore,
@@ -38,21 +40,24 @@ FIXTURE_P2 = DIR_EVENTOS / "fixture_p2.json"  # el nuestro, hasta que P1 publiqu
 
 
 def cargar_eventos(directorio: Path = DIR_EVENTOS) -> list[RawEvent]:
-    """Los eventos de P1 si ya existen; si no, nuestro fixture.
+    """Load live P1 events, then P1 mocks, then P2's internal fixture.
 
-    P1 escribe un archivo por fuente en `data/raw/` (mock_events.json,
-    slack_events.json, github_events.json...). En cuanto aparezca cualquiera de
-    ellos, esto deja de leer el fixture solo — sin tocar código y sin mezclar
-    datos reales con inventados. Deduplica por `id`, que P1 genera determinista.
+    P1 writes normalized live files to `data/raw/`. Live files must never be
+    mixed with `mock_events.json`, because the same emails can exist in both and
+    fictional knowledge would be attributed to real people. Every tier is
+    deduplicated by P1's deterministic event id.
     """
-    reales = sorted(p for p in directorio.glob("*.json") if p.name != FIXTURE_P2.name)
-    archivos = reales or ([FIXTURE_P2] if FIXTURE_P2.exists() else [])
-    por_id: dict[str, RawEvent] = {}
-    for archivo in archivos:
-        for crudo in json.loads(archivo.read_text(encoding="utf-8")):
-            ev = RawEvent.model_validate(crudo)
-            por_id.setdefault(ev.id, ev)
-    return sorted(por_id.values(), key=lambda e: e.timestamp)
+    fixture = directorio / FIXTURE_P2.name
+    mock = directorio / "mock_events.json"
+    excluded = {fixture.name, mock.name}
+    live = sorted(path for path in directorio.glob("*.json") if path.name not in excluded)
+    files = live or ([mock] if mock.exists() else [fixture] if fixture.exists() else [])
+    by_id: dict[str, RawEvent] = {}
+    for file in files:
+        for raw in json.loads(file.read_text(encoding="utf-8")):
+            event = RawEvent.model_validate(raw)
+            by_id.setdefault(event.id, event)
+    return sorted(by_id.values(), key=lambda event: event.timestamp)
 
 PESOS = {"acceso": 3, "proceso": 2, "tarea": 1, "regla_tacita": 2}
 BONO_INTERMEDIACION = 0.5  # la persona mas central del grafo pesa 1.5x
@@ -101,6 +106,14 @@ class _Fusion(BaseModel):
     grupos: list[list[int]]
 
 
+class _Critica(BaseModel):
+    """Autoevaluación del playbook, al estilo del ciclo de Zuin et al. (IJCNN 2025)."""
+
+    puntaje: int  # 0-10
+    faltantes: list[str] = Field(default_factory=list)
+    sugerencias: list[str] = Field(default_factory=list)
+
+
 class _QuestGenerada(BaseModel):
     asignado_a: str
     accion: str
@@ -143,6 +156,20 @@ Un buen playbook responde: qué hacía la persona o el sistema afectado, cómo l
 hacía, qué reglas no escritas hay que respetar, quién asume cada cosa y qué pasa \
 en las primeras 48 horas. Las reglas tácitas son lo más valioso del documento: \
 nómbralas explícitamente, son lo primero que se pierde."""
+
+SISTEMA_CRITICO = """Evalúas documentos de empalme con criterio duro. Puntúas de 0 a 10.
+
+Para llegar a 8 o más el documento tiene que cumplir TODO esto:
+- Nombra explícitamente las reglas tácitas. Son lo primero que se pierde y lo más
+valioso del documento; si las omite, no pasa de 6.
+- Asigna cada elemento huérfano a una persona concreta, con la razón de por qué esa
+persona. "Alguien del equipo" o "el líder" no cuentan.
+- Los pasos de las primeras 48 horas son ejecutables: se puede saber si se hicieron o no.
+- No afirma nada que no esté en la evidencia entregada.
+
+La especulación no se permite. Si el documento inventa datos, atribuye conocimiento a
+alguien sin sustento, o se escuda en generalidades, baja el puntaje y dilo en `faltantes`.
+`sugerencias` son instrucciones concretas para la siguiente versión, no elogios."""
 
 SISTEMA_DIGEST = """Generas misiones semanales de descentralización del conocimiento. \
 Cada misión es una acción imperativa, concreta y ejecutable en menos de una hora, \
@@ -396,6 +423,60 @@ def _detalle(
     return ". ".join(partes) + "."
 
 
+def _quienes_saben(item: KnowledgeItem) -> set[str]:
+    return {item.dueño_principal, *item.respaldos}
+
+
+def _fraccion_huerfana(items: list[KnowledgeItem], presentes: set[str]) -> tuple[float, int]:
+    """Qué proporción del peso del conocimiento no la sabe nadie de `presentes`."""
+    total = sum(PESOS[it.tipo] for it in items)
+    if not total:
+        return 0.0, 0
+    huerfanos = [it for it in items if not (_quienes_saben(it) & presentes)]
+    return sum(PESOS[it.tipo] for it in huerfanos) / total, len(huerfanos)
+
+
+def bus_factor(items: list[KnowledgeItem], *, umbral: float = 0.5) -> BusFactor:
+    """Cuánta gente puede faltar antes de que el equipo se rompa.
+
+    Heurístico greedy de Avelino et al. (arXiv 1604.06766), portado de archivos
+    de código a elementos de conocimiento: en cada vuelta se saca a la persona
+    cuya ausencia deja más conocimiento sin nadie que lo sepa, hasta pasar el
+    `umbral` de peso huérfano. El número de personas que hubo que sacar es el
+    bus factor.
+
+    Una persona "sabe" un elemento si es su dueño o está en sus respaldos, y
+    cada elemento pesa según su tipo (`PESOS`): perder un acceso no es lo mismo
+    que perder una tarea.
+    """
+    if not items:
+        return BusFactor(numero=0)
+
+    presentes = {p for it in items for p in _quienes_saben(it)}
+    fuera: list[str] = []
+    pasos: list[PasoBusFactor] = []
+    fraccion, _ = _fraccion_huerfana(items, presentes)
+
+    # ponytail: O(n²·m) — recalcula la fracción para cada candidato en cada vuelta.
+    # Con 9-200 personas es instantáneo; a escala de miles, cachear por persona.
+    while presentes and fraccion <= umbral:
+        # la persona cuya salida deja más peso sin dueño
+        victima = max(presentes, key=lambda p: (_fraccion_huerfana(items, presentes - {p})[0], p))
+        presentes = presentes - {victima}
+        fuera.append(victima)
+        fraccion, cuantos = _fraccion_huerfana(items, presentes)
+        pasos.append(
+            PasoBusFactor(persona_id=victima, fraccion_huerfana=round(fraccion, 3), items_huerfanos=cuantos)
+        )
+
+    return BusFactor(
+        numero=len(fuera),
+        personas=fuera,
+        fraccion_huerfana=round(fraccion, 3),
+        pasos=pasos,
+    )
+
+
 def resiliencia_equipo(items: list[KnowledgeItem]) -> float:
     """0-100: qué porcentaje del conocimiento del equipo está cubierto.
 
@@ -512,6 +593,7 @@ def simular(
     raw_events: list[RawEvent | dict] | None = None,
     *,
     timeout: float = 25.0,
+    autocritica: bool = True,
     mock: bool = False,
 ) -> SimulationResult:
     """Ejecuta un escenario y genera el playbook de empalme en Markdown.
@@ -519,6 +601,10 @@ def simular(
     Con `raw_events` el prompt recibe además con quién colabora realmente cada
     persona afectada, que es lo que permite proponer un sucesor cuando el item
     no tiene respaldo. Sin ellos el modelo solo puede adivinar por el texto.
+
+    Con `autocritica` el playbook se evalúa de 0 a 10 y se reescribe una vez si no
+    llega a 8. Súbele calidad a costa de una o dos llamadas más; apágalo si la
+    latencia en vivo aprieta (la caché guarda el resultado del ensayo).
 
     Nunca levanta por culpa del LLM: si no hay API key, si la llamada falla o si
     se pasa de `timeout` segundos, cae a un playbook determinista construido con
@@ -594,17 +680,73 @@ def simular(
         base.advertencias = [f"Playbook degradado ({type(e).__name__}): {e}"]
         return base
 
+    advertencias: list[str] = []
+    puntaje: int | None = None
+    if autocritica:
+        playbook, puntaje, aviso = _pulir_playbook(playbook, prompt, timeout)
+        advertencias += aviso
+
     permitidos = {i.dueño_principal for i in items} | {r for i in items for r in i.respaldos}
-    inventados = _emails_inventados(playbook, permitidos)
+    advertencias += [f"Email inventado en el playbook: {e}" for e in _emails_inventados(playbook, permitidos)]
     return SimulationResult(
         scenario_id=scenario_id,
         objetivo_id=objetivo_id,
         items_huerfanos=huerfanos,
         impacto=impacto,
         playbook_md=playbook,
-        advertencias=[f"Email inventado en el playbook: {e}" for e in inventados],
+        advertencias=advertencias,
         generado_por="claude",
+        puntaje_playbook=puntaje,
     )
+
+
+PUNTAJE_ACEPTABLE = 8
+
+
+def _pulir_playbook(playbook: str, prompt: str, timeout: float) -> tuple[str, int | None, list[str]]:
+    """Un ciclo de autocrítica: puntúa el playbook y, si flojea, lo reescribe una vez.
+
+    Adaptado de Zuin et al. (IJCNN 2025), recortado a una sola iteración: el playbook
+    corre en vivo delante del jurado y cada llamada extra son segundos.
+
+    Devuelve `(playbook, puntaje, advertencias)`. El puntaje describe **la versión
+    devuelta**: si hubo reescritura viene `None`, porque evaluarla otra vez sería una
+    tercera llamada en vivo y el número del borrador no aplica al texto nuevo.
+
+    Si la crítica o la reescritura fallan, devuelve el playbook original — nunca deja
+    el resultado peor de como llegó.
+    """
+    try:
+        critica = llm.parse_json(
+            SISTEMA_CRITICO,
+            f"## Documento a evaluar\n\n{playbook}\n\n## Contexto del que salió\n\n{prompt}",
+            _Critica,
+            max_tokens=2000,
+            timeout=timeout,
+        )
+    except Exception as e:
+        return playbook, None, [f"Autocrítica omitida ({type(e).__name__})"]
+
+    if critica.puntaje >= PUNTAJE_ACEPTABLE:
+        return playbook, critica.puntaje, []
+
+    faltantes = "\n".join(f"- {f}" for f in critica.faltantes) or "- (sin detalle)"
+    sugerencias = "\n".join(f"- {s}" for s in critica.sugerencias) or "- (sin detalle)"
+    try:
+        mejorado = llm.texto(
+            SISTEMA_PLAYBOOK,
+            f"{prompt}\n\n## Un primer intento sacó {critica.puntaje}/10\n\n"
+            f"Le falta:\n{faltantes}\n\nCorrige:\n{sugerencias}\n\n"
+            "Reescribe el documento completo resolviendo cada punto. Mismo formato.",
+            timeout=timeout,
+        )
+    except Exception as e:
+        return playbook, critica.puntaje, [f"Reescritura omitida ({type(e).__name__}); playbook en {critica.puntaje}/10"]
+
+    # El puntaje era del borrador, no de esta versión, y volver a evaluarla
+    # costaría una tercera llamada en vivo. Devolver el número viejo junto al
+    # texto nuevo sería mentirle al dashboard de P5.
+    return mejorado, None, [f"Playbook reescrito tras autocrítica del borrador ({critica.puntaje}/10)"]
 
 
 def _catalogo_detallado(items: list[KnowledgeItem]) -> str:

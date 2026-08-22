@@ -74,6 +74,27 @@ class RiskScore(BaseModel):
     detalle: str = ""  # explicación legible del score, para el dashboard de P5
 
 
+class PasoBusFactor(BaseModel):
+    """Qué queda huérfano tras sacar a una persona más."""
+
+    persona_id: str
+    fraccion_huerfana: float
+    items_huerfanos: int
+
+
+class BusFactor(BaseModel):
+    """El número que da nombre al producto: cuánta gente puede faltar antes de romperse.
+
+    Sale del heurístico greedy de Avelino et al. (arXiv 1604.06766) portado a
+    elementos de conocimiento en vez de archivos de código.
+    """
+
+    numero: int  # el titular
+    personas: list[str] = Field(default_factory=list)  # en orden de criticidad
+    fraccion_huerfana: float = 0.0  # peso del conocimiento sin dueño al terminar
+    pasos: list[PasoBusFactor] = Field(default_factory=list)  # para el dashboard de P5
+
+
 # --- Escenarios y simulación ----------------------------------------------------
 
 
@@ -91,6 +112,7 @@ class SimulationResult(BaseModel):
     items_huerfanos: list[KnowledgeItem] = Field(default_factory=list)
     impacto: str = ""
     playbook_md: str = ""
+    puntaje_playbook: int | None = None  # 0-10 de la autocrítica; None si no corrió
     advertencias: list[str] = Field(default_factory=list)  # emails inventados, degradaciones
     generado_por: Literal["claude", "respaldo", "mock"] = "claude"
 
