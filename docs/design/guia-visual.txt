@@ -1,0 +1,325 @@
+GUÍA DE ARTE · v1 · SYNTH DUSK
+BUS FACTOR HQ
+Atardecer sintético con acento lima. Ciruela profunda de base, turquesa para datos, rosa para acción, lima para lo que está vivo. Cálido y eléctrico al mismo tiempo.
+TILE 32PX · SPRITE 32×52
+WORKBENCH + JERSEY 15 + VT323
+8 PANTALLAS · 9 PERSONAJES
+01
+PALETA
+11 colores. Nada fuera de esta lista.
+VOID
+#120A20
+Fuera de la sala, sombra
+BASE
+#1A0F2E
+Fondo de todo
+SURFACE
+#241543
+Paneles, tarjetas
+LINE
+#43276B
+Bordes, divisores
+TURQUESA · DATOS
+#2BD9D0
+Pantallas, cifras, bordes de panel activo
+ROSA · ACCIÓN
+#FF4D9D
+Consola, botón primario, foco
+LIMA · VIVO
+#B6FF3C
+Infra sana, quest hecha, restaurar
+ORO · PUNTAJE
+#FFD166
+Resiliencia, puntos, premios
+#FF7A2F
+Naranja · luz cálida
+#A98BFF
+Lila · mobiliario
+#7B3FE4
+Morado · sala de juntas
+#FF2E63
+Rojo · solo emergencia
+#A98CD6
+Texto secundario
+UN COLOR, UN PAPEL
+El turquesa nunca es un botón. El rosa nunca es un dato. El lima nunca decora: significa que algo funciona.
+EL ROJO SE GANA
+Rojo solo durante una emergencia activa o riesgo ≥ 70. Si el rojo está siempre presente, deja de alarmar.
+DOS FONDOS Y NADA MÁS
+Base #1A0F2E para escena, surface #241543 para paneles. Sin degradados de fondo en la UI.
+02
+TIPOGRAFÍA
+Tres cortes, jerarquía sin ambigüedad.
+Workbench
+Solo títulos de pantalla y el logo. Nunca párrafos, nunca menos de 32px.
+32 / 38 / 56 / 76 PX
+Jersey 15
+Cuerpo, descripciones, listas de tareas. El texto que la gente lee de verdad.
+22 / 24 / 30 PX
+VT323
+Etiquetas, HUD, cifras, código del playbook. Siempre en MAYÚSCULAS con tracking.
+17 / 20 / 24 PX
+MÍNIMO LEGIBLE
+Ningún texto por debajo de 17px en pantalla de juego. En el panel de resultado, nada por debajo de 22px: el jurado lo lee proyectado.
+03
+TILES · 32PX
+Mostrados a 2×. Cada pieza cabe en una celda de la grilla de pathfinding.
+PISO
+MURO
+ESCRITORIO
+SILLA
+MONITOR ON
+MONITOR OFF
+RACK GITHUB
+CAFETERA
+PUERTA
+LÁMPARA
+PANTALLA MEET
+PLANTA
+04
+SPRITE SHEET · 9 PERSONAJES
+32×52 base, mostrados a 2×.
+ARREGLA ESTO
+Sentados no se distinguen porque solo se ve pelo y torso. Regla:
+cada personaje tiene pelo único Y ropa única
+, y esos dos colores solos deben identificarlo. Nunca dos personajes con el mismo par. Además, sentado conserva su aura de riesgo bajo la silla.
+ANA · OPS
+Pelo turquesa + ropa rosa
+RIESGO 87 · AURA ROJA PULSA
+DAVID · INFRA
+Pelo naranja + ropa lima
+RIESGO 24 · AURA LIMA
+SAMUEL · BACKEND
+Pelo lila + ropa turquesa
+RIESGO 31 · AURA LIMA
+ANDRÉS · FRONTEND
+Pelo oro + ropa morada
+RIESGO 58 · AURA ORO
+SLOT 5 · LIBRE
+Pelo rosa + ropa oro
+PAR RESERVADO
+SLOT 6 · LIBRE
+Pelo ciruela + ropa naranja
+PAR RESERVADO
+SLOT 7 · LIBRE
+Pelo lima + ropa lila
+PAR RESERVADO
+SLOT 8 · LIBRE
+Pelo rubio + ropa morada
+PAR RESERVADO
+SLOT 9 · LIBRE
+Pelo morado + ropa naranja
+PAR RESERVADO
+POSES MÍNIMAS POR PERSONAJE
+FRENTE
+ESPALDA
+SENTADO + AURA
+CAMINAR (2 CUADROS)
+Cinco poses cubren todo el demo: frente, espalda, sentado, y dos cuadros de caminata alternando pierna. Teclear = el cuadro sentado con las manos moviéndose 2px.
+AURAS DE RIESGO
+0–39 · BAJO
+Aura lima estática, sin movimiento
+40–69 · MEDIO
+Aura oro, respiración lenta de 3 s
+70–100 · ALTO
+Aura roja pulsando cada 1,4 s + etiqueta flotante
+La etiqueta flotante (
+ANA 87
+) aparece solo en riesgo alto. Si flotara sobre los nueve, el ojo no encontraría el problema.
+05
+/OFICINA
+La pantalla que decide el pitch.
+SALA MEET
+GITHUB
+ANA 87
+🔊
+CHIPTUNE
+OFICINA INERXIA
+9 PERSONAJES
+RESILIENCIA
+64
+▲12
+🕹️
+CONSOLA
+LA SALA RESPIRA
+Nunca más de 3 personajes moviéndose a la vez, y con desfases de 2–4 s. Nueve caminando al mismo tiempo se ve roto, no vivo.
+UN SOLO FOCO
+Solo Ana lleva etiqueta y aura roja. El ojo del jurado tiene que ir ahí en el primer segundo, sin que nadie lo señale.
+LA CONSOLA ES EL BOTÓN
+Rosa, con sombra dura de 7px y borde blanco. Es el único elemento de la escena con ese tratamiento: se lee como pulsable.
+06
+ESTADOS DE EMERGENCIA
+Cada escenario cambia la sala antes de mostrar un solo dato.
+APAGÓN
+Todo baja a un 45% de luminosidad. Solo los monitores y el aura conservan color. El rack se apaga: sin LEDs.
+!
+CAÍDA DE GITHUB
+El lima del rack se vuelve rojo, humo gris sube en dos tiempos y dos devs se levantan con un signo de interrogación.
+?
+🔒
+ROBO DEL PC
+El PC deja un hueco punteado, haz rojo giratorio y un candado oro sobre los accesos comprometidos. Efecto que faltaba en la demo.
+REGLA DE ORO
+Primero espectáculo, después sustancia. La animación dura 3–5 s y el panel entra deslizándose
+solo cuando la animación terminó
+. Si el panel aparece encima del efecto, se pierden los dos.
+07
+TOOLTIP · CONSOLA · RESULTADO
+ANA
+OPS · OFICINA INERXIA
+87
+riesgo
+×
+SOLO ELLA SABE HACER ESTO
+TAREA
+Comprar los vuelos del jefe
+TAREA
+Administrar el CRM
+TÁCITO
+Al jefe solo le gusta viajar en LATAM
+ACCESO
+Panel de facturación
+🕹️
+CONSOLA DE EMERGENCIAS
+7 ESCENARIOS
+RENUNCIA / AUSENCIA
+Sale por la puerta; su escritorio queda gris
+ROBO DEL PC DEL CTO
+Alarma y luz roja giratoria
+CAÍDA DE GITHUB
+El servidor echa humo
+CAÍDA DE MEET
+La pantalla queda en estática
+APAGÓN
+Solo brillan las pantallas
+LA OFICINA SE CAE
+Screen shake, todos a la salida
+RANSOMWARE
+Candados por todas partes
+Los siete quedan visibles: la profundidad del producto se ve sin hacer clic.
+PERSONA
+Ana (Ops)
+▼
+SIMULAR ▶
+SIN ANA · OPS
+RESULTADO SIMULADO (DEMO)
+GENERADO EN 9,4 S
+7
+tareas huérfanas
+12
+días de empalme estimados
+64
+impacto sobre la operación
+QUÉ QUEDA SIN DUEÑO
+TAREA
+Comprar los vuelos del jefe
+TAREA
+Administrar el CRM y su limpieza mensual
+TAREA
+Conciliar facturas con contabilidad
+TÁCITO
+Al jefe solo le gusta viajar en LATAM
+TÁCITO
+El proveedor de viáticos responde solo por WhatsApp
+ACCESO
+Panel de facturación (único administrador)
+ACCESO
+Cuenta del CRM y su plan de cobro
+PLAYBOOK GENERADO
+MARKDOWN
+# Empalme de Ana · Ops
+## 1. Lo urgente (48 h)
+- Rotar credenciales del panel de facturación
+- Pasar el CRM a Samuel como admin temporal
+## 2. Reglas no escritas
+- Vuelos del jefe: siempre LATAM, pasillo
+- Viáticos: el proveedor solo contesta WhatsApp
+## 3. Evidencia
+slack#operaciones · 14 mensajes
+meet · reunión del 4 jun · min 12:30
+RESTAURAR OFICINA
+DESCARGAR .MD
+08
+ENTRADA Y AVATAR
+Los dos primeros minutos de cualquier usuario nuevo.
+🕹️
+BUS FACTOR HQ
+Entra a tu oficina. Tu personaje te está esperando.
+USUARIO
+ana@inerxia.co
+CONTRASEÑA
+ENTRAR ▶
+Sin cuenta todavía?
+Crear oficina
+/LOGIN
+TU AVATAR
+GUARDADO ✓
+CUERPO
+Claro
+Oscuro
+PEINADO
+Corto
+Largo
+ROPA
+Camisa
+Traje
+COLOR
+GUARDAR
+IR A LA OFICINA ▶
+/AVATAR
+FEEDBACK VISIBLE
+El aviso
+GUARDADO ✓
+vive en el encabezado de la tarjeta, no debajo del botón: ahí sí se nota. Dura 2,5 s y entra con un salto de 4px, no con fade.
+09
+DIGEST DEL VIERNES
+La prevención, convertida en juego.
+PUNTAJE DE RESILIENCIA
+64
+▲ 12
+Mejor semana desde que empezaron a medir.
+ÚLTIMAS 8 SEMANAS
+Personas en riesgo alto
+1
+Conocimiento con un solo dueño
+18
+Quests completadas
+7 / 10
+QUESTS DE ESTA SEMANA
+CIERRAN EL VIERNES 18:00
+✓
+David → compartir acceso del servidor con Samuel
+COMPLETADA · +30 PTS
+Andrés → documentar el flujo del PR pendiente
+EN CURSO · +20 PTS
+Ana → grabar cómo se compran los vuelos del jefe
+CRÍTICA · +50 PTS · BAJA EL RIESGO DE 87 A 61
+Samuel → segundo administrador del panel de facturación
+PENDIENTE · +20 PTS
+VER PLAYBOOKS
+Completar la quest crítica de Ana es lo único que mueve el puntaje por encima de 70.
+10
+MOVIMIENTO
+Lo que separa "juguete" de "producto".
+CAMINAR
+64 px/s
+Dos tiles por segundo. Easing lineal, cambio de cuadro cada 8 px.
+SENTARSE
+280 ms
+Ease-out. Nunca aparecer sentado de golpe.
+PANEL ENTRA
+220 ms
+Desliza 24 px desde abajo con ease-out. Sin rebote.
+EMERGENCIA
+3–5 s
+Después, el panel. Nunca simultáneos.
+SÍ
+Todo movimiento con tween y easing, sobre la grilla de 32 px.
+Desfasar los ambientes: cafetera a los 10 s, servidor a los 14 s, paseo a los 19 s.
+Etiqueta "Resultado simulado (demo)" mientras el mock esté activo.
+Titileo de pantallas con steps(2), no con opacidad continua: se ve pixel-art.
+NO
+Teletransportes, saltos de posición o personajes atravesando escritorios.
+Degradados de fondo, sombras suaves grandes, bordes redondeados en la UI.
+Rojo como color decorativo. Rojo significa emergencia y nada más.
+Más de dos tipografías en una misma pantalla del juego.
