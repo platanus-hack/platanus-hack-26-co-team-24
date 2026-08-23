@@ -259,18 +259,36 @@ describe('api (modo real, con VITE_API_URL)', () => {
     expect(warn).toHaveBeenCalled();
   });
 
-  it('putAvatar no llama a la red (PUT /avatar no existe en P3) y resuelve ok', async () => {
-    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const { api, fetchMock } = await importRealApi({});
-    const res = await api.putAvatar({
-      cuerpo: 'light',
-      peinado: 'short',
-      ropa: 'shirt',
-      paleta: 'blue',
-    });
+  it('putAvatar sin sesión usa el endpoint sin token, con el email del usuario demo', async () => {
+    const { api, fetchMock } = await importRealApi({ ok: true });
+    const cfg = { cuerpo: 'light', peinado: 'short', ropa: 'shirt', paleta: 'blue' } as const;
+    const res = await api.putAvatar(cfg);
     expect(res).toEqual({ ok: true });
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(info).toHaveBeenCalled();
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+    expect(url).toContain('/avatar?email=ana%40empresa.com');
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body as string)).toEqual({ avatar_config: cfg });
+    // Sin sesión no se manda Authorization: el endpoint no lo pide.
+    expect(init.headers.Authorization).toBeUndefined();
+  });
+
+  it('putAvatar con sesión guarda en la cuenta y manda el Bearer', async () => {
+    // Es lo que hace que el avatar sobreviva al cambio de equipo.
+    const datos = new Map<string, string>([['bfhq.token', 'tok-123']]);
+    globalThis.localStorage = {
+      getItem: (k: string) => datos.get(k) ?? null,
+      setItem: (k: string, v: string) => void datos.set(k, v),
+      removeItem: (k: string) => void datos.delete(k),
+      clear: () => datos.clear(),
+      key: () => null,
+      length: datos.size,
+    } as Storage;
+    const { api, fetchMock } = await importRealApi({ ok: true });
+    await api.putAvatar({ cuerpo: 'dark', peinado: 'long', ropa: 'suit', paleta: 'red' });
+    const [url, init] = fetchMock.mock.calls[0] as [string, { headers: Record<string, string> }];
+    expect(url).toContain('/usuarios/me/avatar');
+    expect(init.headers.Authorization).toBe('Bearer tok-123');
+    datos.clear();
   });
 
   it('VITE_DEMO_USER_ID sobreescribe el usuario demo', async () => {

@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { putAvatar } from '../api';
+import { API_BASE, putAvatar } from '../api';
+import { haySesion, salir, yo } from '../sesion';
 import { PALETTE } from '../game/palette';
-import { loadAvatar, saveAvatar, CUERPOS, PEINADOS, ROPAS, PALETAS } from '../avatarStorage';
+import {
+  loadAvatar,
+  saveAvatar,
+  isValidAvatar,
+  CUERPOS,
+  PEINADOS,
+  ROPAS,
+  PALETAS,
+} from '../avatarStorage';
 import type { AvatarConfig } from '../types';
 import './ui.css';
 
@@ -99,11 +108,28 @@ export function AvatarEditor() {
     };
   }, [cfg]);
 
+  // Con sesión, la verdad es el servidor: sin esto el editor abriría con lo
+  // que tuviera este navegador y pisaría el avatar real al guardar.
+  useEffect(() => {
+    if (!API_BASE || !haySesion()) return;
+    let vivo = true;
+    yo(API_BASE)
+      .then((u) => {
+        if (vivo && isValidAvatar(u.avatar_config)) setCfg(u.avatar_config);
+      })
+      .catch(() => {
+        /* token vencido: `yo` ya lo borró, seguimos con el local */
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
   async function handleSave() {
     try {
       await putAvatar(cfg);
       saveAvatar(cfg);
-      setStatus('Guardado ✓');
+      setStatus(haySesion() ? 'Guardado en tu cuenta ✓' : 'Guardado ✓');
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Error al guardar');
     }
@@ -144,6 +170,20 @@ export function AvatarEditor() {
             Guardar
           </button>
           <Link to="/oficina">Ir a la oficina</Link>
+          {haySesion() ? (
+            <button
+              type="button"
+              className="avatar-salir"
+              onClick={() => {
+                salir();
+                window.location.assign('/entrar');
+              }}
+            >
+              Cerrar sesión
+            </button>
+          ) : (
+            <Link to="/entrar">Entrar con mi cuenta</Link>
+          )}
         </div>
         {status && <p className="avatar-status">{status}</p>}
       </div>

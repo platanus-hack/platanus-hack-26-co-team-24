@@ -424,3 +424,121 @@
   border: 1px solid #00e5ff;
   color: #ffffff;
 }
+
+/* --- Pantalla de entrada -------------------------------------------------- */
+
+.entrar {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: #0b0b2b;
+}
+
+.entrar-caja {
+  width: min(26rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.75rem;
+  border: 2px solid #00e5ff;
+  background: #120f3a;
+  box-shadow: 0 0 0 4px rgba(0, 229, 255, 0.12);
+}
+
+.entrar-caja h1 {
+  font-family: monospace;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* #b9c4ff sobre #120f3a da 8.4:1: legible de verdad, no gris decorativo. */
+.entrar-nota {
+  font-family: monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #b9c4ff;
+  margin: 0;
+}
+
+.entrar-pestanas {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.entrar-pestanas button {
+  flex: 1;
+  padding: 0.5rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #b9c4ff;
+  background: transparent;
+  border: 2px solid #2b2d7a;
+  cursor: pointer;
+}
+
+.entrar-pestanas button.activa {
+  color: #0b0b2b;
+  background: #00e5ff;
+  border-color: #00e5ff;
+}
+
+.entrar-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #b9c4ff;
+}
+
+.entrar-campo input {
+  padding: 0.55rem;
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #ffffff;
+  background: #0b0b2b;
+  border: 2px solid #2b2d7a;
+}
+
+.entrar-campo input:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 1px;
+}
+
+.entrar-error {
+  margin: 0;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #ff8a9b;
+}
+
+.entrar-caja > button[type='submit'] {
+  padding: 0.7rem;
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #0b0b2b;
+  background: #39ff14;
+  border: none;
+  cursor: pointer;
+}
+
+.entrar-caja > button[type='submit']:disabled {
+  background: #2b2d7a;
+  color: #b9c4ff;
+  cursor: progress;
+}
+
+.entrar-invitado,
+.avatar-salir {
+  padding: 0.4rem;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #b9c4ff;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}

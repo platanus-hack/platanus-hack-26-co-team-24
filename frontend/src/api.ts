@@ -20,6 +20,7 @@ import {
   ROPAS,
   isValidAvatar,
 } from './avatarStorage';
+import { cabecerasAuth, haySesion } from './sesion';
 import oficinaMock from './mocks/oficina.json';
 import riesgoMock from './mocks/riesgo.json';
 import escenariosMock from './mocks/escenarios.json';
@@ -40,6 +41,10 @@ const BASE = CRUDO?.trim()
  * (avatar en localStorage, etc.) se guía por esta bandera. */
 export const IS_MOCK = !BASE;
 
+/** Base de la API real. `null` en modo mock. La sesión la necesita para
+ * construir sus propias URLs sin duplicar la lógica de normalización. */
+export const API_BASE = BASE ?? null;
+
 /** Persona "yo" de la demo: en mocks es `p_ana`; contra P3, su usuario demo.
  * Configurable por si el backend cambia de dataset. */
 export const DEMO_USER_ID =
@@ -48,8 +53,10 @@ export const DEMO_USER_ID =
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(BASE + path, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    // El Bearer va en toda petición si hay sesión: los endpoints públicos lo
+    // ignoran y los de usuario lo necesitan. Un solo camino, sin ramas.
+    headers: { 'Content-Type': 'application/json', ...cabecerasAuth(), ...init?.headers },
   });
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
   return r.json();
@@ -185,9 +192,15 @@ export async function simular(body: {
 }
 
 export async function putAvatar(cfg: AvatarConfig): Promise<{ ok: boolean }> {
-  // P3 todavía no expone PUT /avatar: no llamamos a la red para no ensuciar
-  // la demo con un 404. El editor ya guarda en localStorage en ambos modos.
-  if (!IS_MOCK)
-    console.info('PUT /avatar pendiente en P3; guardado local', cfg);
+  // Modo mock: no hay servidor, el editor guarda en localStorage y ya.
+  if (IS_MOCK) return { ok: true };
+
+  // Con sesión el avatar queda atado a la cuenta, que es lo que hace que
+  // sobreviva al cambio de equipo. Sin sesión cae al endpoint sin token que
+  // dejó P3, para que la demo funcione sin obligar a registrarse.
+  const ruta = haySesion()
+    ? '/usuarios/me/avatar'
+    : `/avatar?email=${encodeURIComponent(DEMO_USER_ID)}`;
+  await req<unknown>(ruta, { method: 'PUT', body: JSON.stringify({ avatar_config: cfg }) });
   return { ok: true };
 }
