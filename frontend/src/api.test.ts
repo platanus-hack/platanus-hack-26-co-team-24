@@ -329,6 +329,30 @@ describe('api (modo real, con VITE_API_URL)', () => {
     });
   });
 
+  it('putAvatar con sesión guarda en la cuenta y manda el Bearer', async () => {
+    // Es lo que hace que el avatar sobreviva al cambio de equipo: sin sesión
+    // el backend no sabe de quién es.
+    const datos = new Map([['bfhq.token', 'tok-123']]);
+    globalThis.localStorage = {
+      getItem: (k: string) => datos.get(k) ?? null,
+      setItem: (k: string, v: string) => void datos.set(k, v),
+      removeItem: (k: string) => void datos.delete(k),
+      clear: () => datos.clear(),
+      key: () => null,
+      length: datos.size,
+    } as Storage;
+
+    const { api, fetchMock } = await importRealApi({ ok: true });
+    await api.putAvatar({ cuerpo: 'dark', peinado: 'long', ropa: 'suit', paleta: 'red' });
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://x/usuarios/me/avatar');
+    const init = fetchMock.mock.calls[0][1]! as RequestInit & {
+      headers: Record<string, string>;
+    };
+    expect(init.headers.Authorization).toBe('Bearer tok-123');
+    datos.clear();
+  });
+
   it('VITE_DEMO_USER_ID sobreescribe el usuario demo', async () => {
     vi.stubEnv('VITE_DEMO_USER_ID', 'otro@empresa.com');
     const { api } = await importRealApi(RAW_OFICINA);

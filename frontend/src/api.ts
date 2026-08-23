@@ -20,6 +20,7 @@ import {
   ROPAS,
   isValidAvatar,
 } from './avatarStorage';
+import { cabecerasAuth, haySesion } from './sesion';
 import oficinaMock from './mocks/oficina.json';
 import riesgoMock from './mocks/riesgo.json';
 import escenariosMock from './mocks/escenarios.json';
@@ -40,6 +41,10 @@ const BASE = CRUDO?.trim()
  * (avatar en localStorage, etc.) se guía por esta bandera. */
 export const IS_MOCK = !BASE;
 
+/** Base de la API real, `null` en modo mock. La sesión la necesita para armar
+ * sus URLs sin repetir la normalización del host. */
+export const API_BASE = BASE ?? null;
+
 /** Persona "yo" de la demo: en mocks es `p_ana`; contra P3, su usuario demo.
  * Configurable por si el backend cambia de dataset. */
 export const DEMO_USER_ID =
@@ -53,8 +58,11 @@ const DESK_COUNT = 9;
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(BASE + path, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    // El Bearer va en toda petición cuando hay sesión: los endpoints públicos
+    // lo ignoran y los de usuario lo necesitan. Va después de `...init` para
+    // que un caller no lo pise sin querer al pasar sus propias cabeceras.
+    headers: { 'Content-Type': 'application/json', ...init?.headers, ...cabecerasAuth() },
   });
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
   return r.json();
@@ -216,13 +224,14 @@ export async function simular(body: {
 export async function putAvatar(cfg: AvatarConfig): Promise<{ ok: boolean }> {
   // En modo demo no hay red: el editor guarda en localStorage igual.
   if (IS_MOCK) return { ok: true };
-  // P3 (`backend/app.py::put_avatar`) acepta las capas en la raíz del body y
-  // el email por query, sin token. La respuesta (`guardar_avatar`) no nos
-  // aporta nada: nos basta con que no sea un error.
+  // P3 acepta las capas en la raíz del body en ambos endpoints. Con sesión el
+  // avatar queda atado a la cuenta, que es lo que hace que sobreviva al cambio
+  // de equipo; sin sesión cae al endpoint sin token para no obligar a
+  // registrarse durante la demo.
   const { cuerpo, peinado, ropa, paleta } = cfg;
-  await req(`/avatar?email=${encodeURIComponent(DEMO_USER_ID)}`, {
-    method: 'PUT',
-    body: JSON.stringify({ cuerpo, peinado, ropa, paleta }),
-  });
+  const ruta = haySesion()
+    ? '/usuarios/me/avatar'
+    : `/avatar?email=${encodeURIComponent(DEMO_USER_ID)}`;
+  await req(ruta, { method: 'PUT', body: JSON.stringify({ cuerpo, peinado, ropa, paleta }) });
   return { ok: true };
 }

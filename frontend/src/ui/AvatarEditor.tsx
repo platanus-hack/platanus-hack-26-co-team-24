@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { putAvatar } from '../api';
+import { API_BASE, putAvatar } from '../api';
+import { haySesion, salir, yo } from '../sesion';
 import { PALETTE, SPRITE_W, SPRITE_H } from '../game/palette';
-import { loadAvatar, saveAvatar, CUERPOS, PEINADOS, ROPAS, PALETAS } from '../avatarStorage';
+import {
+  loadAvatar,
+  saveAvatar,
+  isValidAvatar,
+  CUERPOS,
+  PEINADOS,
+  ROPAS,
+  PALETAS,
+} from '../avatarStorage';
 import type { AvatarConfig } from '../types';
 import './ui.css';
 
@@ -100,6 +109,23 @@ export function AvatarEditor() {
       clearInterval(interval);
     };
   }, [cfg]);
+
+  // Con sesión manda el servidor: sin esto el editor abriría con lo que tenga
+  // este navegador y pisaría el avatar real al guardar.
+  useEffect(() => {
+    if (!API_BASE || !haySesion()) return;
+    let vivo = true;
+    yo(API_BASE)
+      .then((u) => {
+        if (vivo && isValidAvatar(u.avatar_config)) setCfg(u.avatar_config);
+      })
+      .catch(() => {
+        /* token vencido: `yo` ya lo borró; seguimos con lo local */
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   async function handleSave() {
     try {
@@ -214,6 +240,22 @@ export function AvatarEditor() {
           <Link to="/oficina" className="avatar-btn avatar-btn--go">
             IR A LA OFICINA ▶
           </Link>
+          {haySesion() ? (
+            <button
+              type="button"
+              className="avatar-btn"
+              onClick={() => {
+                salir();
+                window.location.assign('/entrar');
+              }}
+            >
+              SALIR
+            </button>
+          ) : (
+            <Link to="/entrar" className="avatar-btn">
+              ENTRAR CON MI CUENTA
+            </Link>
+          )}
         </div>
       </div>
     </div>
