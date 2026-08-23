@@ -39,7 +39,11 @@ export function Hud() {
       {resiliencia !== undefined && (
         <div className="hud-resiliencia">
           <span className="hud-resiliencia__label">RESILIENCIA</span>
-          <span className="hud-resiliencia__value">{resiliencia}</span>
+          {/* P3 manda la resiliencia con decimales (28.6): la tarjeta es de
+              3 dígitos, así que se redondea al pintarla. */}
+          <span className="hud-resiliencia__value">
+            {Math.round(resiliencia)}
+          </span>
           {delta !== undefined && (
             <span className="hud-resiliencia__delta">▲{delta}</span>
           )}

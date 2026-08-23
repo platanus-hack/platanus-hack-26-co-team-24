@@ -57,6 +57,8 @@ const AURA_HIGH_H = 20;
 const AURA_SEAT_Y = 54;
 const AURA_SEAT_SCALE = 1.2;
 const LABEL_Y = -34; // etiqueta flotante 8 px por encima de la cabeza
+// Puesto al que se cae cualquier `desk_N` que no exista en el mapa.
+const FALLBACK_DESK = 'desk_0';
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 export type AnimName =
@@ -390,7 +392,14 @@ export class Character extends Phaser.GameObjects.Container {
     point: string,
     scene: OfficeScene,
   ): { x: number; y: number } {
-    return resolveTargetTile(point, scene.points[point], (x, y) =>
+    // Un punto inexistente (p.ej. `desk_9` en un mapa de 9 escritorios) haría
+    // reventar la resolución a mitad de un `walkTo`: se cae al escritorio 0.
+    let name = point;
+    if (!scene.points[name]) {
+      console.warn(`punto "${point}" no está en el mapa: se usa desk_0`);
+      name = FALLBACK_DESK;
+    }
+    return resolveTargetTile(name, scene.points[name], (x, y) =>
       isBlocked(scene.map, x, y),
     );
   }
@@ -554,7 +563,14 @@ function chairPixelFor(
   scene: OfficeScene,
   deskIndex: number,
 ): { x: number; y: number } {
-  const desk = scene.points[`desk_${deskIndex}`];
+  // `api.ts` ya acota el escritorio a los que dibuja el mapa; esto es la red
+  // por si el mapa cambia de tamaño sin avisar (si no, `desk.x` revienta y se
+  // cae la oficina entera al crearse).
+  let desk = scene.points[`desk_${deskIndex}`];
+  if (!desk) {
+    console.warn(`desk_${deskIndex} no está en el mapa: se usa desk_0`);
+    desk = scene.points[FALLBACK_DESK];
+  }
   const tx = desk.x / TILE + 1; // silla = tile arriba-derecha del escritorio
   const ty = desk.y / TILE - 1;
   return { x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 };
