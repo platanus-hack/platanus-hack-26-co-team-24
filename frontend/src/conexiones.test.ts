@@ -226,20 +226,77 @@ describe('conexiones contra el servidor', () => {
     );
   });
 
-  it('subirTranscripciones manda los archivos y marca la conexión de drive', async () => {
+  it('subirTranscripciones cuenta archivos y fragmentos por separado', async () => {
+    // `eventos` son los trozos de ~1500 caracteres en que el backend parte
+    // cada archivo, no los archivos: decir "47 transcripciones" cuando se
+    // subió una sola sería mentir sobre lo que acaba de pasar.
     const { mod, fetchMock } = await importarConFetch({
       ok: true,
       status: 200,
-      json: async () => ({ eventos: 3 }),
+      json: async () => ({ eventos: 47 }),
     });
-    await expect(
-      mod.subirTranscripciones([{ nombre: 'reunion.txt', contenido: 'hola' }]),
-    ).resolves.toContain('3 transcripciones');
+    const texto = await mod.subirTranscripciones([
+      { nombre: 'reunion.txt', contenido: 'hola' },
+    ]);
+    expect(texto).toContain('1 archivo');
+    expect(texto).toContain('47 fragmentos');
+    expect(texto).not.toContain('47 transcripciones');
 
     expect(fetchMock.mock.calls[0][0]).toBe(
       'http://x/conexiones/drive/transcripciones',
     );
     expect(fetchMock.mock.calls[1][0]).toBe('http://x/conexiones');
+    // Sin recalcular, la oficina se queda igual: ingerir no es saber.
+    expect(fetchMock.mock.calls[2][0]).toBe('http://x/admin/procesar');
+  });
+
+  it('sincronizar recalcula el mapa y lo dice', async () => {
+    const { mod, fetchMock } = await importarConFetch({
+      ok: true,
+      status: 200,
+      json: async () => ({ mensajes: 120, canales: 4 }),
+    });
+    const texto = await mod.sincronizarSlack();
+    expect(texto).toContain('120 mensajes · 4 canales');
+    expect(texto).toContain('recalculado');
+    expect(fetchMock.mock.calls[1][0]).toBe('http://x/admin/procesar');
+  });
+
+  it('si el recálculo falla, la ingesta cuenta pero el fallo se dice', async () => {
+    // Callarlo dejaría al usuario esperando un cambio en la oficina que no va
+    // a llegar, sin saber por qué.
+    vi.stubEnv('VITE_API_URL', 'http://x');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url.endsWith('/admin/procesar')
+          ? {
+              ok: false,
+              status: 500,
+              json: async () => ({ detail: 'sin API key' }),
+            }
+          : { ok: true, status: 200, json: async () => ({ mensajes: 9 }) },
+      ),
+    );
+    vi.resetModules();
+    const mod = await import('./conexiones');
+    const texto = await mod.sincronizarSlack();
+    expect(texto).toContain('9 mensajes');
+    expect(texto).toContain('no se recalculó');
+    expect(texto).toContain('sin API key');
+  });
+
+  it('volverAlDemo resetea y repuebla el mapa', async () => {
+    // Sin el recálculo, `reset` deja el estado limpio pero la oficina vacía:
+    // el backend avisa de que hay que correr `procesar` para repoblar.
+    const { mod, fetchMock } = await importarConFetch({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true }),
+    });
+    await expect(mod.volverAlDemo()).resolves.toContain('restaurada');
+    expect(fetchMock.mock.calls[0][0]).toBe('http://x/admin/reset');
+    expect(fetchMock.mock.calls[1][0]).toBe('http://x/admin/procesar');
   });
 
   it('en modo mock ninguna llamada toca la red', async () => {

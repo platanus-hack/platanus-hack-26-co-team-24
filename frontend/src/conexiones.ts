@@ -147,12 +147,30 @@ export function resumenSincronizacion(datos: unknown): string {
   return 'Sincronizado. Tus mensajes ya están en el mapa de conocimiento.';
 }
 
+/** Ingerir no es lo mismo que saber: la sincronización y la subida solo meten
+ * eventos crudos, y el mapa de conocimiento se recalcula aparte. Sin esta
+ * llamada el usuario conecta, espera dos minutos, entra a la oficina y la ve
+ * exactamente igual — que es la peor forma de que algo "funcione".
+ *
+ * Va como mejor esfuerzo pero SE REPORTA: si el recálculo falla en silencio,
+ * el usuario se queda con esa misma confusión sin saber por qué. */
+async function recalcularMapa(): Promise<string> {
+  try {
+    await pedir<unknown>('/admin/procesar', { method: 'POST' });
+    return 'Mapa de conocimiento recalculado.';
+  } catch (e) {
+    const porque = e instanceof Error ? e.message : 'motivo desconocido';
+    return `Los datos entraron, pero el mapa no se recalculó (${porque}).`;
+  }
+}
+
 /** Dispara la ingesta con el token del usuario. Tarda de segundos a minutos:
  * quien llame tiene que mostrar que está trabajando. */
 export async function sincronizarSlack(): Promise<string> {
-  return resumenSincronizacion(
+  const resumen = resumenSincronizacion(
     await pedir<unknown>('/conexiones/slack/sincronizar', { method: 'POST' }),
   );
+  return `${resumen} ${await recalcularMapa()}`;
 }
 
 // --- Drive / Meet ----------------------------------------------------------
@@ -181,10 +199,28 @@ export async function subirTranscripciones(
     /* el estado se recupera solo la próxima vez que el backend lo marque */
   }
 
+  // `eventos` NO es el número de archivos: el backend parte cada transcripción
+  // en trozos de ~1500 caracteres, así que casi siempre es mayor. Llamarlos
+  // "transcripciones" diría que se subieron 47 archivos cuando fueron 3.
   const d = (datos ?? {}) as Record<string, unknown>;
-  const n = typeof d.eventos === 'number' ? d.eventos : archivos.length;
-  // "transcripción" pierde la tilde en plural: no se puede sufijar sin más.
-  return `Listo: ${n} ${n === 1 ? 'transcripción' : 'transcripciones'} en el mapa de conocimiento.`;
+  const archivo = archivos.length === 1 ? 'archivo' : 'archivos';
+  const trozos =
+    typeof d.eventos === 'number' ? ` · ${d.eventos} fragmentos` : '';
+  return `Listo: ${archivos.length} ${archivo}${trozos}. ${await recalcularMapa()}`;
+}
+
+// --- Volver al demo --------------------------------------------------------
+
+/** Salida del aviso de arriba: como el backend no mezcla datos reales con el
+ * fixture, quien sincroniza su Slack en un ensayo se lleva por delante la
+ * oficina del demo. `POST /admin/reset` borra lo ingerido y repuebla el
+ * ejemplo. El token de Slack sigue guardado: resincronizar lo trae de vuelta.
+ *
+ * Destruye datos de TODA la oficina, no solo los de quien pulsa: quien llame
+ * tiene que confirmar antes. */
+export async function volverAlDemo(): Promise<string> {
+  await pedir<unknown>('/admin/reset', { method: 'POST' });
+  return `Oficina de ejemplo restaurada. ${await recalcularMapa()}`;
 }
 
 // --- Vuelta del OAuth ------------------------------------------------------

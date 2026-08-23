@@ -36,6 +36,7 @@ import {
   leerRetornoOAuth,
   sincronizarSlack,
   subirTranscripciones,
+  volverAlDemo,
   urlAutorizacionSlack,
 } from '../conexiones';
 import type {
@@ -51,13 +52,26 @@ import './ui.css';
  * no congele la pestaña leyéndolo como texto ni reviente el POST. */
 const MAX_BYTES = 2 * 1024 * 1024;
 
+/** En cuanto entra un dato real, el backend deja de contar el dataset de
+ * ejemplo: no los mezcla, y hace bien —atribuirle conocimiento inventado a una
+ * persona real es peor que no tener datos—. Pero eso significa que un clic en
+ * "Sincronizar" durante un ensayo cambia la oficina del demo por la de quien
+ * hizo clic. Se avisa ANTES, junto al botón, no después en un mensaje de
+ * éxito. */
+const CONFIRMA_VOLVER_AL_DEMO =
+  'Esto borra los datos ingeridos de toda la oficina y repuebla el equipo de ejemplo. ' +
+  'Tu conexión de Slack se queda: puedes volver a sincronizar cuando quieras.\n\n¿Seguir?';
+
+const AVISO_REEMPLAZA_DEMO =
+  'Ojo: en cuanto entren tus datos, la oficina deja de mostrar el equipo de ejemplo y pasa a ser la tuya.';
+
 const CHIP: Record<EstadoFuente, { texto: string; clase: string }> = {
   activa: { texto: 'Conectada', clase: 'fuente-chip--activa' },
   pendiente: { texto: 'Pendiente', clase: 'fuente-chip--pendiente' },
   sin_conectar: { texto: 'Sin conectar', clase: 'fuente-chip--off' },
 };
 
-type Ocupado = null | 'slack-oauth' | 'slack-sync' | 'drive';
+type Ocupado = null | 'slack-oauth' | 'slack-sync' | 'drive' | 'reset';
 type Mensaje = { tono: 'ok' | 'error'; texto: string } | null;
 
 function textoError(e: unknown): string {
@@ -267,6 +281,26 @@ export function Conexiones() {
     }
   }
 
+  async function restaurarDemo() {
+    // `confirm()` nativo, y aquí SÍ: esto borra los datos ingeridos de toda la
+    // oficina, no hace lo que el botón de al lado promete. Un diálogo por
+    // hacer lo que pediste es ruido; uno antes de borrar lo de todos, no.
+    if (!window.confirm(CONFIRMA_VOLVER_AL_DEMO)) return;
+    setMensaje(null);
+    setOcupado('reset');
+    try {
+      setMensaje({ tono: 'ok', texto: await volverAlDemo() });
+      setEstado(SIN_CONECTAR);
+    } catch (e) {
+      setMensaje({
+        tono: 'error',
+        texto: `No se pudo volver al demo: ${textoError(e)}`,
+      });
+    } finally {
+      setOcupado(null);
+    }
+  }
+
   // --- Modo demo: sin servidor no hay nada que conectar --------------------
   if (IS_MOCK) {
     // Las tres se pintan "conectada" porque en el demo lo están: el dataset de
@@ -352,12 +386,13 @@ export function Conexiones() {
                     className="fuente-nota fuente-nota--trabajando"
                     role="status"
                   >
-                    Leyendo tus canales · {segundos} s · puede tardar unos
-                    minutos, no cierres la pestaña.
+                    Leyendo tus canales y rehaciendo el mapa · {segundos} s ·
+                    puede tardar unos minutos, no cierres la pestaña.
                   </p>
                 ) : (
                   <p className="fuente-nota">
-                    Vuelve a sincronizar cuando quieras refrescar el mapa.
+                    Vuelve a sincronizar cuando quieras refrescar el mapa.{' '}
+                    {AVISO_REEMPLAZA_DEMO}
                   </p>
                 )}
               </>
@@ -408,7 +443,7 @@ export function Conexiones() {
             </button>
             <p className="fuente-nota">
               En Meet: la grabación deja el archivo de transcripción en tu
-              Drive.
+              Drive. {AVISO_REEMPLAZA_DEMO}
             </p>
           </Tarjeta>
 
@@ -425,6 +460,23 @@ export function Conexiones() {
             </p>
           </Tarjeta>
         </ul>
+
+        <div className="fuentes-pie">
+          <button
+            type="button"
+            className="fuente-btn"
+            onClick={restaurarDemo}
+            disabled={ocupado !== null}
+          >
+            {ocupado === 'reset'
+              ? 'Restaurando…'
+              : 'Volver al equipo de ejemplo'}
+          </button>
+          <p className="fuente-nota">
+            Para los ensayos: deja la oficina como estaba antes de conectar
+            nada.
+          </p>
+        </div>
       </main>
     </div>
   );
