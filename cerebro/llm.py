@@ -114,25 +114,42 @@ def parse_json(
     return resultado
 
 
-def texto(system: str, prompt: str, *, max_tokens: int = 8000, timeout: float | None = None) -> str:
+ESFUERZO = os.getenv("CEREBRO_ESFUERZO", "medium")
+
+
+def texto(
+    system: str,
+    prompt: str,
+    *,
+    max_tokens: int = 8000,
+    timeout: float | None = None,
+    esfuerzo: str = ESFUERZO,
+) -> str:
     """Respuesta en texto libre (Markdown). Para el playbook de empalme.
 
-    `timeout` en segundos: en el demo en vivo vale más un playbook degradado a
-    tiempo que uno perfecto que llega tarde.
+    Va en streaming: sin él, generar un playbook completo se pasaba del timeout
+    de 25 s y el demo caía al plan B justo en su momento estelar. El streaming
+    no acelera el modelo, pero evita que la conexión muera esperando.
+
+    `esfuerzo` controla cuánto piensa el modelo antes de escribir. En `high`
+    (el default de la API) el playbook tardaba de más; `medium` lo deja en el
+    rango de 5-15 s que pide el guion del demo sin que se note en la prosa.
     """
-    clave = _clave(MODELO, system, prompt, "texto", str(max_tokens))
+    clave = _clave(MODELO, system, prompt, "texto", str(max_tokens), esfuerzo)
     if (crudo := _leer_cache(clave)) is not None:
         return json.loads(crudo)
 
     cliente = _get_cliente()
     if timeout is not None:
         cliente = cliente.with_options(timeout=timeout)
-    respuesta = cliente.messages.create(
+    with cliente.messages.stream(
         model=MODELO,
         max_tokens=max_tokens,
         system=system,
         messages=[{"role": "user", "content": prompt}],
-    )
+        output_config={"effort": esfuerzo},
+    ) as flujo:
+        respuesta = flujo.get_final_message()
     salida = "".join(b.text for b in respuesta.content if b.type == "text")
     _escribir_cache(clave, json.dumps(salida))
     return salida
