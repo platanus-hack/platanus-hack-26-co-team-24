@@ -51,6 +51,15 @@ import './ui.css';
  * no congele la pestaña leyéndolo como texto ni reviente el POST. */
 const MAX_BYTES = 2 * 1024 * 1024;
 
+/** En cuanto entra un dato real, el backend deja de contar el dataset de
+ * ejemplo: no los mezcla, y hace bien —atribuirle conocimiento inventado a una
+ * persona real es peor que no tener datos—. Pero eso significa que un clic en
+ * "Sincronizar" durante un ensayo cambia la oficina del demo por la de quien
+ * hizo clic. Se avisa ANTES, junto al botón, no después en un mensaje de
+ * éxito. */
+const AVISO_REEMPLAZA_DEMO =
+  'Ojo: en cuanto entren tus datos, la oficina deja de mostrar el equipo de ejemplo y pasa a ser la tuya.';
+
 const CHIP: Record<EstadoFuente, { texto: string; clase: string }> = {
   activa: { texto: 'Conectada', clase: 'fuente-chip--activa' },
   pendiente: { texto: 'Pendiente', clase: 'fuente-chip--pendiente' },
@@ -352,12 +361,13 @@ export function Conexiones() {
                     className="fuente-nota fuente-nota--trabajando"
                     role="status"
                   >
-                    Leyendo tus canales · {segundos} s · puede tardar unos
-                    minutos, no cierres la pestaña.
+                    Leyendo tus canales y rehaciendo el mapa · {segundos} s ·
+                    puede tardar unos minutos, no cierres la pestaña.
                   </p>
                 ) : (
                   <p className="fuente-nota">
-                    Vuelve a sincronizar cuando quieras refrescar el mapa.
+                    Vuelve a sincronizar cuando quieras refrescar el mapa.{' '}
+                    {AVISO_REEMPLAZA_DEMO}
                   </p>
                 )}
               </>
@@ -408,7 +418,7 @@ export function Conexiones() {
             </button>
             <p className="fuente-nota">
               En Meet: la grabación deja el archivo de transcripción en tu
-              Drive.
+              Drive. {AVISO_REEMPLAZA_DEMO}
             </p>
           </Tarjeta>
 
