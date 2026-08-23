@@ -1,38 +1,28 @@
 import { describe, it, expect } from 'vitest';
-import { scoreToColor, isCritical } from './risk';
+import { riskLevel } from './risk';
 
-describe('scoreToColor', () => {
-  it('0 -> verde (riskLow)', () => {
-    expect(scoreToColor(0)).toBe(0x00ff88);
+describe('riskLevel', () => {
+  it('0 -> bajo', () => {
+    expect(riskLevel(0)).toBe('bajo');
   });
 
-  it('40 -> verde (riskLow), borde inclusivo', () => {
-    expect(scoreToColor(40)).toBe(0x00ff88);
+  it('39 -> bajo, borde inclusivo', () => {
+    expect(riskLevel(39)).toBe('bajo');
   });
 
-  it('41 -> amarillo (riskMid)', () => {
-    expect(scoreToColor(41)).toBe(0xffea00);
+  it('40 -> medio, borde inclusivo', () => {
+    expect(riskLevel(40)).toBe('medio');
   });
 
-  it('70 -> amarillo (riskMid), borde inclusivo', () => {
-    expect(scoreToColor(70)).toBe(0xffea00);
+  it('69 -> medio, borde inclusivo', () => {
+    expect(riskLevel(69)).toBe('medio');
   });
 
-  it('71 -> rojo (riskHigh)', () => {
-    expect(scoreToColor(71)).toBe(0xff1744);
+  it('70 -> alto, borde inclusivo', () => {
+    expect(riskLevel(70)).toBe('alto');
   });
 
-  it('100 -> rojo (riskHigh)', () => {
-    expect(scoreToColor(100)).toBe(0xff1744);
-  });
-});
-
-describe('isCritical', () => {
-  it('70 no es crítico', () => {
-    expect(isCritical(70)).toBe(false);
-  });
-
-  it('71 es crítico', () => {
-    expect(isCritical(71)).toBe(true);
+  it('100 -> alto', () => {
+    expect(riskLevel(100)).toBe('alto');
   });
 });

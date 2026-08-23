@@ -48,7 +48,7 @@ const RAW_OFICINA = {
     total_items: 1,
     detalle: `detalle de ${n}`,
   })),
-  resiliencia_equipo: 0.42,
+  resiliencia_equipo: 28.6,
 };
 
 const RAW_RIESGO = {
@@ -62,7 +62,7 @@ const RAW_RIESGO = {
       detalle: '3 elementos sin respaldo. Bus factor 1.',
     },
   ],
-  resiliencia_equipo: 0.42,
+  resiliencia_equipo: 28.6,
 };
 
 const RAW_ESCENARIOS = [
@@ -121,9 +121,11 @@ const RAW_SIMULAR = {
 };
 
 /** Importa `./api` con `VITE_API_URL` puesto y `fetch` stubeado. Devuelve el
- * módulo y el mock de fetch para inspeccionar la request enviada. */
-async function importRealApi(payload: unknown) {
-  vi.stubEnv('VITE_API_URL', 'http://x');
+ * módulo y el mock de fetch para inspeccionar la request enviada. `crudo` es
+ * el valor EXACTO de la variable de entorno, para poder ejercitar la
+ * normalización de la URL contra el `fetch` real del módulo. */
+async function importRealApi(payload: unknown, crudo = 'http://x') {
+  vi.stubEnv('VITE_API_URL', crudo);
   const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
     ok: true,
     status: 200,
@@ -160,6 +162,28 @@ describe('api (modo real, con VITE_API_URL)', () => {
     expect(oficina.people.map((p) => p.desk)).toEqual([
       0, 1, 2, 3, 4, 5, 6, 7, 8,
     ]);
+    // P3 manda la resiliencia 0-100 con decimales: el cliente la pasa tal
+    // cual y el HUD la redondea para pintarla (ver Hud.tsx).
+    expect(oficina.resiliencia).toBe(28.6);
+  });
+
+  it('getOficina acota el escritorio a los 9 del mapa aunque lleguen más miembros', async () => {
+    const payload = structuredClone(RAW_OFICINA);
+    payload.miembros = Array.from({ length: 11 }, (_, i) => ({
+      ...RAW_OFICINA.miembros[0],
+      email: `p${i}@empresa.com`,
+    }));
+    const { api } = await importRealApi(payload);
+    const oficina = await api.getOficina();
+
+    expect(oficina.people).toHaveLength(11);
+    expect(oficina.people.map((p) => p.desk)).toEqual([
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1,
+    ]);
+    for (const person of oficina.people) {
+      expect(person.desk).toBeGreaterThanOrEqual(0);
+      expect(person.desk).toBeLessThanOrEqual(8);
+    }
   });
 
   it('getOficina traduce el avatar_config ajeno de P3 a configs válidas y distintas', async () => {
@@ -189,6 +213,28 @@ describe('api (modo real, con VITE_API_URL)', () => {
     const { api } = await importRealApi(payload);
     const oficina = await api.getOficina();
     expect(oficina.people[0].avatar_config).toEqual(nuestro);
+  });
+
+  it('getOficina cae al último resultado exitoso si la API falla (restore offline)', async () => {
+    const { api, fetchMock } = await importRealApi(RAW_OFICINA);
+    await api.getOficina(); // primera llamada exitosa: cachea
+
+    fetchMock.mockImplementationOnce(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    const oficina = await api.getOficina();
+    expect(oficina.people).toHaveLength(9);
+  });
+
+  it('getRiesgo cae al último resultado exitoso si la API falla (restore offline)', async () => {
+    const { api, fetchMock } = await importRealApi(RAW_RIESGO);
+    await api.getRiesgo(); // primera llamada exitosa: cachea
+
+    fetchMock.mockImplementationOnce(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    const riesgo = await api.getRiesgo();
+    expect(riesgo.scores[0].person_id).toBe('ana@empresa.com');
   });
 
   it('getRiesgo mapea persona_id -> person_id y expone el detalle como primer item', async () => {
@@ -259,22 +305,34 @@ describe('api (modo real, con VITE_API_URL)', () => {
     expect(warn).toHaveBeenCalled();
   });
 
-  it('putAvatar sin sesión usa el endpoint sin token, con el email del usuario demo', async () => {
+  it('putAvatar hace PUT /avatar?email=... con las capas en la raíz del body', async () => {
     const { api, fetchMock } = await importRealApi({ ok: true });
-    const cfg = { cuerpo: 'light', peinado: 'short', ropa: 'shirt', paleta: 'blue' } as const;
-    const res = await api.putAvatar(cfg);
+    const res = await api.putAvatar({
+      cuerpo: 'dark',
+      peinado: 'long',
+      ropa: 'suit',
+      paleta: 'purple',
+    });
+
     expect(res).toEqual({ ok: true });
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
-    expect(url).toContain('/avatar?email=ana%40empresa.com');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'http://x/avatar?email=ana%40empresa.com',
+    );
+    const init = fetchMock.mock.calls[0][1]!;
     expect(init.method).toBe('PUT');
-    expect(JSON.parse(init.body as string)).toEqual({ avatar_config: cfg });
-    // Sin sesión no se manda Authorization: el endpoint no lo pide.
-    expect(init.headers.Authorization).toBeUndefined();
+    expect(JSON.parse(init.body as string)).toEqual({
+      cuerpo: 'dark',
+      peinado: 'long',
+      ropa: 'suit',
+      paleta: 'purple',
+    });
   });
 
   it('putAvatar con sesión guarda en la cuenta y manda el Bearer', async () => {
-    // Es lo que hace que el avatar sobreviva al cambio de equipo.
-    const datos = new Map<string, string>([['bfhq.token', 'tok-123']]);
+    // Es lo que hace que el avatar sobreviva al cambio de equipo: sin sesión
+    // el backend no sabe de quién es.
+    const datos = new Map([['bfhq.token', 'tok-123']]);
     globalThis.localStorage = {
       getItem: (k: string) => datos.get(k) ?? null,
       setItem: (k: string, v: string) => void datos.set(k, v),
@@ -283,10 +341,14 @@ describe('api (modo real, con VITE_API_URL)', () => {
       key: () => null,
       length: datos.size,
     } as Storage;
+
     const { api, fetchMock } = await importRealApi({ ok: true });
     await api.putAvatar({ cuerpo: 'dark', peinado: 'long', ropa: 'suit', paleta: 'red' });
-    const [url, init] = fetchMock.mock.calls[0] as [string, { headers: Record<string, string> }];
-    expect(url).toContain('/usuarios/me/avatar');
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://x/usuarios/me/avatar');
+    const init = fetchMock.mock.calls[0][1]! as RequestInit & {
+      headers: Record<string, string>;
+    };
     expect(init.headers.Authorization).toBe('Bearer tok-123');
     datos.clear();
   });
@@ -301,25 +363,37 @@ describe('api (modo real, con VITE_API_URL)', () => {
 describe('normalización de VITE_API_URL', () => {
   // Render entrega el host pelado cuando la variable viene de otro servicio del
   // blueprint. Sin esquema, fetch lo trata como ruta relativa y pega contra el
-  // propio estático en vez de contra la API.
-  const normalizar = (crudo: string | undefined) =>
-    crudo?.trim()
-      ? /^https?:\/\//.test(crudo.trim())
-        ? crudo.trim().replace(/\/$/, '')
-        : `https://${crudo.trim().replace(/\/$/, '')}`
-      : undefined;
-
-  it('le pone https al host pelado que inyecta Render', () => {
-    expect(normalizar('bus-factor-api.onrender.com')).toBe('https://bus-factor-api.onrender.com');
+  // propio estático en vez de contra la API. Se comprueba sobre la URL que sale
+  // por `fetch`, no sobre una copia del ternario de api.ts.
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.resetModules();
   });
 
-  it('respeta una URL completa y le quita la barra final', () => {
-    expect(normalizar('http://localhost:8000/')).toBe('http://localhost:8000');
-    expect(normalizar('https://api.example.com')).toBe('https://api.example.com');
+  it('le pone https al host pelado que inyecta Render', async () => {
+    const { api, fetchMock } = await importRealApi(
+      RAW_OFICINA,
+      'bus-factor-api.onrender.com',
+    );
+    await api.getOficina();
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://bus-factor-api.onrender.com/oficina',
+    );
   });
 
-  it('vacío sigue significando modo mock', () => {
-    expect(normalizar(undefined)).toBeUndefined();
-    expect(normalizar('   ')).toBeUndefined();
+  it('respeta una URL completa y no deja doble barra', async () => {
+    const { api, fetchMock } = await importRealApi(RAW_OFICINA, 'https://x/');
+    await api.getOficina();
+    expect(fetchMock.mock.calls[0][0]).toBe('https://x/oficina');
+  });
+
+  it('vacío sigue significando modo mock (sin red)', async () => {
+    const { api, fetchMock } = await importRealApi(RAW_OFICINA, '   ');
+    expect(api.IS_MOCK).toBe(true);
+    const oficina = await api.getOficina();
+    expect(oficina.people[0].id).toBe('p_ana');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

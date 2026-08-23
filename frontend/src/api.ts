@@ -41,8 +41,8 @@ const BASE = CRUDO?.trim()
  * (avatar en localStorage, etc.) se guía por esta bandera. */
 export const IS_MOCK = !BASE;
 
-/** Base de la API real. `null` en modo mock. La sesión la necesita para
- * construir sus propias URLs sin duplicar la lógica de normalización. */
+/** Base de la API real, `null` en modo mock. La sesión la necesita para armar
+ * sus URLs sin repetir la normalización del host. */
 export const API_BASE = BASE ?? null;
 
 /** Persona "yo" de la demo: en mocks es `p_ana`; contra P3, su usuario demo.
@@ -51,12 +51,18 @@ export const DEMO_USER_ID =
   (import.meta.env.VITE_DEMO_USER_ID as string | undefined) ||
   (IS_MOCK ? 'p_ana' : 'ana@empresa.com');
 
+// Escritorios que dibuja el mapa (`desk_0`..`desk_8`, ver scripts/gen-map.mjs).
+// La oficina real puede tener más gente que puestos: el índice se cicla en vez
+// de apuntar a un `desk_9` que no existe.
+const DESK_COUNT = 9;
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(BASE + path, {
     ...init,
-    // El Bearer va en toda petición si hay sesión: los endpoints públicos lo
-    // ignoran y los de usuario lo necesitan. Un solo camino, sin ramas.
-    headers: { 'Content-Type': 'application/json', ...cabecerasAuth(), ...init?.headers },
+    // El Bearer va en toda petición cuando hay sesión: los endpoints públicos
+    // lo ignoran y los de usuario lo necesitan. Va después de `...init` para
+    // que un caller no lo pise sin querer al pasar sus propias cabeceras.
+    headers: { 'Content-Type': 'application/json', ...init?.headers, ...cabecerasAuth() },
   });
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
   return r.json();
@@ -73,6 +79,8 @@ interface RawMiembro {
 interface RawOficina {
   oficina: { id: string; nombre: string };
   miembros: RawMiembro[];
+  // 0-100, cobertura de conocimiento del equipo (ver cerebro/README.md).
+  resiliencia_equipo?: number;
 }
 interface RawScore {
   persona_id: string;
@@ -113,38 +121,60 @@ const toAvatarConfig = (raw: unknown, i: number): AvatarConfig =>
 
 // --- Endpoints -------------------------------------------------------------
 
+// Última /oficina exitosa: si la API se cae justo cuando OfficeScene.restore()
+// (scene.restart()) vuelve a pedirla, sin esto la oficina se queda vacía en
+// vez de restaurar los 9 personajes (ver integ-report.md check f).
+let lastOficina: Oficina | null = null;
+
 export async function getOficina(): Promise<Oficina> {
   if (IS_MOCK) return structuredClone(oficinaMock as Oficina);
-  const raw = await req<RawOficina>('/oficina');
-  const people: Person[] = raw.miembros.map((m, i) => ({
-    id: m.email,
-    nombre: m.nombre,
-    rol: m.rol,
-    desk: i,
-    avatar_config: toAvatarConfig(m.avatar_config, i),
-  }));
-  return { office: raw.oficina, people };
+  try {
+    const raw = await req<RawOficina>('/oficina');
+    const people: Person[] = raw.miembros.map((m, i) => ({
+      id: m.email,
+      nombre: m.nombre,
+      rol: m.rol,
+      desk: i % DESK_COUNT,
+      avatar_config: toAvatarConfig(m.avatar_config, i),
+    }));
+    lastOficina = { office: raw.oficina, people, resiliencia: raw.resiliencia_equipo };
+    return structuredClone(lastOficina);
+  } catch (err) {
+    if (lastOficina) return structuredClone(lastOficina);
+    throw err;
+  }
 }
+
+// Mismo trato que `/oficina` (ver arriba): si la API se cae en el `restart()`
+// de `restore()`, la sala vuelve con sus auras de riesgo en vez de con todo el
+// mundo en verde.
+let lastRiesgo: Riesgo | null = null;
 
 export async function getRiesgo(): Promise<Riesgo> {
   if (IS_MOCK) return structuredClone(riesgoMock as Riesgo);
-  const raw = await req<{ scores: RawScore[] }>('/riesgo');
-  return {
-    // ponytail: P3 sólo manda ids de item; el `detalle` (frase legible) va
-    // como primer "item" para que el tooltip diga algo útil.
-    scores: raw.scores.map((s) => ({
-      person_id: s.persona_id,
-      score: s.score,
-      items_criticos: [
-        { id: 'detalle', tipo: 'resumen', descripcion: s.detalle },
-        ...s.items_criticos.map((id) => ({
-          id,
-          tipo: 'item',
-          descripcion: id,
-        })),
-      ],
-    })),
-  };
+  try {
+    const raw = await req<{ scores: RawScore[] }>('/riesgo');
+    lastRiesgo = {
+      // ponytail: P3 sólo manda ids de item; el `detalle` (frase legible) va
+      // como primer "item" para que el tooltip diga algo útil.
+      scores: raw.scores.map((s) => ({
+        person_id: s.persona_id,
+        score: s.score,
+        items_criticos: [
+          { id: 'detalle', tipo: 'resumen', descripcion: s.detalle },
+          ...s.items_criticos.map((id) => ({
+            id,
+            tipo: 'item',
+            descripcion: id,
+          })),
+        ],
+      })),
+    };
+    return structuredClone(lastRiesgo);
+  } catch (err) {
+    if (lastRiesgo) return structuredClone(lastRiesgo);
+    throw err;
+  }
 }
 
 export async function getEscenarios(): Promise<{ scenarios: Scenario[] }> {
@@ -192,15 +222,16 @@ export async function simular(body: {
 }
 
 export async function putAvatar(cfg: AvatarConfig): Promise<{ ok: boolean }> {
-  // Modo mock: no hay servidor, el editor guarda en localStorage y ya.
+  // En modo demo no hay red: el editor guarda en localStorage igual.
   if (IS_MOCK) return { ok: true };
-
-  // Con sesión el avatar queda atado a la cuenta, que es lo que hace que
-  // sobreviva al cambio de equipo. Sin sesión cae al endpoint sin token que
-  // dejó P3, para que la demo funcione sin obligar a registrarse.
+  // P3 acepta las capas en la raíz del body en ambos endpoints. Con sesión el
+  // avatar queda atado a la cuenta, que es lo que hace que sobreviva al cambio
+  // de equipo; sin sesión cae al endpoint sin token para no obligar a
+  // registrarse durante la demo.
+  const { cuerpo, peinado, ropa, paleta } = cfg;
   const ruta = haySesion()
     ? '/usuarios/me/avatar'
     : `/avatar?email=${encodeURIComponent(DEMO_USER_ID)}`;
-  await req<unknown>(ruta, { method: 'PUT', body: JSON.stringify({ avatar_config: cfg }) });
+  await req(ruta, { method: 'PUT', body: JSON.stringify({ cuerpo, peinado, ropa, paleta }) });
   return { ok: true };
 }

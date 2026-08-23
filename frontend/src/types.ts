@@ -18,6 +18,11 @@ export interface Person {
 export interface Oficina {
   office: { id: string; nombre: string };
   people: Person[];
+  // Puntaje de resiliencia del equipo (0-100). Opcional: el HUD lo oculta si
+  // falta (p. ej. un backend viejo sin `resiliencia_equipo`).
+  resiliencia?: number;
+  // Delta mostrado junto al puntaje (mock únicamente; P3 no lo manda).
+  resiliencia_delta?: number;
 }
 
 export interface ItemCritico {

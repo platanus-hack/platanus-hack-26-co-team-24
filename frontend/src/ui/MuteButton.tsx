@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { isMuted, setMuted } from '../audio';
 import './ui.css';
 
-/** Botón flotante arriba-izquierda que silencia/reactiva la música y los
- * efectos de sonido (persistido en `localStorage.muted`). */
+/** Caja mute/CHIPTUNE de la esquina superior izquierda del HUD (montada
+ * dentro de `Hud.tsx`). Silencia/reactiva música y efectos, persistido en
+ * `localStorage.muted`. */
 export function MuteButton() {
   const [muted, setMutedState] = useState(isMuted());
 
@@ -20,7 +21,8 @@ export function MuteButton() {
       aria-label={muted ? 'Activar sonido' : 'Silenciar'}
       onClick={toggle}
     >
-      {muted ? '🔇' : '🔊'}
+      <span className="mute-btn__icon">{muted ? '🔇' : '🔊'}</span>
+      <span>{muted ? 'SILENCIO' : 'CHIPTUNE'}</span>
     </button>
   );
 }

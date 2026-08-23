@@ -1,10 +1,12 @@
 import type { OfficeScene } from '../OfficeScene';
-import { floatIcon, wait } from './fx';
+import { floatIcon, hex, wait } from './fx';
+import { THEME, TILE } from '../palette';
 import { sfx } from '../../audio';
 
-const TILE = 16;
-const GRAY = 0x777777;
-const QUESTION_OFFSETS = [-10, 0, 10];
+// Escritorio "apagado" = tinte LINE (guía), no un gris genérico fuera de
+// los 11 colores de la paleta Synth Dusk.
+const GRAY = hex(THEME.line);
+const QUESTION_OFFSETS = [-TILE / 2, 0, TILE / 2];
 
 /** Escenario ⭐ del demo: la persona se levanta, camina a la puerta, se
  * desvanece y deja su escritorio apagado (gris) con tres "?" flotando.
@@ -36,21 +38,30 @@ export async function run(scene: OfficeScene, personId: string): Promise<void> {
   if (!scene.sys.isActive()) return;
   char.setVisible(false);
 
-  // El escritorio queda "apagado": PC y mueble en gris.
-  scene.objects[`pc_${char.person.desk}`]?.setTint(GRAY);
-  const desk = scene.points[`desk_${char.person.desk}`];
+  // El escritorio queda "apagado": PC, bisel y mueble en gris. El tablero son
+  // dos sprites (`desk_i` y `desk_i_b`, ver OfficeScene.placeObjects), no
+  // tiles de la capa `furniture`.
+  const deskIdx = char.person.desk;
+  for (const key of [
+    `pc_${deskIdx}`,
+    `pc_frame_${deskIdx}`,
+    `desk_${deskIdx}`,
+    `desk_${deskIdx}_b`,
+  ]) {
+    scene.objects[key]?.setTint(GRAY);
+  }
+  const desk = scene.points[`desk_${deskIdx}`];
   if (desk) {
-    const tile = scene.map.getTileAt(
-      desk.x / TILE,
-      desk.y / TILE,
-      false,
-      'furniture',
-    );
-    if (tile) tile.tint = GRAY;
     QUESTION_OFFSETS.forEach((dx, i) => {
-      // -14 px: justo encima del PC (que ocupa desk.y-8 .. desk.y+8), para
-      // que los "?" no tapen el escritorio apagado.
-      floatIcon(scene, desk.x + TILE / 2 + dx, desk.y - 14, undefined, i * 150);
+      // Sobre la silla vacía (una fila por encima de la mesa), que es donde
+      // el ojo va a buscar a quien ya no está.
+      floatIcon(
+        scene,
+        desk.x + TILE / 2 + dx,
+        desk.y - TILE,
+        hex(THEME.oro),
+        i * 150,
+      );
     });
   }
 }

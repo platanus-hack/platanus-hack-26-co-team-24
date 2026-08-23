@@ -46,6 +46,17 @@ export function ArcadeConsole() {
     };
   }, []);
 
+  // Escape cierra el panel, igual que el tooltip de riesgo y el panel de
+  // resultado (ver RiskTooltip.tsx / ResultPanel.tsx).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const selected = scenarios.find((s) => s.id === selectedId) ?? null;
 
   const simulate = () => {
@@ -72,24 +83,35 @@ export function ArcadeConsole() {
           setOpen((v) => !v);
         }}
       >
-        🕹️ Consola
+        <span>🕹️</span>
+        <span>CONSOLA</span>
       </button>
 
       {open && (
         <div className="arcade-panel">
           <div className="arcade-panel__header">
-            <p className="arcade-panel__title">Consola de escenarios</p>
-            <button
-              type="button"
-              className="arcade-close"
-              aria-label="Cerrar"
-              onClick={() => {
-                sfx('click');
-                setOpen(false);
-              }}
-            >
-              ×
-            </button>
+            <div className="arcade-panel__title-group">
+              <span className="arcade-panel__icon" aria-hidden="true">
+                🕹️
+              </span>
+              <p className="arcade-panel__title">CONSOLA DE EMERGENCIAS</p>
+            </div>
+            <div className="arcade-panel__header-right">
+              <span className="arcade-panel__count">
+                {scenarios.length} ESCENARIOS
+              </span>
+              <button
+                type="button"
+                className="arcade-close"
+                aria-label="Cerrar"
+                onClick={() => {
+                  sfx('click');
+                  setOpen(false);
+                }}
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           <ul className="arcade-list">
@@ -115,7 +137,7 @@ export function ArcadeConsole() {
 
           {selected?.requiere_persona && (
             <label className="arcade-field">
-              Persona
+              PERSONA
               <select
                 value={personId}
                 onChange={(e) => setPersonId(e.target.value)}
@@ -135,7 +157,7 @@ export function ArcadeConsole() {
             disabled={!selected || running}
             onClick={simulate}
           >
-            Simular
+            SIMULAR ▶
           </button>
         </div>
       )}
