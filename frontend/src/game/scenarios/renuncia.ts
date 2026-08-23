@@ -1,9 +1,12 @@
 import type { OfficeScene } from '../OfficeScene';
 import { floatIcon, wait } from './fx';
-import { TILE } from '../palette';
+import { THEME, TILE } from '../palette';
 import { sfx } from '../../audio';
 
-const GRAY = 0x777777;
+const hex = (s: string): number => parseInt(s.slice(1), 16);
+// Escritorio "apagado" = tinte LINE (guía), no un gris genérico fuera de
+// los 11 colores de la paleta Synth Dusk.
+const GRAY = hex(THEME.line);
 const QUESTION_OFFSETS = [-TILE / 2, 0, TILE / 2];
 
 /** Escenario ⭐ del demo: la persona se levanta, camina a la puerta, se
@@ -57,7 +60,7 @@ export async function run(scene: OfficeScene, personId: string): Promise<void> {
         scene,
         desk.x + TILE / 2 + dx,
         desk.y - TILE,
-        undefined,
+        hex(THEME.oro),
         i * 150,
       );
     });
