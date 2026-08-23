@@ -1178,3 +1178,279 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* --- Pantalla de fuentes (/conexiones) -------------------------------------
+   Mismo lenguaje que la consola arcade: fondo BASE, panel SURFACE, canto
+   izquierdo de 6px por tarjeta (igual que .arcade-item) y un solo color por
+   papel — TURQUESA para lo que está trabajando, LIMA para lo que ya está
+   vivo, ORO para lo pendiente, ROSA solo en los botones.
+
+   Contraste comprobado sobre los dos fondos de la guía: --texto2 (#a98cd6)
+   da 5.9:1 sobre SURFACE y 6.4:1 sobre BASE; el texto oscuro #2e0a1c sobre
+   ROSA da 5.8:1 (el #f3e8ff sobre ROSA que usan otros botones se queda en
+   2.6:1, así que aquí NO se repite). */
+
+.fuentes-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 32px 24px 48px;
+  background: var(--base);
+  color: var(--texto);
+  box-sizing: border-box;
+}
+
+.fuentes-panel {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px;
+  background: var(--surface);
+  border: 3px solid var(--line);
+  box-sizing: border-box;
+}
+
+.fuentes-panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.fuentes-panel__header h1 {
+  margin: 0;
+  font-family: 'Workbench', monospace;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--texto);
+}
+
+.fuentes-volver {
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--turquesa);
+  text-decoration: none;
+}
+
+.fuentes-intro {
+  margin: 0;
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--texto2);
+}
+
+/* Avisos y resultados: el color va en el canto izquierdo, no en el fondo del
+   párrafo entero, para no encender media pantalla por un mensaje de una
+   línea. El error sí lleva fondo propio (#2e0a1c, 5:1 contra el ROJO): es lo
+   único que tiene que interrumpir. */
+.fuentes-aviso,
+.fuentes-mensaje {
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--base);
+  border-left: 4px solid var(--line);
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--texto);
+}
+
+.fuentes-aviso {
+  border-left-color: var(--oro);
+}
+
+.fuentes-mensaje--ok {
+  border-left-color: var(--lima);
+}
+
+.fuentes-mensaje--error {
+  background: #2e0a1c;
+  border-left-color: var(--rojo);
+  color: var(--rojo);
+}
+
+.fuentes-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fuente {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  background: var(--base);
+  border-left: 6px solid var(--line);
+}
+
+.fuente__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Marca de la fuente: un glifo, no un logo. Traer los SVG de Slack, Google y
+   GitHub metería tres estéticas ajenas en una pantalla pixel art. */
+.fuente__marca {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: var(--turquesa);
+}
+
+.fuente__titulo {
+  flex: 1;
+  margin: 0;
+  font-family: 'VT323', monospace;
+  font-size: 26px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--texto);
+}
+
+.fuente-chip {
+  flex: none;
+  padding: 4px 9px;
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.fuente-chip--activa {
+  background: var(--lima);
+  color: #1b2e06;
+}
+
+.fuente-chip--pendiente {
+  background: var(--oro);
+  color: var(--base);
+}
+
+.fuente-chip--off {
+  border: 1px solid var(--line);
+  color: var(--texto2);
+}
+
+.fuente__desc {
+  margin: 0;
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  line-height: 1.25;
+  color: var(--texto2);
+}
+
+.fuente__accion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.fuente-nota {
+  margin: 0;
+  font-family: 'Jersey 15', monospace;
+  font-size: 21px;
+  line-height: 1.25;
+  color: var(--texto2);
+}
+
+/* "Está trabajando": TURQUESA (papel de datos) y un cursor que titila con
+   steps(2), como las pantallas de la oficina. Una barra de progreso mentiría:
+   el backend no manda porcentaje. */
+.fuente-nota--trabajando {
+  color: var(--turquesa);
+}
+
+.fuente-nota--trabajando::before {
+  content: '█ ';
+  animation: fuente-titileo 900ms steps(2, jump-none) infinite;
+}
+
+@keyframes fuente-titileo {
+  50% {
+    opacity: 0;
+  }
+}
+
+.fuente-btn {
+  padding: 11px 20px;
+  border: 3px solid var(--line);
+  background: none;
+  color: var(--texto);
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.fuente-btn--primaria {
+  background: var(--rosa);
+  border-color: #f3e8ff;
+  /* Texto oscuro sobre el rosa: 5.8:1. Es además el tratamiento del botón
+     CONSOLA en la guía (sección 05). */
+  color: #2e0a1c;
+  box-shadow: 4px 4px 0 var(--void);
+}
+
+.fuente-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* El input de archivos se deja nativo (arrastrar, multiselección y el nombre
+   del archivo salen gratis); solo se tiñe su botón para que no sea el gris
+   del sistema en medio de la paleta. */
+.fuente-archivo {
+  max-width: 100%;
+  font-family: 'Jersey 15', monospace;
+  font-size: 21px;
+  color: var(--texto2);
+}
+
+.fuente-archivo::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 14px;
+  background: none;
+  border: 3px solid var(--turquesa);
+  color: var(--turquesa);
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.fuentes-pie {
+  display: flex;
+  gap: 12px;
+}
+
+/* Foco visible en toda la pantalla: se navega con teclado y el borde por
+   defecto del navegador desaparece sobre estos fondos. */
+.fuentes-page a:focus-visible,
+.fuentes-page button:focus-visible,
+.fuentes-page input:focus-visible {
+  outline: 3px solid var(--turquesa);
+  outline-offset: 2px;
+}
