@@ -44,7 +44,7 @@ const ANIMS: Array<{
 const DESK_COUNT = 9;
 // Lámparas del techo: columnas de tiles sobre la franja de muro superior
 // (ver scripts/gen-map.mjs, LAMPS).
-const LAMP_COLUMNS = [4, 10, 16];
+const LAMP_COLUMNS = [4, 11, 18];
 const LAMP_ROW = 0;
 const LAMP_OFFSET_Y = 8; // el círculo cuelga un poco por debajo del borde
 
@@ -81,10 +81,10 @@ const RACK_SEGMENTS = [
   { key: 'server_mid', dy: -1, frame: 0, off: 1, flip: false },
   { key: 'server_top', dy: -2, frame: 14, off: 15, flip: false },
 ];
-// Recuadro de la sala Meet en tiles. Cubre el interior (x 15..18, y 2..4, ver
+// Recuadro de la sala Meet en tiles. Cubre el interior (x 18..21, y 2..4, ver
 // MEET en scripts/gen-map.mjs) y sube una fila para englobar la pantalla que
 // cuelga del muro, igual que el mockup dibuja su marco sobre la franja alta.
-const MEET_ROOM = { x: 15, y: 1, w: 4, h: 4 };
+const MEET_ROOM = { x: 18, y: 1, w: 4, h: 4 };
 // El monitor asoma 12 px por encima del canto de la mesa, apoyado en ella
 // (el mockup lo dibuja montado sobre el tablero).
 const PC_OFFSET_Y = -12;
@@ -490,7 +490,7 @@ export class OfficeScene extends Phaser.Scene {
 
   private setupCamera(): void {
     const cam = this.cameras.main;
-    // No zoom/pan: the map is exactly the size of the game canvas (640x416),
+    // No zoom/pan: the map is exactly the size of the game canvas (736x416),
     // so the whole office fits on screen at zoom 1. Config-level `zoom: 2`
     // (see game/config.ts) scales the canvas up for pixel-art crispness.
     cam.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);

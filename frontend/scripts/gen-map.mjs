@@ -1,13 +1,15 @@
 // Genera public/assets/maps/office.json, un tilemap Tiled 1.10 en JSON, por
-// script (no hay GUI de Tiled). Layout: 20x13 tiles de 32 px = 640x416, el
-// tamaño exacto del canvas del juego (game/config.ts), sin zoom ni paneo de
-// cámara: toda la oficina cabe en pantalla.
+// script (no hay GUI de Tiled). Layout: 23x13 tiles de 32 px = 736x416, el
+// tamaño exacto del canvas del juego (game/config.ts) -- ancho elegido para
+// que el canvas llene el ancho en pantallas 16:9 (ratio 1.769, Task H) --,
+// sin zoom ni paneo de cámara: toda la oficina cabe en pantalla.
 //
 // La composición reproduce el mockup de la guía (docs/design/oficina-mockup.html,
 // sección 05 de guia-visual.dc.html): muro superior de 2 filas con lámparas,
-// cafetera arriba-izquierda, 3x3 de escritorios (monitor arriba, silla abajo),
-// sala Meet arriba-derecha tras un muro parcial con abertura de 2 tiles, rack
-// de GitHub en la pared derecha fuera de la sala, puerta abajo-centro, consola
+// cafetera arriba-izquierda, 3x3 de escritorios (monitor arriba, silla abajo)
+// repartidos con espaciado generoso en la sala principal ensanchada, sala
+// Meet arriba-derecha tras un muro parcial con abertura de 2 tiles, rack de
+// GitHub en la pared derecha fuera de la sala, puerta abajo-centro, consola
 // abajo-derecha y dos plantas.
 //
 // Tileset `office` (public/assets/tiles/office.png, 9 tiles de 32 px, firstgid=1):
@@ -30,7 +32,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dirname, '..', 'public', 'assets', 'maps', 'office.json');
 
 const TILE = 32;
-const W = 20;
+const W = 23;
 const H = 13;
 
 const GID = {
@@ -92,20 +94,22 @@ setWalkable(DOOR.x, DOOR.y, GID.door, walls);
 setWalkable(DOOR.x, DOOR.y + 1, GID.door, walls);
 
 // ---------- sala Meet: arriba-derecha, muro parcial con abertura de 2 ----------
-// Interior x 15..18, y 2..4. Muro vertical en x=14 (y 2..5) y muro inferior en
-// y=5 sólo en x 17..18: la abertura de 2 tiles es (15,5) y (16,5).
-const MEET = { x0: 15, x1: 18, y0: 2, y1: 4 };
-for (let y = MEET.y0; y <= MEET.y1 + 1; y++) setWall(14, y);
-setWall(17, MEET.y1 + 1);
-setWall(18, MEET.y1 + 1);
+// Interior x 18..21, y 2..4 (shift +3 respecto al layout 20x13 para dejar
+// sitio a la sala principal ensanchada). Muro vertical en x=17 (y 2..5) y
+// muro inferior en y=5 sólo en x 20..21: la abertura de 2 tiles es (18,5) y
+// (19,5).
+const MEET = { x0: 18, x1: 21, y0: 2, y1: 4 };
+for (let y = MEET.y0; y <= MEET.y1 + 1; y++) setWall(17, y);
+setWall(20, MEET.y1 + 1);
+setWall(21, MEET.y1 + 1);
 
 // Mesa de juntas 3x1 (el mockup la dibuja igual que un escritorio: cuerpo
 // #6E4FA8 con canto LILA) y pantalla Meet de 2 tiles colgada del muro
 // superior, como el panel de 208 px del mockup.
-for (const x of [15, 16, 17]) setProp(x, 3, GID.desk);
-const MEET_SCREEN = { x: 16, y: 1 }; // el sprite hermano va en (17,1)
-for (const x of [16, 17]) furniture[1][x] = GID.meetScreen; // ya son muro
-const MEETING = { x: 16, y: 4 }; // celda libre delante de la mesa
+for (const x of [18, 19, 20]) setProp(x, 3, GID.desk);
+const MEET_SCREEN = { x: 19, y: 1 }; // el sprite hermano va en (20,1)
+for (const x of [19, 20]) furniture[1][x] = GID.meetScreen; // ya son muro
+const MEETING = { x: 19, y: 4 }; // celda libre delante de la mesa
 
 // ---------- escritorios: 3x3, mesa de 2 tiles, silla ENCIMA ----------
 // Cada puesto ocupa 2 filas: la silla va en la fila de ARRIBA (y-1) y la mesa
@@ -115,7 +119,11 @@ const MEETING = { x: 16, y: 4 }; // celda libre delante de la mesa
 // está sentado. El monitor tampoco es un tile: es el sprite `pc`, apoyado en
 // el canto de la mesa (offset -12 px) sobre el tile IZQUIERDO; la silla va en
 // el DERECHO para que la persona quede al lado del monitor y no detrás.
-const DESK_COLS = [2, 7, 11];
+// Columnas repartidas con espaciado parejo (4 tiles libres entre mesas, 1
+// tile de margen a cada lado) en la sala principal ensanchada (interior útil
+// x 1..16, antes de llegar al muro de la sala Meet en x=17); el mockup pide
+// espaciado generoso en vez del reparto original, más apretado.
+const DESK_COLS = [2, 8, 14];
 const DESK_ROWS = [3, 6, 9];
 const desks = [];
 for (const y of DESK_ROWS) {
@@ -139,10 +147,10 @@ setProp(1, 11, GID.plant);
 
 // ---------- rack GitHub: pared derecha, fuera de la sala Meet ----------
 // Torre de 3 tiles como en el mockup (118x214 a 2x). El punto `server` es el
-// segmento de abajo; (18,9) queda libre, así que el destino es alcanzable.
+// segmento de abajo; (21,9) queda libre, así que el destino es alcanzable.
 // Los tiles sólo bloquean: los tres segmentos los pinta OfficeScene con los
 // frames `rack_cap_*` / `server_*` de objects.png.
-const SERVER = { x: 18, y: 8 };
+const SERVER = { x: 21, y: 8 };
 for (const y of [6, 7, 8]) collision[y][SERVER.x] = GID.wall;
 if (collision[9][SERVER.x] !== 0) {
   throw new Error('la celda bajo el rack tiene que quedar libre');
@@ -152,14 +160,16 @@ if (collision[9][SERVER.x] !== 0) {
 // En la fila 10 y no en la 11: la 12 es muro, así que desde la 11 no habría
 // celda libre debajo y `resolveTargetTile('console')` daría un destino
 // bloqueado (ver src/game/map.test.ts).
-const CONSOLE = { x: 17, y: 10 };
+const CONSOLE = { x: 20, y: 10 };
 collision[CONSOLE.y][CONSOLE.x] = GID.wall; // sprite-only (objects.png frame 10)
 
 // ---------- lámparas del techo: sprite-only sobre el muro superior ----------
+// Recentradas en la sala ensanchada: margen de 4 tiles a cada lado y 7 entre
+// lámparas consecutivas (simétrico sobre 23 columnas).
 const LAMPS = [
   { x: 4, y: 0 },
-  { x: 10, y: 0 },
-  { x: 16, y: 0 },
+  { x: 11, y: 0 },
+  { x: 18, y: 0 },
 ];
 for (const l of LAMPS) furniture[l.y][l.x] = GID.lamp;
 

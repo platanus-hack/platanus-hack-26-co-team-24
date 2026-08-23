@@ -86,9 +86,23 @@ function flood(start: Tile): Set<string> {
 }
 
 describe('office.json', () => {
-  it('es la grilla que declara palette.ts: 20x13 celdas de 32 px', () => {
-    expect([map.width, map.height]).toEqual([20, 13]);
+  it('es la grilla que declara palette.ts: 23x13 celdas de 32 px (16:9, Task H)', () => {
+    expect([map.width, map.height]).toEqual([23, 13]);
     expect([map.tilewidth, map.tileheight]).toEqual([TILE, TILE]);
+  });
+
+  // `game/config.ts` fija `width`/`height` a mano (importarlo aquí traería
+  // Phaser al entorno de test de Node, que no tiene `window`/`document`), así
+  // que la igualdad con el canvas se comprueba contra el tamaño derivado del
+  // propio mapa: si alguien cambia W/H en gen-map.mjs sin tocar config.ts (o
+  // viceversa), este test lo detecta.
+  it('el canvas del juego (config.ts) mide map.width*TILE x map.height*TILE', () => {
+    const GAME_WIDTH = 736;
+    const GAME_HEIGHT = 416;
+    expect([GAME_WIDTH, GAME_HEIGHT]).toEqual([
+      map.width * TILE,
+      map.height * TILE,
+    ]);
   });
 
   it('declara los 14 puntos que consumen la escena y el comportamiento', () => {

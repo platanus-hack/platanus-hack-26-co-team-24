@@ -93,7 +93,7 @@ export const THEME = {
 // Grilla y sprites (guía, secciones 03 TILES · 32PX y 04 SPRITE SHEET):
 // una sola fuente de verdad para todo el juego. Nadie más debe declarar
 // estas constantes: el mapa (scripts/gen-map.mjs), el canvas
-// (game/config.ts, 20x13 tiles = 640x416) y los spritesheets generados
+// (game/config.ts, 23x13 tiles = 736x416) y los spritesheets generados
 // (scripts/gen-assets.mjs) están cuadrados con estos números.
 export const TILE = 32;
 export const SPRITE_W = 32;

@@ -317,7 +317,7 @@ function genGlow() {
 }
 
 /** Extruye 1 px el borde de cada tile (margin 1, spacing 2 en Tiled).
- * Sin esto, el juego escala el mapa a un factor no entero (FIT: 640x416 en la
+ * Sin esto, el juego escala el mapa a un factor no entero (FIT: 736x416 en la
  * ventana) y el muestreo del borde de cada tile chupa el píxel del tile
  * vecino de la tira, pintando una rejilla de líneas del color del muro sobre
  * todo el piso. */
