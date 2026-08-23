@@ -30,6 +30,13 @@ export const durationMs = (_: State, r = Math.random()) => 4000 + r * 8000;
 export const MAX_MOVING = 3;
 export const canMove = (moving: number): boolean => moving < MAX_MOVING;
 
+/** Contador tras terminar (o cancelar) un `walkTo` ambiental. Nunca baja de
+ * 0: `OfficeScene.create()` lo resetea en cada `restart()` (restaurar) y los
+ * `finally` de los ticks que seguían vivos aterrizan DESPUÉS. Sin este piso
+ * el contador quedaba negativo y la sala pasaba a mover hasta 6 personajes a
+ * la vez. */
+export const decMoving = (moving: number): number => Math.max(0, moving - 1);
+
 // Puntos por los que un personaje "caminando" puede pasear.
 const WALK_TARGETS = ['coffee', 'meeting', 'door'] as const;
 

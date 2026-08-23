@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { nextState, durationMs, pointFor, canMove, MAX_MOVING } from './behavior';
+import {
+  nextState,
+  durationMs,
+  pointFor,
+  canMove,
+  decMoving,
+  MAX_MOVING,
+} from './behavior';
 
 describe('nextState', () => {
   it('trabajando aparece entre 0.67 y 0.73 de las veces en 10000 muestras', () => {
@@ -65,5 +72,17 @@ describe('canMove', () => {
 
   it('canMove(0) === true', () => {
     expect(canMove(0)).toBe(true);
+  });
+});
+
+describe('decMoving', () => {
+  it('descuenta uno cuando hay gente caminando', () => {
+    expect(decMoving(3)).toBe(2);
+    expect(decMoving(1)).toBe(0);
+  });
+
+  it('nunca baja de 0 (restaurar resetea el contador a mitad de un walkTo)', () => {
+    expect(decMoving(0)).toBe(0);
+    expect(decMoving(-2)).toBe(0);
   });
 });

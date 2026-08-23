@@ -13,12 +13,12 @@ const LOCK_W = 10;
 const LOCK_H = 8;
 const LOCK_RADIUS = 4;
 // El punto `cto_pc` es el escritorio 0, arriba-izquierda del mapa -- justo
-// donde vive el HUD fijo ("OFICINA <NOMBRE>" + mute, ver Hud.tsx). Si el
-// candado flotara centrado sobre el monitor quedaría tapado por esa tarjeta
-// (fuera del alcance de esta tarea mover el HUD o el escritorio 0): se
-// desplaza a la derecha, fuera de la tarjeta, todavía sobre el mismo puesto.
+// donde vive el HUD fijo ("OFICINA <NOMBRE>" + mute, ver Hud.tsx). Flotando
+// ARRIBA del monitor el candado caía debajo de esa tarjeta y no se veía, así
+// que baja al tablero del escritorio (por debajo de la tarjeta y del haz
+// giratorio), todavía sobre el mismo puesto comprometido.
 const LOCK_OFFSET_X = 24;
-const LOCK_OFFSET_Y = -40; // candado flotando sobre el hueco, no encima del haz
+const LOCK_OFFSET_Y = 40;
 const LAMP_COUNT = 3; // ver OfficeScene.LAMP_COLUMNS
 const LAMP_BLINKS = 6; // 6 medios-ciclos = 3 parpadeos completos
 const LAMP_INTERVAL_MS = 500; // 6 * 500ms = 3s (guía: "≈3 s")

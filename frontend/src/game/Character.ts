@@ -11,7 +11,7 @@ import {
   SPRITE_H,
   type PairKey,
 } from './palette';
-import { nextState, durationMs, pointFor, canMove } from './behavior';
+import { nextState, durationMs, pointFor, canMove, decMoving } from './behavior';
 import { resolveTargetTile } from './targets';
 import { riskLevel, RISK_LEVEL_COLOR } from './risk';
 import { DEMO_USER_ID } from '../api';
@@ -542,7 +542,7 @@ export class Character extends Phaser.GameObjects.Container {
     try {
       await this.walkTo(pointFor(state, this.person.desk));
     } finally {
-      scene.moving--;
+      scene.moving = decMoving(scene.moving);
     }
     if (!this.running || !this.scene) return;
     this.play(state === 'trabajando' ? 'type' : 'idle');

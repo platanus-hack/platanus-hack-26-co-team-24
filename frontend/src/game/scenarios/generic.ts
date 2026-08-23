@@ -120,12 +120,16 @@ async function runApagon(scene: OfficeScene): Promise<void> {
   }
 
   // Rack apagado: frame "caído" y su halo lima a 0 (sin LEDs) -- el único
-  // que se apaga en vez de elevarse.
+  // que se apaga en vez de elevarse. Los frames "caídos" están dibujados en
+  // ROJO (son el idioma de "GitHub se cayó", ver github.ts), y en un apagón
+  // el rack tiene que leerse APAGADO, no en emergencia: se tinta con el
+  // morado de línea para que quede oscuro sobre la sala a oscuras.
   for (const key of ['server', 'server_mid', 'server_top']) {
     const rack = scene.objects[key];
     if (!rack) continue;
     rack.anims.stop();
     rack.setFrame(rack.getData('offFrame') ?? 1);
+    rack.setTint(hex(THEME.line));
   }
   const server = scene.points['server'];
   if (server) {
@@ -135,16 +139,23 @@ async function runApagon(scene: OfficeScene): Promise<void> {
   await wait(scene, 3200);
 }
 
-/** Meet caído: la pantalla se apaga y "tiembla" un instante. */
+/** Meet caído: la pantalla se apaga y "tiembla" un instante. La pantalla del
+ * mockup son DOS sprites contiguos (`meet_screen` + `meet_screen_b`, ver
+ * OfficeScene): hay que apagar y sacudir las dos mitades o se queda media
+ * pantalla encendida y quieta. */
 async function runMeetCaido(scene: OfficeScene): Promise<void> {
-  const meet = scene.objects['meet_screen'];
-  if (!meet) return;
-  meet.anims.stop();
-  meet.setFrame(9); // meet_off
+  const halves = ['meet_screen', 'meet_screen_b']
+    .map((key) => scene.objects[key])
+    .filter((s): s is NonNullable<typeof s> => !!s);
+  if (halves.length === 0) return;
+  for (const half of halves) {
+    half.anims.stop();
+    half.setFrame(9); // meet_off
+  }
 
   await new Promise<void>((resolve) => {
     scene.tweens.add({
-      targets: meet,
+      targets: halves,
       x: '+=1',
       duration: 50,
       yoyo: true,
