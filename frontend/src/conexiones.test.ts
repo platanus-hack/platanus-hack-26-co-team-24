@@ -286,6 +286,19 @@ describe('conexiones contra el servidor', () => {
     expect(texto).toContain('sin API key');
   });
 
+  it('volverAlDemo resetea y repuebla el mapa', async () => {
+    // Sin el recálculo, `reset` deja el estado limpio pero la oficina vacía:
+    // el backend avisa de que hay que correr `procesar` para repoblar.
+    const { mod, fetchMock } = await importarConFetch({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true }),
+    });
+    await expect(mod.volverAlDemo()).resolves.toContain('restaurada');
+    expect(fetchMock.mock.calls[0][0]).toBe('http://x/admin/reset');
+    expect(fetchMock.mock.calls[1][0]).toBe('http://x/admin/procesar');
+  });
+
   it('en modo mock ninguna llamada toca la red', async () => {
     // El modo mock es el plan B del demo: si esta pantalla intentara un fetch
     // sin servidor, se colgaría justo cuando el plan B tiene que funcionar.

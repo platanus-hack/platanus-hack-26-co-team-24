@@ -209,6 +209,20 @@ export async function subirTranscripciones(
   return `Listo: ${archivos.length} ${archivo}${trozos}. ${await recalcularMapa()}`;
 }
 
+// --- Volver al demo --------------------------------------------------------
+
+/** Salida del aviso de arriba: como el backend no mezcla datos reales con el
+ * fixture, quien sincroniza su Slack en un ensayo se lleva por delante la
+ * oficina del demo. `POST /admin/reset` borra lo ingerido y repuebla el
+ * ejemplo. El token de Slack sigue guardado: resincronizar lo trae de vuelta.
+ *
+ * Destruye datos de TODA la oficina, no solo los de quien pulsa: quien llame
+ * tiene que confirmar antes. */
+export async function volverAlDemo(): Promise<string> {
+  await pedir<unknown>('/admin/reset', { method: 'POST' });
+  return `Oficina de ejemplo restaurada. ${await recalcularMapa()}`;
+}
+
 // --- Vuelta del OAuth ------------------------------------------------------
 
 export interface RetornoOAuth {
