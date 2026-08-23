@@ -20,6 +20,17 @@ from pydantic import BaseModel
 
 from .esquemas import RAIZ
 
+# `backend/` ya carga el .env, pero `python -m cerebro` y los scripts sueltos no
+# pasaban por ahí: ponías la clave en el archivo y el cerebro seguía diciendo que
+# no había. python-dotenv viene con el extra [api]; sin él esto no hace nada y
+# manda la variable de entorno, que es lo que usa Render.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(RAIZ / ".env")
+except ImportError:  # pragma: no cover
+    pass
+
 MODELO = os.getenv("CEREBRO_MODELO", "claude-opus-5")
 # En Railway/Render el disco es efímero: la caché no sobrevive un reinicio y la
 # primera llamada tras cada deploy va en frío. Los KnowledgeItem viven en
