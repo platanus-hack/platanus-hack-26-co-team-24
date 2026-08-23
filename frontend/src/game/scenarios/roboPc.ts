@@ -3,7 +3,7 @@ import { wait } from './fx';
 import { sfx } from '../../audio';
 
 const RED = 0xff1744;
-const LAMP_COUNT = 4;
+const LAMP_COUNT = 3; // ver OfficeScene.LAMP_COLUMNS
 const LAMP_BLINKS = 6; // 6 medios-ciclos = 3 parpadeos completos
 const LAMP_INTERVAL_MS = 300;
 
@@ -18,11 +18,11 @@ export async function run(scene: OfficeScene): Promise<void> {
   const x = pc?.x ?? scene.points['cto_pc']?.x ?? 0;
   const y = pc?.y ?? scene.points['cto_pc']?.y ?? 0;
 
-  const alarm = scene.add.circle(x, y, 14, RED, 0.3).setDepth(600);
+  const alarm = scene.add.circle(x, y, 22, RED, 0.3).setDepth(600);
   scene.scenarioFx.push(alarm);
 
   const beam = scene.add
-    .rectangle(x, y, 28, 3, RED, 0.6)
+    .rectangle(x, y, 44, 3, RED, 0.6)
     .setOrigin(0, 0.5)
     .setDepth(601);
   scene.scenarioFx.push(beam);

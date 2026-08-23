@@ -6,12 +6,13 @@ import { createPathfinder, type Pathfinder } from './pathfinding';
 import { loadAvatar } from '../avatarStorage';
 import { bus } from '../bus';
 import { getRunner } from './scenarios';
+import { assignPairs, THEME, TILE, SPRITE_W, SPRITE_H } from './palette';
 
 const OBJECTS_KEY = 'objects';
 
-// Cada char_*.png es un spritesheet de 48x96: 3 columnas x 4 filas de
-// frames de 16x24 (filas: down, left, right, up; columnas: 3 poses de
-// caminata, la columna 1 es la pose de pie).
+// Cada char_*.png es un spritesheet de 96x208: 3 columnas x 4 filas de
+// frames de 32x52 (filas: frente, izquierda, derecha, espalda; columnas:
+// 3 poses de caminata, la columna 1 es la pose de reposo).
 const CHARACTER_SHEETS = [
   'char_body_light',
   'char_body_dark',
@@ -24,22 +25,46 @@ const CHARACTER_SHEETS = [
 // Frame indices in sprites/objects.png (see gen-assets.mjs / ATTRIBUTION.md):
 // 0 server_on, 1 server_off, 2 pc_on, 3 pc_off, 4 coffee_a, 5 coffee_b,
 // 6 lamp_a, 7 lamp_b, 8 meet_on, 9 meet_off, 10 console, 11 question.
+// Titileo `steps(2)` de la guía: las pantallas están encendidas casi todo el
+// rato y dan un pestañeo corto, no un 50/50 encendido/apagado (que se leería
+// como "media oficina rota"). Los frames `_off` son el estado caído que usan
+// los escenarios, así que sólo aparecen 1 de cada 6 cuadros -- o ninguno, en
+// el caso del rack, que en el mockup nunca se pone rojo por su cuenta.
 const ANIMS: Array<{
   key: string;
-  start: number;
-  end: number;
+  frames: number[];
   frameRate: number;
 }> = [
-  { key: 'server', start: 0, end: 1, frameRate: 2 },
-  { key: 'pc', start: 2, end: 3, frameRate: 1 },
-  { key: 'coffee', start: 4, end: 5, frameRate: 2 },
-  { key: 'lamp', start: 6, end: 7, frameRate: 0.5 },
-  { key: 'meet', start: 8, end: 9, frameRate: 1 },
+  { key: 'server', frames: [0], frameRate: 1 },
+  { key: 'pc', frames: [2, 2, 2, 2, 2, 3], frameRate: 4 },
+  { key: 'coffee', frames: [4, 4, 4, 5], frameRate: 2 },
+  { key: 'lamp', frames: [6, 6, 6, 7], frameRate: 1 },
+  { key: 'meet', frames: [8, 8, 8, 8, 8, 9], frameRate: 4 },
 ];
 
 const DESK_COUNT = 9;
-const LAMP_COLUMNS = [6, 15, 24, 34]; // tile x positions along the ceiling row
-const LAMP_ROW = 1; // tile y position (ceiling row)
+// Lámparas del techo: columnas de tiles sobre la franja de muro superior
+// (ver scripts/gen-map.mjs, LAMPS).
+const LAMP_COLUMNS = [4, 10, 16];
+const LAMP_ROW = 0;
+const LAMP_OFFSET_Y = 8; // el círculo cuelga un poco por debajo del borde
+
+// Glows del mockup (`box-shadow` en la guía): NO están horneados en los PNG.
+// Se pintan aquí, en modo aditivo, detrás de los objetos que emiten luz, con
+// la textura `glow` (halo blanco con caída radial, ver gen-assets.mjs) para
+// que tengan la misma caída suave que el `box-shadow` del mockup. Son 14 en
+// total: 9 monitores + rack + pantalla Meet + 3 lámparas.
+const GLOW_KEY = 'glow';
+// Recuadro de la sala Meet en tiles. Cubre el interior (x 15..18, y 2..4, ver
+// MEET en scripts/gen-map.mjs) y sube una fila para englobar la pantalla que
+// cuelga del muro, igual que el mockup dibuja su marco sobre la franja alta.
+const MEET_ROOM = { x: 15, y: 1, w: 4, h: 4 };
+// El monitor asoma 12 px por encima del canto de la mesa, apoyado en ella
+// (el mockup lo dibuja montado sobre el tablero).
+const PC_OFFSET_Y = -12;
+
+// Color hex (`#RRGGBB`) -> entero para las APIs de Phaser.
+const hex = (s: string): number => parseInt(s.slice(1), 16);
 
 export class OfficeScene extends Phaser.Scene {
   map!: Phaser.Tilemaps.Tilemap;
@@ -66,14 +91,15 @@ export class OfficeScene extends Phaser.Scene {
   preload(): void {
     this.load.tilemapTiledJSON('office', '/assets/maps/office.json');
     this.load.image('office-tiles', '/assets/tiles/office.png');
+    this.load.image(GLOW_KEY, '/assets/sprites/glow.png');
     this.load.spritesheet(OBJECTS_KEY, '/assets/sprites/objects.png', {
-      frameWidth: 16,
-      frameHeight: 16,
+      frameWidth: TILE,
+      frameHeight: TILE,
     });
     for (const key of CHARACTER_SHEETS) {
       this.load.spritesheet(key, `/assets/sprites/${key}.png`, {
-        frameWidth: 16,
-        frameHeight: 24,
+        frameWidth: SPRITE_W,
+        frameHeight: SPRITE_H,
       });
     }
   }
@@ -98,12 +124,14 @@ export class OfficeScene extends Phaser.Scene {
     this.map.createLayer('collision', tileset, 0, 0)?.setVisible(false);
 
     this.loadPoints();
+    this.drawRoomTrim();
     this.createAnimations();
+    this.placeGlows();
     this.placeObjects();
     this.setupCamera();
 
     this.pathfinder = createPathfinder(this.map);
-    this.spawnCharacters();
+    void this.spawnCharacters();
 
     this.scenarioFx = [];
     this.scenarioRunning = false;
@@ -171,12 +199,15 @@ export class OfficeScene extends Phaser.Scene {
       // ESE momento: si aún no cargó, el navegador la sustituye por el
       // fallback y el layout inicial se calcula mal (el texto no re-mide
       // solo cuando la fuente llega después). Esperamos su carga (en
-      // paralelo con `getOficina`, no en serie) antes de crear personajes;
-      // si falla (navegador sin Font Loading API, red, lo que sea) seguimos
-      // igual con el fallback monospace de la guía.
+      // paralelo con `getOficina`, no en serie) antes de crear personajes,
+      // pero con un techo de 1 s: una carga de fuente colgada nunca debe
+      // impedir que la oficina se pueble.
       const fontReady = (async () => {
         try {
-          await document.fonts.load('17px VT323');
+          await Promise.race([
+            document.fonts.load('17px VT323'),
+            new Promise((r) => setTimeout(r, 1000)),
+          ]);
         } catch {
           // best-effort: sin bloquear el spawn de personajes por esto.
         }
@@ -191,11 +222,19 @@ export class OfficeScene extends Phaser.Scene {
       // otro formato, así que localStorage es la única fuente del avatar
       // que el usuario acaba de crear.
       const localAvatar = loadAvatar();
+      // Pelo+ropa únicos por persona: se reparte con la oficina entera a la
+      // vista (guía, sección 04: "nunca dos personajes con el mismo par").
+      const pairs = assignPairs(oficina.people);
       for (const person of oficina.people) {
         if (localAvatar && person.id === DEMO_USER_ID) {
           person.avatar_config = localAvatar;
         }
-        const character = new Character(this, person, this.pathfinder);
+        const character = new Character(
+          this,
+          person,
+          this.pathfinder,
+          pairs[person.id],
+        );
         this.add.existing(character);
         this.characters[person.id] = character;
         character.startBehavior();
@@ -233,30 +272,137 @@ export class OfficeScene extends Phaser.Scene {
     }
   }
 
+  /** Detalles de sala del mockup (sección 05) que no son tiles: la franja
+   * ROSA al pie del muro superior (`top: 116px; height: 6px; #FF4D9D;
+   * opacity:.45` = 3 px a escala 1x justo donde el muro toca el piso), el
+   * recuadro MORADO de la sala Meet y las dos etiquetas VT323. */
+  private drawRoomTrim(): void {
+    this.add
+      .rectangle(0, TILE * 2, this.map.widthInPixels, 3, hex(THEME.rosa), 0.45)
+      .setOrigin(0, 1);
+
+    // Recuadro de la sala Meet (x 15..18, y 2..4 en tiles, ver gen-map.mjs).
+    this.add
+      .rectangle(MEET_ROOM.x * TILE, MEET_ROOM.y * TILE, MEET_ROOM.w * TILE, MEET_ROOM.h * TILE)
+      .setOrigin(0)
+      .setFillStyle(hex(THEME.morado), 0.12)
+      .setStrokeStyle(2, hex(THEME.morado), 0.9);
+
+    // Dentro del marco y por debajo de la lámpara del techo, para no chocar.
+    this.roomLabel(MEET_ROOM.x * TILE + 4, MEET_ROOM.y * TILE + 4, 'SALA MEET', THEME.lila);
+    const server = this.points['server'];
+    if (server) this.roomLabel(server.x - 30, server.y - TILE - 16, 'GITHUB', THEME.lima);
+  }
+
+  private roomLabel(x: number, y: number, text: string, color: string): void {
+    this.add
+      .text(x, y, text, {
+        fontFamily: 'VT323, monospace',
+        fontSize: '13px',
+        color,
+      })
+      .setResolution(2);
+  }
+
   private createAnimations(): void {
-    for (const { key, start, end, frameRate } of ANIMS) {
+    for (const { key, frames, frameRate } of ANIMS) {
       if (this.anims.exists(key)) continue;
       this.anims.create({
         key,
-        frames: this.anims.generateFrameNumbers(OBJECTS_KEY, { start, end }),
+        frames: this.anims.generateFrameNumbers(OBJECTS_KEY, { frames }),
         frameRate,
         repeat: -1,
       });
     }
   }
 
-  /** Places a 16x16 sprite so it's centered on the tile at `point`, with an optional vertical pixel offset. */
+  /** Places a 32x32 sprite so it's centered on the tile at `point`, with an optional vertical pixel offset. */
   private spriteAt(
     point: { x: number; y: number },
     offsetY = 0,
   ): Phaser.GameObjects.Sprite {
-    return this.add.sprite(point.x + 8, point.y + 8 + offsetY, OBJECTS_KEY);
+    return this.add.sprite(
+      point.x + TILE / 2,
+      point.y + TILE / 2 + offsetY,
+      OBJECTS_KEY,
+    );
+  }
+
+  /** Halo aditivo detrás de un objeto luminoso. Se crea antes que los
+   * sprites de `placeObjects()` (misma profundidad 0, orden de creación) para
+   * que quede debajo de ellos y encima de las capas del mapa. */
+  private glow(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    color: string,
+    alpha: number,
+  ): void {
+    this.add
+      .image(x, y, GLOW_KEY)
+      .setDisplaySize(w, h)
+      .setTint(hex(color))
+      .setAlpha(alpha)
+      .setBlendMode(Phaser.BlendModes.ADD);
+  }
+
+  private placeGlows(): void {
+    for (let i = 0; i < DESK_COUNT; i++) {
+      const desk = this.points[`desk_${i}`];
+      if (!desk) continue;
+      this.glow(
+        desk.x + TILE / 2,
+        desk.y + TILE / 2 + PC_OFFSET_Y,
+        60,
+        48,
+        THEME.turquesa,
+        0.45,
+      );
+    }
+    const server = this.points['server'];
+    if (server) {
+      this.glow(
+        server.x + TILE / 2,
+        server.y,
+        80,
+        110,
+        THEME.lima,
+        0.45,
+      );
+    }
+    const meet = this.points['meet_screen'];
+    if (meet) {
+      this.glow(
+        meet.x + TILE / 2,
+        meet.y + TILE / 2,
+        84,
+        60,
+        THEME.turquesa,
+        0.5,
+      );
+    }
+    for (const col of LAMP_COLUMNS) {
+      this.glow(
+        col * TILE + TILE / 2,
+        LAMP_ROW * TILE + TILE / 2 + LAMP_OFFSET_Y,
+        110,
+        110,
+        THEME.oro,
+        0.5,
+      );
+    }
   }
 
   private placeObjects(): void {
+    // El rack ocupa 2 tiles en vertical (ver gen-map.mjs): dos cuerpos
+    // idénticos, ambos animados, como la torre del mockup.
     const server = this.spriteAt(this.points['server']);
     server.play('server');
     this.objects['server'] = server;
+    const serverTop = this.spriteAt(this.points['server'], -TILE);
+    serverTop.play('server');
+    this.objects['server_top'] = serverTop;
 
     const meetScreen = this.spriteAt(this.points['meet_screen']);
     meetScreen.play('meet');
@@ -265,7 +411,9 @@ export class OfficeScene extends Phaser.Scene {
     for (let i = 0; i < DESK_COUNT; i++) {
       const desk = this.points[`desk_${i}`];
       if (!desk) continue;
-      const pc = this.spriteAt(desk, -8);
+      // El monitor va apoyado sobre el canto de la mesa, asomando hacia
+      // arriba (ver gen-map.mjs), como en el mockup.
+      const pc = this.spriteAt(desk, PC_OFFSET_Y);
       pc.play('pc');
       this.objects[`pc_${i}`] = pc;
     }
@@ -282,7 +430,10 @@ export class OfficeScene extends Phaser.Scene {
     this.objects['console'] = console_;
 
     LAMP_COLUMNS.forEach((col, i) => {
-      const lamp = this.spriteAt({ x: col * 16, y: LAMP_ROW * 16 });
+      const lamp = this.spriteAt(
+        { x: col * TILE, y: LAMP_ROW * TILE },
+        LAMP_OFFSET_Y,
+      );
       lamp.play('lamp');
       this.objects[`lamp_${i}`] = lamp;
     });
@@ -290,7 +441,7 @@ export class OfficeScene extends Phaser.Scene {
 
   private setupCamera(): void {
     const cam = this.cameras.main;
-    // No zoom/pan: the map is exactly the size of the game canvas (640x400),
+    // No zoom/pan: the map is exactly the size of the game canvas (640x416),
     // so the whole office fits on screen at zoom 1. Config-level `zoom: 2`
     // (see game/config.ts) scales the canvas up for pixel-art crispness.
     cam.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);

@@ -102,8 +102,9 @@
 }
 
 .avatar-preview-box {
-  width: 96px;
-  height: 144px;
+  /* preview del sprite 32x52 a 4x (guía, sección 04) */
+  width: 128px;
+  height: 208px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,8 +114,8 @@
 }
 
 .avatar-preview-canvas {
-  width: 96px;
-  height: 144px;
+  width: 128px;
+  height: 208px;
   image-rendering: pixelated;
 }
 

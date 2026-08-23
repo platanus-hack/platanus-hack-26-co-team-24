@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { putAvatar } from '../api';
-import { PALETTE } from '../game/palette';
+import { PALETTE, SPRITE_W, SPRITE_H } from '../game/palette';
 import { loadAvatar, saveAvatar, CUERPOS, PEINADOS, ROPAS, PALETAS } from '../avatarStorage';
 import type { AvatarConfig } from '../types';
 import './ui.css';
@@ -17,19 +17,20 @@ const DEFAULT_CONFIG: AvatarConfig = { cuerpo: 'light', peinado: 'short', ropa: 
 
 const toHex = (n: number) => '#' + n.toString(16).padStart(6, '0');
 
-// Tinta un frame (fila 0 = mirando abajo) por multiplicación, recortado a la
+// Tinta un frame (fila 0 = de frente) por multiplicación, recortado a la
 // silueta original vía destination-in.
 function tintedFrame(img: HTMLImageElement, sx: number, color: string): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = 16;
-  c.height = 24;
+  c.width = SPRITE_W;
+  c.height = SPRITE_H;
   const ctx = c.getContext('2d')!;
-  ctx.drawImage(img, sx, 0, 16, 24, 0, 0, 16, 24);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, sx, 0, SPRITE_W, SPRITE_H, 0, 0, SPRITE_W, SPRITE_H);
   ctx.globalCompositeOperation = 'multiply';
   ctx.fillStyle = color;
-  ctx.fillRect(0, 0, 16, 24);
+  ctx.fillRect(0, 0, SPRITE_W, SPRITE_H);
   ctx.globalCompositeOperation = 'destination-in';
-  ctx.drawImage(img, sx, 0, 16, 24, 0, 0, 16, 24);
+  ctx.drawImage(img, sx, 0, SPRITE_W, SPRITE_H, 0, 0, SPRITE_W, SPRITE_H);
   return c;
 }
 
@@ -39,8 +40,9 @@ function loadImg(src: string): HTMLImageElement {
   return img;
 }
 
-// Editor de avatar: 4 selects nativos + preview animado (16x24 a 6x) en
-// canvas, compuesto de las 3 capas LPC de Character.ts, ropa tintada por PALETTE.
+// Editor de avatar: 4 selects nativos + preview animado (32x52 a 4x, es
+// decir 128x208) en canvas, compuesto de las 3 capas de Character.ts, con la
+// ropa tintada por PALETTE.
 export function AvatarEditor() {
   // El localStorage manda en ambos modos: P3 todavía no tiene `PUT /avatar`,
   // así que el avatar guardado aquí es el único que existe (y es el que
@@ -64,11 +66,11 @@ export function AvatarEditor() {
       const ctx = canvasRef.current?.getContext('2d');
       if (!ctx) return;
       ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, 16, 24);
-      const sx = frameRef.current * 16; // fila 0 = down; 3 poses de caminata
-      ctx.drawImage(bodyImg, sx, 0, 16, 24, 0, 0, 16, 24);
+      ctx.clearRect(0, 0, SPRITE_W, SPRITE_H);
+      const sx = frameRef.current * SPRITE_W; // fila 0 = frente; 3 poses
+      ctx.drawImage(bodyImg, sx, 0, SPRITE_W, SPRITE_H, 0, 0, SPRITE_W, SPRITE_H);
       ctx.drawImage(tintedFrame(clothesImg, sx, color), 0, 0);
-      ctx.drawImage(hairImg, sx, 0, 16, 24, 0, 0, 16, 24);
+      ctx.drawImage(hairImg, sx, 0, SPRITE_W, SPRITE_H, 0, 0, SPRITE_W, SPRITE_H);
     };
 
     let ready = 0;
@@ -133,7 +135,12 @@ export function AvatarEditor() {
       <div className="avatar-panel">
         <h1>Tu avatar</h1>
         <div className="avatar-preview-box">
-          <canvas ref={canvasRef} width={16} height={24} className="avatar-preview-canvas" />
+          <canvas
+            ref={canvasRef}
+            width={SPRITE_W}
+            height={SPRITE_H}
+            className="avatar-preview-canvas"
+          />
         </div>
         {field('cuerpo', 'Cuerpo', CUERPOS)}
         {field('peinado', 'Peinado', PEINADOS)}

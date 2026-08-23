@@ -1,45 +1,52 @@
 # Attribution
 
-All art in this folder is **programmatically generated placeholder pixel art**
-(solid-color blocks with 1px darker borders), produced by
-`frontend/scripts/gen-assets.mjs`. It exists so the game is playable and
-demoable without shipping third-party binaries in an agent-authored commit.
+Todo el arte de esta carpeta es **pixel art generado por script**
+(`frontend/scripts/gen-assets.mjs`), dibujado rectángulo a rectángulo según
+la guía de arte "Synth Dusk" de Claude Design
+(`docs/design/guia-visual.dc.html`, secciones 03 TILES y 04 SPRITE SHEET).
+Las coordenadas de la guía se muestran a 2x en cajas de 64 px: aquí van
+divididas por 2.
 
-Real art is intended to be a **drop-in swap**: replace the files below with
-matching filenames and frame sizes, no code changes required (frame geometry
-is fixed in `game/config.ts` / scene code).
+No se usa arte de terceros, así que no se debe atribución externa.
 
-## Expected files & frame sizes
+## Archivos y geometría de frames
 
-### `tiles/office.png` — 128x16, 8 tiles of 16x16 in a row
-Index 0 floor, 1 wall, 2 desk, 3 chair, 4 coffee machine, 5 meeting table, 6 server, 7 console.
+### `tiles/office.png` — 408x34, 12 tiles de 32x32 (margin 1, spacing 2)
 
-### `sprites/objects.png` — 192x16, 12 frames of 16x16 in a row
-`server_on, server_off, pc_on, pc_off, coffee_a, coffee_b, lamp_a, lamp_b, meet_on, meet_off, console, question`.
+`0 piso · 1 muro · 2 escritorio · 3 silla · 4 monitor_on · 5 monitor_off ·
+6 rack GitHub · 7 cafetera · 8 puerta · 9 lámpara · 10 pantalla Meet · 11 planta`
 
-### Character layers — each a 4-row x 3-col sheet of 16x24 frames (48x96)
-Rows: down, left, right, up. Cols: 3 walk frames.
+Los tiles de mobiliario tienen fondo transparente: se pintan en la capa
+`furniture` sobre la capa `floor`.
+
+### `sprites/glow.png` — 64x64, halo radial blanco
+
+Textura de un solo uso: `OfficeScene` la tinta y la escala para los glows
+aditivos (monitores encendidos, rack, lámparas, pantalla Meet).
+
+### `sprites/objects.png` — 384x32, 12 frames de 32x32 en fila
+
+`server_on, server_off, pc_on, pc_off, coffee_a, coffee_b, lamp_a, lamp_b,
+meet_on, meet_off, console, question`. Fondo transparente.
+
+### Capas de personaje — 96x208 (3 columnas x 4 filas de 32x52)
+
+Filas: frente, izquierda, derecha, espalda. Columnas: 1 = reposo, 0 y 2 =
+pasos alternos.
 
 - `sprites/char_body_light.png`, `sprites/char_body_dark.png`
 - `sprites/char_hair_short.png`, `sprites/char_hair_long.png`
 - `sprites/char_clothes_shirt.png`, `sprites/char_clothes_suit.png`
 
-Clothing layers are kept light-gray/grayscale-ish so the runtime `paleta` tint
-(applied via Phaser sprite tint) reads correctly on top of them.
+Pelo y ropa se dibujan en `#d8d8d8` para que el tinte en runtime
+(`HAIR_PALETTE` / `PALETTE`) lea vivo. La piel va en `#E8B98A` (clara) o
+`#8A5C3E` (oscura) y el pantalón siempre en `#331D53`.
+
+Los glows (`box-shadow` en la guía) **no** están horneados en los PNG: los
+añade `OfficeScene` como elipses aditivas detrás de monitores encendidos,
+rack, lámparas y pantalla Meet.
 
 ### `audio/`
-See `audio/README.md` — 4 files to be dropped in later (`music.ogg`, `door.ogg`,
-`alarm.ogg`, `click.ogg`).
 
-## Intended real-art sources (to swap in later)
-
-- **Kenney** (tiles, objects, UI, audio) — CC0. https://kenney.nl — no attribution
-  legally required, but credit is nice: "Assets by Kenney (kenney.nl), CC0."
-- **LPC (Liberated Pixel Cup)** base/hair/clothes character sprites — CC-BY-SA 3.0
-  and/or GPL 3.0 depending on the specific contributor's assets on OpenGameArt.
-  When swapped in, list here the exact asset pack(s) used and their authors per
-  the license's attribution requirements (e.g. "LPC character base by
-  <author>, opengameart.org, CC-BY-SA 3.0").
-
-Until swapped, no external attribution is owed — everything here was generated
-by our own script.
+Ver `audio/README.md` — 4 archivos a soltar más adelante (`music.ogg`,
+`door.ogg`, `alarm.ogg`, `click.ogg`).

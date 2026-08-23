@@ -7,7 +7,7 @@ export const config: Phaser.Types.Core.GameConfig = {
   pixelArt: true,
   zoom: 2,
   width: 640,
-  height: 400,
+  height: 416,
   backgroundColor: THEME.void,
   scale: {
     mode: Phaser.Scale.FIT,

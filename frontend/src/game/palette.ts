@@ -89,3 +89,51 @@ export const THEME = {
   meeting: '#7B3FE4', // = morado
   console: '#FF4D9D', // = rosa
 } as const;
+
+// Grilla y sprites (guía, secciones 03 TILES · 32PX y 04 SPRITE SHEET):
+// una sola fuente de verdad para todo el juego. Nadie más debe declarar
+// estas constantes: el mapa (scripts/gen-map.mjs), el canvas
+// (game/config.ts, 20x13 tiles = 640x416) y los spritesheets generados
+// (scripts/gen-assets.mjs) están cuadrados con estos números.
+export const TILE = 32;
+export const SPRITE_W = 32;
+export const SPRITE_H = 52;
+
+// Las cuatro personas que la guía nombra en la sección 04 llevan un par de
+// colores concreto ("Ana · OPS: pelo turquesa + ropa rosa"). Se fijan por id
+// para que la demo se vea como la guía; el resto reparte los slots libres.
+const GUIDE_SLOT: Record<string, number> = {
+  p_ana: 0, // turquesa + rosa
+  p_david: 1, // naranja + lima
+  p_samuel: 2, // lila + turquesa
+  p_andres: 3, // oro + morado
+};
+
+/** Reparte los 9 pares [pelo, ropa] entre la gente de la oficina sin repetir
+ * ninguno (regla dura de la guía: "nunca dos personajes con el mismo par").
+ * Las personas nombradas por la guía toman su slot; las demás, en orden de
+ * llegada, los que queden libres. Con más de 9 personas los pares se
+ * reciclan (no ocurre en el demo, que tiene exactamente 9 escritorios). */
+export function assignPairs(
+  people: readonly { id: string }[],
+): Record<string, [PairKey, PairKey]> {
+  const out: Record<string, [PairKey, PairKey]> = {};
+  const free = PAIRS.map((_, i) => i);
+
+  for (const person of people) {
+    const slot = GUIDE_SLOT[person.id];
+    if (slot === undefined || out[person.id]) continue;
+    const i = free.indexOf(slot);
+    if (i < 0) continue; // ya lo tomó otra persona
+    free.splice(i, 1);
+    out[person.id] = PAIRS[slot];
+  }
+
+  let k = 0;
+  for (const person of people) {
+    if (out[person.id]) continue;
+    out[person.id] = PAIRS[free.length ? free[k % free.length] : 0];
+    k++;
+  }
+  return out;
+}

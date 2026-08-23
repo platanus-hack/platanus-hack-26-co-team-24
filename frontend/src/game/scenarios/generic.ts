@@ -1,5 +1,6 @@
 import type { OfficeScene } from '../OfficeScene';
 import { floatIcon, wait } from './fx';
+import { TILE } from '../palette';
 import { sfx } from '../../audio';
 
 const RED = 0xff1744;
@@ -129,7 +130,7 @@ async function runRansomware(scene: OfficeScene): Promise<void> {
     const desk = scene.points[`desk_${i}`];
     if (!pc || !desk) continue;
     pc.setTint(RED);
-    floatIcon(scene, desk.x + 8, desk.y - 14, RED, i * 80);
+    floatIcon(scene, desk.x + TILE / 2, desk.y - TILE * 1.5, RED, i * 80);
   }
 
   await wait(scene, 1000);

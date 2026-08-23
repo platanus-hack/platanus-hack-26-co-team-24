@@ -1,13 +1,23 @@
-// Generates public/assets/maps/office.json, a Tiled 1.10 JSON tilemap, by
-// script (no Tiled GUI available). Layout: 40x25 tiles of 16px.
+// Genera public/assets/maps/office.json, un tilemap Tiled 1.10 en JSON, por
+// script (no hay GUI de Tiled). Layout: 20x13 tiles de 32 px = 640x416, el
+// tamaño exacto del canvas del juego (game/config.ts), sin zoom ni paneo de
+// cámara: toda la oficina cabe en pantalla.
 //
-// Tileset `office` (public/assets/tiles/office.png, 8 tiles x16px, firstgid=1):
-//   0 floor(gid1), 1 wall(gid2), 2 desk(gid3), 3 chair(gid4), 4 coffee(gid5),
-//   5 meeting table(gid6), 6 server(gid7), 7 console(gid8).
+// La composición reproduce el mockup de la guía (docs/design/oficina-mockup.html,
+// sección 05 de guia-visual.dc.html): muro superior de 2 filas con lámparas,
+// cafetera arriba-izquierda, 3x3 de escritorios (monitor arriba, silla abajo),
+// sala Meet arriba-derecha tras un muro parcial con abertura de 2 tiles, rack
+// de GitHub en la pared derecha fuera de la sala, puerta abajo-centro, consola
+// abajo-derecha y dos plantas.
 //
-// Layers: floor, walls, furniture, collision (tile layers) + points (object layer).
-// collision layer: gid 2 (wall) marks a blocked cell, 0 = free. The pathfinder
-// (later task) reads this layer directly: non-zero = blocked.
+// Tileset `office` (public/assets/tiles/office.png, 12 tiles de 32 px, firstgid=1):
+//   0 piso(gid1)  1 muro(gid2)  2 escritorio(gid3)  3 silla(gid4)
+//   4 monitor_on(gid5)  5 monitor_off(gid6)  6 rack(gid7)  7 cafetera(gid8)
+//   8 puerta(gid9)  9 lámpara(gid10)  10 pantalla_meet(gid11)  11 planta(gid12)
+//
+// Capas: floor, walls, furniture, collision (tile layers) + points (objetos).
+// La capa `collision` marca celda bloqueada con el gid del muro; 0 = libre.
+// `pathfinding.ts` la lee tal cual: índice > 0 = bloqueada.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -16,18 +26,23 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dirname, '..', 'public', 'assets', 'maps', 'office.json');
 
-const W = 40;
-const H = 25;
+const TILE = 32;
+const W = 20;
+const H = 13;
 
 const GID = {
   floor: 1,
   wall: 2,
   desk: 3,
   chair: 4,
-  coffee: 5,
-  table: 6,
-  server: 7,
-  console: 8,
+  monitorOn: 5,
+  monitorOff: 6,
+  rack: 7,
+  coffee: 8,
+  door: 9,
+  lamp: 10,
+  meetScreen: 11,
+  plant: 12,
 };
 
 function grid(fill) {
@@ -44,19 +59,24 @@ function setWall(x, y) {
   collision[y][x] = GID.wall;
 }
 
-function clearWall(x, y) {
-  walls[y][x] = 0;
+/** Mueble sólido: se pinta en `furniture` y bloquea el paso. */
+function setProp(x, y, gid) {
+  furniture[y][x] = gid;
+  collision[y][x] = GID.wall;
+}
+
+/** Mueble por el que sí se camina (sillas, y la puerta en el muro). */
+function setWalkable(x, y, gid, layer = furniture) {
+  layer[y][x] = gid;
   collision[y][x] = 0;
 }
 
-function setFurniture(x, y, gid) {
-  furniture[y][x] = gid;
-  collision[y][x] = GID.wall; // blocked, regardless of which furniture gid
-}
-
-// ---------- perimeter walls ----------
+// ---------- muros: perímetro, con el muro superior de 2 filas ----------
+// El mockup pinta una franja de muro de ~120 px (a 2x) en la parte alta: son
+// 2 filas de 32 px. Ahí cuelgan las lámparas y la pantalla de la sala Meet.
 for (let x = 0; x < W; x++) {
   setWall(x, 0);
+  setWall(x, 1);
   setWall(x, H - 1);
 }
 for (let y = 0; y < H; y++) {
@@ -64,75 +84,86 @@ for (let y = 0; y < H; y++) {
   setWall(W - 1, y);
 }
 
-// ---------- door: opening in the bottom wall, centered ----------
-const DOOR = { x: 20, y: H - 1 };
-clearWall(DOOR.x, DOOR.y);
+// ---------- puerta: abajo-centro, atravesable ----------
+const DOOR = { x: 10, y: H - 1 };
+setWalkable(DOOR.x, DOOR.y, GID.door, walls);
 
-// ---------- meeting room separator: vertical wall at x=29, 3-tile opening ----------
-const SEPARATOR_X = 29;
-const OPENING_Y = [11, 12, 13];
-for (let y = 1; y < H - 1; y++) {
-  if (!OPENING_Y.includes(y)) setWall(SEPARATOR_X, y);
-}
+// ---------- sala Meet: arriba-derecha, muro parcial con abertura de 2 ----------
+// Interior x 15..18, y 2..4. Muro vertical en x=14 (y 2..5) y muro inferior en
+// y=5 sólo en x 17..18: la abertura de 2 tiles es (15,5) y (16,5).
+const MEET = { x0: 15, x1: 18, y0: 2, y1: 4 };
+for (let y = MEET.y0; y <= MEET.y1 + 1; y++) setWall(14, y);
+setWall(17, MEET.y1 + 1);
+setWall(18, MEET.y1 + 1);
 
-// ---------- desks: 3x3 grid, aisles between, chair directly below each ----------
-const DESK_COLS = [5, 12, 19];
-const DESK_ROWS = [5, 11, 17];
+// Mesa de juntas MORADO 2x1 (el mockup la dibuja igual que un escritorio:
+// cuerpo #6E4FA8 con canto LILA) y pantalla Meet colgada del muro superior.
+setProp(16, 3, GID.desk);
+setProp(17, 3, GID.desk);
+const MEET_SCREEN = { x: 17, y: 1 };
+furniture[MEET_SCREEN.y][MEET_SCREEN.x] = GID.meetScreen; // ya es muro
+const MEETING = { x: 16, y: 4 }; // celda libre delante de la mesa
+
+// ---------- escritorios: 3x3, mesa de 2 tiles, silla debajo ----------
+// Cada puesto ocupa 2 filas (mesa + silla) y quedan filas libres entre bloques,
+// como en el mockup. El monitor NO es un tile: es el sprite `pc` de
+// objects.png, que OfficeScene apoya sobre el canto de la mesa (offset -12 px)
+// igual que el mockup lo dibuja montado encima del tablero.
+const DESK_COLS = [2, 7, 12];
+const DESK_ROWS = [3, 6, 9];
 const desks = [];
-for (const r of DESK_ROWS) {
-  for (const c of DESK_COLS) {
-    desks.push({ x: c, y: r });
-  }
-}
-desks.forEach(({ x, y }) => {
-  setFurniture(x, y, GID.desk);
-  furniture[y + 1][x] = GID.chair; // chair tile, visual only
-  // chair cell stays free (not blocked) in collision
-});
-
-// ---------- coffee: top-left ----------
-const COFFEE = { x: 2, y: 2 };
-setFurniture(COFFEE.x, COFFEE.y, GID.coffee);
-
-// ---------- server: top-right of main office area ----------
-const SERVER = { x: 26, y: 2 };
-setFurniture(SERVER.x, SERVER.y, GID.server);
-
-// ---------- console: bottom-right of main office area ----------
-const CONSOLE = { x: 26, y: 21 };
-setFurniture(CONSOLE.x, CONSOLE.y, GID.console);
-
-// ---------- meeting table: 3x3 block inside meeting room ----------
-const TABLE_COLS = [33, 34, 35];
-const TABLE_ROWS = [10, 11, 12];
-for (const y of TABLE_ROWS) {
-  for (const x of TABLE_COLS) {
-    setFurniture(x, y, GID.table);
+for (const y of DESK_ROWS) {
+  for (const x of DESK_COLS) {
+    desks.push({ x, y });
+    setProp(x, y, GID.desk);
+    setProp(x + 1, y, GID.desk); // el tile de escritorio va a todo el ancho:
+    // dos contiguos forman una mesa de 64 px como en el mockup.
+    collision[y - 1][x] = GID.wall; // el monitor asoma aquí: nadie lo atraviesa
+    // La silla va bajo el tile DERECHO: el monitor ocupa el izquierdo y en
+    // el mockup la persona queda al lado del monitor, no detrás.
+    setWalkable(x + 1, y + 1, GID.chair); // la silla es el destino de `desk_i`
   }
 }
 
-// ---------- meeting room extra points (sprite-only, no tile) ----------
-const MEET_SCREEN = { x: 34, y: 2 };
-const MEETING = { x: 34, y: 6 };
+// ---------- cafetera + planta arriba-izquierda ----------
+const COFFEE = { x: 1, y: 2 };
+setProp(COFFEE.x, COFFEE.y, GID.coffee);
+setProp(4, 2, GID.plant);
 
-// ---------- points object layer ----------
-function tileToPx(t) {
-  return { x: t.x * 16, y: t.y * 16 };
-}
+// ---------- planta abajo-izquierda ----------
+setProp(1, 11, GID.plant);
 
+// ---------- rack GitHub: pared derecha, fuera de la sala Meet ----------
+const SERVER = { x: 18, y: 7 };
+setProp(SERVER.x, SERVER.y, GID.rack);
+setProp(SERVER.x, SERVER.y - 1, GID.rack); // rack de 2 tiles como en el mockup
+// (18,8) queda libre: el destino `server` sigue siendo alcanzable.
+
+// ---------- consola arcade: abajo-derecha ----------
+const CONSOLE = { x: 17, y: 11 };
+collision[CONSOLE.y][CONSOLE.x] = GID.wall; // sprite-only (objects.png frame 10)
+
+// ---------- lámparas del techo: sprite-only sobre el muro superior ----------
+const LAMPS = [
+  { x: 4, y: 0 },
+  { x: 10, y: 0 },
+  { x: 16, y: 0 },
+];
+for (const l of LAMPS) furniture[l.y][l.x] = GID.lamp;
+
+// ---------- capa de objetos `points` ----------
 const points = [];
 let nextId = 1;
 
 function addPoint(name, tile) {
-  const px = tileToPx(tile);
   points.push({
     id: nextId++,
     name,
     type: '',
-    x: px.x,
-    y: px.y,
-    width: 16,
-    height: 16,
+    x: tile.x * TILE,
+    y: tile.y * TILE,
+    width: TILE,
+    height: TILE,
     rotation: 0,
     visible: true,
     properties: [],
@@ -146,9 +177,36 @@ addPoint('door', DOOR);
 addPoint('server', SERVER);
 addPoint('console', CONSOLE);
 addPoint('meet_screen', MEET_SCREEN);
-addPoint('cto_pc', desks[0]); // cto_pc sits on desk_0
+addPoint('cto_pc', desks[0]); // cto_pc vive sobre desk_0
 
-// ---------- assemble Tiled JSON ----------
+// ---------- sanity check: todo destino de caminata debe ser alcanzable ----------
+// `Character.resolveTargetTile` usa el tile del punto y, si está bloqueado,
+// el de abajo. Si ambos estuvieran bloqueados el personaje se quedaría
+// clavado en el spawn, así que fallamos aquí y no en el navegador.
+const blocked = (x, y) =>
+  x < 0 || y < 0 || x >= W || y >= H || collision[y][x] !== 0;
+for (const name of [
+  ...desks.map((_, i) => `desk_${i}`),
+  'coffee',
+  'meeting',
+  'door',
+  'server',
+]) {
+  const p = points.find((o) => o.name === name);
+  const t = { x: p.x / TILE, y: p.y / TILE };
+  const target = name.startsWith('desk_')
+    ? { x: t.x + 1, y: t.y + 1 }
+    : blocked(t.x, t.y)
+      ? { x: t.x, y: t.y + 1 }
+      : t;
+  if (blocked(target.x, target.y)) {
+    throw new Error(
+      `punto "${name}" resuelve a (${target.x},${target.y}), que está bloqueado`,
+    );
+  }
+}
+
+// ---------- ensamblar el JSON de Tiled ----------
 
 function tileLayer(id, name, data) {
   return {
@@ -169,8 +227,8 @@ const map = {
   compressionlevel: -1,
   width: W,
   height: H,
-  tilewidth: 16,
-  tileheight: 16,
+  tilewidth: TILE,
+  tileheight: TILE,
   infinite: false,
   orientation: 'orthogonal',
   renderorder: 'right-down',
@@ -184,14 +242,16 @@ const map = {
       firstgid: 1,
       name: 'office',
       image: '../tiles/office.png',
-      imagewidth: 128,
-      imageheight: 16,
-      tilewidth: 16,
-      tileheight: 16,
-      tilecount: 8,
-      columns: 8,
-      margin: 0,
-      spacing: 0,
+      // El tileset va extruido 1 px por tile (ver gen-assets.mjs `extrude`):
+      // 12 celdas de 34 px con margen 1 y separación 2.
+      imagewidth: 408,
+      imageheight: 34,
+      tilewidth: TILE,
+      tileheight: TILE,
+      tilecount: 12,
+      columns: 12,
+      margin: 1,
+      spacing: 2,
     },
   ],
   layers: [
@@ -215,4 +275,4 @@ const map = {
 
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(map, null, 2));
-console.log('wrote', OUT);
+console.log('wrote', OUT, `${W}x${H} @${TILE}px`);

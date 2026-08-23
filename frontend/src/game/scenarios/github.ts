@@ -7,7 +7,7 @@ const RED = 0xff1744;
 const SMOKE_KEY = 'smoke';
 const SMOKE_TINTS = [0x9e9e9e, 0xcfd8dc];
 const DEV_ROLES = /Backend|Frontend|DevOps/i;
-const LAMP_COUNT = 4;
+const LAMP_COUNT = 3; // ver OfficeScene.LAMP_COLUMNS
 
 /** GitHub caído: el servidor destella en rojo, "humea" (no hay incendio
  * real, pero sí una caída total de la plataforma) con dos tonos de gris
@@ -15,17 +15,25 @@ const LAMP_COUNT = 4;
  * hacia el server a intentar algo. Dura ~5-8 s. */
 export async function run(scene: OfficeScene): Promise<void> {
   sfx('smoke');
-  const server = scene.objects['server'];
-  if (server) {
+  // El rack son dos cuerpos apilados (ver OfficeScene.placeObjects).
+  const racks = ['server', 'server_top']
+    .map((k) => scene.objects[k])
+    .filter(Boolean);
+  for (const rack of racks) {
     // Destello rojo breve antes de quedar "apagado" (frame 1): más
     // llamativo que un simple corte de frame.
-    server.anims.stop();
-    server.setTint(RED);
+    rack.anims.stop();
+    rack.setTint(RED);
+  }
+  if (racks.length) {
     await wait(scene, 200);
     if (!scene.sys.isActive()) return;
-    server.setFrame(1); // server_off
-    server.clearTint();
+    for (const rack of racks) {
+      rack.setFrame(1); // server_off
+      rack.clearTint();
+    }
   }
+  const server = racks[0];
 
   if (!scene.textures.exists(SMOKE_KEY)) {
     scene.textures.generate(SMOKE_KEY, {

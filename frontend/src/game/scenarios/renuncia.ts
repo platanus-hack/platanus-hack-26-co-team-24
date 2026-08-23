@@ -1,10 +1,10 @@
 import type { OfficeScene } from '../OfficeScene';
 import { floatIcon, wait } from './fx';
+import { TILE } from '../palette';
 import { sfx } from '../../audio';
 
-const TILE = 16;
 const GRAY = 0x777777;
-const QUESTION_OFFSETS = [-10, 0, 10];
+const QUESTION_OFFSETS = [-TILE / 2, 0, TILE / 2];
 
 /** Escenario ⭐ del demo: la persona se levanta, camina a la puerta, se
  * desvanece y deja su escritorio apagado (gris) con tres "?" flotando.
@@ -47,10 +47,25 @@ export async function run(scene: OfficeScene, personId: string): Promise<void> {
       'furniture',
     );
     if (tile) tile.tint = GRAY;
+    // El escritorio ocupa dos tiles de ancho (ver gen-map.mjs): hay que
+    // apagar los dos, no sólo el que lleva el punto `desk_i`.
+    const right = scene.map.getTileAt(
+      desk.x / TILE + 1,
+      desk.y / TILE,
+      false,
+      'furniture',
+    );
+    if (right) right.tint = GRAY;
     QUESTION_OFFSETS.forEach((dx, i) => {
-      // -14 px: justo encima del PC (que ocupa desk.y-8 .. desk.y+8), para
+      // Un tile por encima del monitor (que vive en desk.y - TILE), para
       // que los "?" no tapen el escritorio apagado.
-      floatIcon(scene, desk.x + TILE / 2 + dx, desk.y - 14, undefined, i * 150);
+      floatIcon(
+        scene,
+        desk.x + TILE / 2 + dx,
+        desk.y - TILE * 1.5,
+        undefined,
+        i * 150,
+      );
     });
   }
 }
