@@ -169,7 +169,10 @@ persona. "Alguien del equipo" o "el líder" no cuentan.
 
 La especulación no se permite. Si el documento inventa datos, atribuye conocimiento a
 alguien sin sustento, o se escuda en generalidades, baja el puntaje y dilo en `faltantes`.
-`sugerencias` son instrucciones concretas para la siguiente versión, no elogios."""
+`sugerencias` son instrucciones concretas para la siguiente versión, no elogios.
+
+Máximo cuatro entradas en cada lista: las que más pesan. Una crítica larga se
+diluye y se corta a mitad."""
 
 SISTEMA_DIGEST = """Generas misiones semanales de descentralización del conocimiento. \
 Cada misión es una acción imperativa, concreta y ejecutable en menos de una hora, \
@@ -592,7 +595,7 @@ def simular(
     objetivo_id: str | None = None,
     raw_events: list[RawEvent | dict] | None = None,
     *,
-    timeout: float = 25.0,
+    timeout: float = 90.0,
     autocritica: bool = True,
     mock: bool = False,
 ) -> SimulationResult:
@@ -601,6 +604,10 @@ def simular(
     Con `raw_events` el prompt recibe además con quién colabora realmente cada
     persona afectada, que es lo que permite proponer un sucesor cuando el item
     no tiene respaldo. Sin ellos el modelo solo puede adivinar por el texto.
+
+    `timeout` son 90 s por diseño, no por descuido: sobre datos reales el
+    playbook tarda ~41 s con el esfuerzo por defecto. Con los 25 s que tenía
+    antes, toda simulación en vivo caía al documento determinista.
 
     Con `autocritica` el playbook se evalúa de 0 a 10 y se reescribe una vez si no
     llega a 8. Súbele calidad a costa de una o dos llamadas más; apágalo si la
@@ -703,6 +710,18 @@ def simular(
 PUNTAJE_ACEPTABLE = 8
 
 
+def _desescapar(texto: str) -> str:
+    """Convierte los \\uXXXX literales que a veces devuelve el modelo.
+
+    Dentro de una salida estructurada el modelo puede emitir la secuencia
+    `\\u00e9` como texto en vez del carácter. Sin esto la crítica llega al
+    prompt de reescritura llena de basura y el modelo la copia.
+    """
+    import re
+
+    return re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), texto)
+
+
 def _pulir_playbook(playbook: str, prompt: str, timeout: float) -> tuple[str, int | None, list[str]]:
     """Un ciclo de autocrítica: puntúa el playbook y, si flojea, lo reescribe una vez.
 
@@ -721,7 +740,7 @@ def _pulir_playbook(playbook: str, prompt: str, timeout: float) -> tuple[str, in
             SISTEMA_CRITICO,
             f"## Documento a evaluar\n\n{playbook}\n\n## Contexto del que salió\n\n{prompt}",
             _Critica,
-            max_tokens=2000,
+            max_tokens=6000,  # con 2000 la crítica de un playbook real se cortaba a mitad del JSON
             timeout=timeout,
         )
     except Exception as e:
@@ -730,8 +749,8 @@ def _pulir_playbook(playbook: str, prompt: str, timeout: float) -> tuple[str, in
     if critica.puntaje >= PUNTAJE_ACEPTABLE:
         return playbook, critica.puntaje, []
 
-    faltantes = "\n".join(f"- {f}" for f in critica.faltantes) or "- (sin detalle)"
-    sugerencias = "\n".join(f"- {s}" for s in critica.sugerencias) or "- (sin detalle)"
+    faltantes = "\n".join(f"- {_desescapar(f)}" for f in critica.faltantes) or "- (sin detalle)"
+    sugerencias = "\n".join(f"- {_desescapar(s)}" for s in critica.sugerencias) or "- (sin detalle)"
     try:
         mejorado = llm.texto(
             SISTEMA_PLAYBOOK,

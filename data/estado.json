@@ -1,0 +1,564 @@
+{
+  "items": [
+    {
+      "id": "ki-5ce32921d4",
+      "tipo": "acceso",
+      "descripcion": "Acceso y manejo del portal de la agencia de viajes para reservar los vuelos corporativos",
+      "dueño_principal": "ana@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "Yo ni sé entrar al portal de la agencia, eso siempre lo has manejado tú.",
+      "evento_ids": [
+        "slack-ops-1721001",
+        "slack-ops-1721002"
+      ]
+    },
+    {
+      "id": "ki-28f707d701",
+      "tipo": "proceso",
+      "descripcion": "Alta de cliente: recibir la solicitud por soporte, cargarla al CRM, generar el usuario y avisar a facturación; si Ana no está el trabajo se acumula",
+      "dueño_principal": "ana@empresa.com",
+      "respaldos": [],
+      "fuente": "meet",
+      "evidencia": "entra la solicitud por soporte, yo la meto al CRM, genero el usuario y le aviso a facturación",
+      "evento_ids": [
+        "meet-ops-0801-b1",
+        "slack-ops-1725003"
+      ]
+    },
+    {
+      "id": "ki-82f5b5854e",
+      "tipo": "tarea",
+      "descripcion": "Mantener y corregir los scripts de deploy y rollback (scripts/deploy.sh, scripts/rollback.sh), incluido el orden migraciones/build",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [],
+      "fuente": "github",
+      "evidencia": "fix(deploy): corregir orden de migraciones antes del build",
+      "evento_ids": [
+        "github-commit-a1b2c3",
+        "github-review-150"
+      ]
+    },
+    {
+      "id": "ki-0b1f8372e6",
+      "tipo": "regla_tacita",
+      "descripcion": "Ningún cambio entra a main sin review de alguien del equipo de plataforma, sin importar lo pequeño que sea el PR",
+      "dueño_principal": "andres@empresa.com",
+      "respaldos": [
+        "david@empresa.com",
+        "samuel@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "nada entra a main sin review de alguien de plataforma. No es negociable aunque el PR sea de una línea",
+      "evento_ids": [
+        "github-pr-142",
+        "github-pr-150",
+        "github-review-142",
+        "github-review-150",
+        "meet-dev-0805-b3",
+        "slack-dev-1722005",
+        "slack-dev-1722006"
+      ]
+    },
+    {
+      "id": "ki-2430fd200c",
+      "tipo": "proceso",
+      "descripcion": "Pipeline de reportes semanales: construido desde cero por Jorge; si se cae un lunes solo él sabe repararlo",
+      "dueño_principal": "jorge@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "El pipeline de reportes semanales lo armé yo desde cero. Si se cae un lunes avísenme a mí, nadie más lo ha tocado.",
+      "evento_ids": [
+        "meet-dev-0805-b2",
+        "slack-dev-1722007"
+      ]
+    },
+    {
+      "id": "ki-ff374aac93",
+      "tipo": "tarea",
+      "descripcion": "Cubrir y atender el canal de soporte #soporte hasta las 8pm, siguiendo el guion de soporte",
+      "dueño_principal": "valentina@empresa.com",
+      "respaldos": [
+        "camilo@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "yo cubro el canal hasta las 8pm, después de esa hora no queda nadie atendiendo",
+      "evento_ids": [
+        "slack-ops-1721007",
+        "slack-ops-1721008",
+        "slack-ops-1725001"
+      ]
+    },
+    {
+      "id": "ki-0b822d9865",
+      "tipo": "acceso",
+      "descripcion": "Administración del Google Workspace: crear cuentas de correo y activar grabaciones de Meet",
+      "dueño_principal": "brayan@empresa.com",
+      "respaldos": [
+        "valentina@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "El admin del Google Workspace lo manejo yo, y Valentina tiene el segundo acceso por si acaso",
+      "evento_ids": [
+        "meet-general-0812-b1",
+        "slack-dev-1722009",
+        "slack-dev-1722010",
+        "slack-mixto-1723003"
+      ]
+    },
+    {
+      "id": "ki-63dbd1e01c",
+      "tipo": "regla_tacita",
+      "descripcion": "El jefe solo viaja en aerolínea LATAM; comprar en otra aerolínea obliga a cancelar y rehacer la reserva completa",
+      "dueño_principal": "ana@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "al jefe solo le gusta viajar en LATAM, no le compren en otra aerolínea porque toca cancelar y rehacer todo",
+      "evento_ids": [
+        "slack-ops-1721001",
+        "meet-ops-0801-b3"
+      ]
+    },
+    {
+      "id": "ki-79477ef0a9",
+      "tipo": "regla_tacita",
+      "descripcion": "En los vuelos del jefe siempre se pide asiento de pasillo y se evita cualquier escala en Lima; no está documentado en ningún lado",
+      "dueño_principal": "ana@empresa.com",
+      "respaldos": [],
+      "fuente": "meet",
+      "evidencia": "el jefe pide siempre pasillo y nunca escala en Lima si se puede evitar",
+      "evento_ids": [
+        "meet-ops-0801-b3"
+      ]
+    },
+    {
+      "id": "ki-14308e4231",
+      "tipo": "acceso",
+      "descripcion": "Cuenta de administrador único del CRM: solo ella puede crear usuarios y procesar altas",
+      "dueño_principal": "ana@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "El único admin del CRM soy yo, así que cualquier alta me la piden por acá y yo la hago.",
+      "evento_ids": [
+        "slack-ops-1721003",
+        "slack-ops-1721004"
+      ]
+    },
+    {
+      "id": "ki-051ca98f93",
+      "tipo": "acceso",
+      "descripcion": "Llave SSH del servidor de producción, necesaria para entrar a revisar logs y operar la máquina",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [
+        "samuel@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "La llave SSH del servidor de producción la tenemos Samuel y yo.",
+      "evento_ids": [
+        "slack-dev-1722001",
+        "slack-dev-1722002"
+      ]
+    },
+    {
+      "id": "ki-0d7833c71e",
+      "tipo": "proceso",
+      "descripcion": "Deploy a producción: correr primero las migraciones, luego el build, y ante fallo hacer rollback manual con el script viejo; no está documentado",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "primero corro las migraciones, después el build, y si algo falla hago rollback a mano con el script viejo",
+      "evento_ids": [
+        "slack-dev-1722003",
+        "slack-dev-1722004",
+        "github-commit-a1b2c3"
+      ]
+    },
+    {
+      "id": "ki-3f48d61b51",
+      "tipo": "tarea",
+      "descripcion": "Rotar las credenciales del servidor de producción y actualizar infra/ssh_config",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [],
+      "fuente": "github",
+      "evidencia": "chore(infra): rotar credenciales del servidor de produccion",
+      "evento_ids": [
+        "github-commit-d4e5f6"
+      ]
+    },
+    {
+      "id": "ki-a38c2edae6",
+      "tipo": "regla_tacita",
+      "descripcion": "Convención de diseño: los endpoints de healthcheck no deben consultar la base de datos directamente",
+      "dueño_principal": "andres@empresa.com",
+      "respaldos": [],
+      "fuente": "github",
+      "evidencia": "el healthcheck no debe tocar la base de datos directamente, esa es la convención que seguimos acá",
+      "evento_ids": [
+        "github-review-142"
+      ]
+    },
+    {
+      "id": "ki-6182294532",
+      "tipo": "proceso",
+      "descripcion": "Conciliación mensual de facturación el último viernes del mes: descargar el extracto del proveedor de pagos y cruzarlo contra el CRM (~2 horas)",
+      "dueño_principal": "laura@empresa.com",
+      "respaldos": [
+        "camilo@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "el último viernes del mes hacemos la conciliación de facturación con el proveedor de pagos",
+      "evento_ids": [
+        "slack-ops-1721005",
+        "slack-ops-1721006",
+        "meet-ops-0801-b2"
+      ]
+    },
+    {
+      "id": "ki-3495512bd8",
+      "tipo": "regla_tacita",
+      "descripcion": "Después de las 8pm no hay nadie atendiendo el canal de soporte; si Valentina falta hay que avisar con tiempo porque nadie más está entrenado en el guion",
+      "dueño_principal": "valentina@empresa.com",
+      "respaldos": [
+        "ana@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "no tenemos a nadie más entrenado en el guion de soporte",
+      "evento_ids": [
+        "slack-ops-1721008"
+      ]
+    },
+    {
+      "id": "ki-add0d10a47",
+      "tipo": "acceso",
+      "descripcion": "Credenciales del bucket de reportes usadas por el pipeline de datos, guardadas en el .env local de Jorge (pendiente moverlas al secret manager)",
+      "dueño_principal": "jorge@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "El pipeline usa el bucket de reportes y las credenciales están en mi .env local",
+      "evento_ids": [
+        "slack-dev-1722008",
+        "github-pr-147"
+      ]
+    },
+    {
+      "id": "ki-83aaf32114",
+      "tipo": "proceso",
+      "descripcion": "Runbook de incidentes en producción: revisar healthcheck, luego logs del servidor y, si es necesario, ejecutar el rollback",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [
+        "samuel@empresa.com"
+      ],
+      "fuente": "meet",
+      "evidencia": "Si se cae producción, primero miramos el healthcheck, después los logs del servidor y si toca revertimos",
+      "evento_ids": [
+        "meet-dev-0805-b1"
+      ]
+    },
+    {
+      "id": "ki-f8a1a9ae01",
+      "tipo": "tarea",
+      "descripcion": "Ejecutar el rollback de despliegue con el script frágil scripts/rollback.sh, único paso del runbook que nadie más puede hacer",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [],
+      "fuente": "meet",
+      "evidencia": "el rollback sí lo tengo que hacer yo, el script es frágil",
+      "evento_ids": [
+        "meet-dev-0805-b1",
+        "github-review-150"
+      ]
+    },
+    {
+      "id": "ki-f72151e4db",
+      "tipo": "acceso",
+      "descripcion": "Acceso al servidor de producción para revisar healthcheck y logs",
+      "dueño_principal": "samuel@empresa.com",
+      "respaldos": [],
+      "fuente": "meet",
+      "evidencia": "yo tengo acceso al servidor así que puedo hacer los dos primeros pasos",
+      "evento_ids": [
+        "meet-dev-0805-b1"
+      ]
+    },
+    {
+      "id": "ki-4a7998b265",
+      "tipo": "regla_tacita",
+      "descripcion": "No se despliega los viernes después de las 4pm",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [
+        "samuel@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "Los viernes después de las 4pm no se despliega. Aprendimos por las malas en marzo.",
+      "evento_ids": [
+        "slack-dev-1722011",
+        "slack-dev-1722012"
+      ]
+    },
+    {
+      "id": "ki-7570611251",
+      "tipo": "tarea",
+      "descripcion": "Exportar los datos del CRM (incluida la columna de altas) y entregarlos para el reporte de facturación y el reporte semanal",
+      "dueño_principal": "ana@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "Yo soy la única que exporta ese archivo",
+      "evento_ids": [
+        "slack-mixto-1723002",
+        "slack-mixto-1723001"
+      ]
+    },
+    {
+      "id": "ki-8d24448c6f",
+      "tipo": "tarea",
+      "descripcion": "Generar el reporte de facturación antes del cierre de mes con los datos del CRM",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [
+        "ana@empresa.com"
+      ],
+      "fuente": "slack",
+      "evidencia": "necesito que el reporte de facturación salga antes del cierre de mes",
+      "evento_ids": [
+        "slack-mixto-1723001"
+      ]
+    },
+    {
+      "id": "ki-42cd74eb17",
+      "tipo": "tarea",
+      "descripcion": "Mantener y evolucionar el pipeline de reportes (retries, alertas y vista semanal de altas) en el repo empresa/datos",
+      "dueño_principal": "jorge@empresa.com",
+      "respaldos": [],
+      "fuente": "github",
+      "evidencia": "Pipeline de reportes: agregar retry y alertas",
+      "evento_ids": [
+        "github-pr-147",
+        "github-commit-g7h8i9"
+      ]
+    },
+    {
+      "id": "ki-250925a612",
+      "tipo": "regla_tacita",
+      "descripcion": "Las grabaciones de Meet se guardan automáticamente en la carpeta compartida del workspace, administrada por Brayan y Valentina",
+      "dueño_principal": "brayan@empresa.com",
+      "respaldos": [
+        "valentina@empresa.com"
+      ],
+      "fuente": "meet",
+      "evidencia": "las grabaciones se guardan automáticamente en la carpeta compartida. Valentina y yo somos admin",
+      "evento_ids": [
+        "meet-general-0812-b1"
+      ]
+    },
+    {
+      "id": "ki-1a06db9e95",
+      "tipo": "tarea",
+      "descripcion": "Mantener y actualizar la guía de onboarding del workspace en docs/onboarding.md del repo empresa/plataforma",
+      "dueño_principal": "brayan@empresa.com",
+      "respaldos": [],
+      "fuente": "github",
+      "evidencia": "docs: actualizar guia de onboarding del workspace",
+      "evento_ids": [
+        "github-commit-j1k2l3"
+      ]
+    },
+    {
+      "id": "ki-42da3126b6",
+      "tipo": "acceso",
+      "descripcion": "Contraseña del keystore del certificado del servidor, custodiada personalmente por David y aún no cargada en el gestor de secretos",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "La contraseña del keystore la tengo yo, no está en el gestor de secretos todavía",
+      "evento_ids": [
+        "slack-dev-1725002"
+      ]
+    },
+    {
+      "id": "ki-1ace168b10",
+      "tipo": "tarea",
+      "descripcion": "Subir y renovar el certificado nuevo en el servidor",
+      "dueño_principal": "david@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "Subí el certificado nuevo al servidor",
+      "evento_ids": [
+        "slack-dev-1725002"
+      ]
+    },
+    {
+      "id": "ki-010b83f545",
+      "tipo": "regla_tacita",
+      "descripcion": "Las altas del CRM y las reservas se congelan hasta que Ana regrese: nadie más las ejecuta en su ausencia",
+      "dueño_principal": "ana@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "la próxima semana estoy fuera dos días. Dejen las altas del CRM y las reservas para cuando vuelva",
+      "evento_ids": [
+        "slack-ops-1725003"
+      ]
+    },
+    {
+      "id": "ki-0e28181841",
+      "tipo": "proceso",
+      "descripcion": "Ejecutar el pipeline de datos localmente; el procedimiento no está documentado y solo Jorge lo conoce",
+      "dueño_principal": "jorge@empresa.com",
+      "respaldos": [],
+      "fuente": "slack",
+      "evidencia": "Te lo explico el lunes en una llamada, no hay nada escrito",
+      "evento_ids": [
+        "slack-dev-1725004",
+        "slack-dev-1725005"
+      ]
+    }
+  ],
+  "scores": [
+    {
+      "persona_id": "ana@empresa.com",
+      "score": 100,
+      "riesgo_absoluto": 22.5,
+      "items_criticos": [
+        "ki-5ce32921d4",
+        "ki-28f707d701",
+        "ki-63dbd1e01c",
+        "ki-79477ef0a9",
+        "ki-14308e4231",
+        "ki-7570611251",
+        "ki-010b83f545"
+      ],
+      "total_items": 7,
+      "detalle": "7 elemento(s) a su nombre. 7 sin ningún respaldo (bus factor 1). colabora con 6 persona(s). intermediación 100% del máximo del equipo."
+    },
+    {
+      "persona_id": "david@empresa.com",
+      "score": 73,
+      "riesgo_absoluto": 16.45,
+      "items_criticos": [
+        "ki-82f5b5854e",
+        "ki-0d7833c71e",
+        "ki-3f48d61b51",
+        "ki-f8a1a9ae01",
+        "ki-42da3126b6",
+        "ki-1ace168b10"
+      ],
+      "total_items": 10,
+      "detalle": "10 elemento(s) a su nombre. 6 sin ningún respaldo (bus factor 1). colabora con 5 persona(s). intermediación 45% del máximo del equipo."
+    },
+    {
+      "persona_id": "jorge@empresa.com",
+      "score": 44,
+      "riesgo_absoluto": 9.82,
+      "items_criticos": [
+        "ki-2430fd200c",
+        "ki-add0d10a47",
+        "ki-42cd74eb17",
+        "ki-0e28181841"
+      ],
+      "total_items": 4,
+      "detalle": "4 elemento(s) a su nombre. 4 sin ningún respaldo (bus factor 1). colabora con 5 persona(s). intermediación 45% del máximo del equipo."
+    },
+    {
+      "persona_id": "brayan@empresa.com",
+      "score": 18,
+      "riesgo_absoluto": 4.09,
+      "items_criticos": [
+        "ki-1a06db9e95"
+      ],
+      "total_items": 3,
+      "detalle": "3 elemento(s) a su nombre. 1 sin ningún respaldo (bus factor 1). colabora con 4 persona(s). intermediación 18% del máximo del equipo."
+    },
+    {
+      "persona_id": "samuel@empresa.com",
+      "score": 13,
+      "riesgo_absoluto": 3.0,
+      "items_criticos": [
+        "ki-f72151e4db"
+      ],
+      "total_items": 1,
+      "detalle": "1 elemento(s) a su nombre. 1 sin ningún respaldo (bus factor 1). colabora con 3 persona(s). intermediación 0% del máximo del equipo."
+    },
+    {
+      "persona_id": "andres@empresa.com",
+      "score": 10,
+      "riesgo_absoluto": 2.2,
+      "items_criticos": [
+        "ki-a38c2edae6"
+      ],
+      "total_items": 2,
+      "detalle": "2 elemento(s) a su nombre. 1 sin ningún respaldo (bus factor 1). colabora con 3 persona(s). intermediación 0% del máximo del equipo."
+    },
+    {
+      "persona_id": "valentina@empresa.com",
+      "score": 8,
+      "riesgo_absoluto": 1.73,
+      "items_criticos": [],
+      "total_items": 2,
+      "detalle": "2 elemento(s) a su nombre. todos con respaldo. colabora con 4 persona(s). intermediación 9% del máximo del equipo."
+    },
+    {
+      "persona_id": "laura@empresa.com",
+      "score": 5,
+      "riesgo_absoluto": 1.1,
+      "items_criticos": [],
+      "total_items": 1,
+      "detalle": "1 elemento(s) a su nombre. todos con respaldo. colabora con 3 persona(s). intermediación 0% del máximo del equipo."
+    },
+    {
+      "persona_id": "camilo@empresa.com",
+      "score": 0,
+      "riesgo_absoluto": 0.0,
+      "items_criticos": [],
+      "total_items": 0,
+      "detalle": "0 elemento(s) a su nombre. todos con respaldo. colabora con 3 persona(s). intermediación 0% del máximo del equipo."
+    }
+  ],
+  "quests": [
+    {
+      "id": "q-001",
+      "asignado_a": "ana@empresa.com",
+      "accion": "Agenda 45 minutos con Camilo y dale acceso propio al portal de la agencia de viajes: crea su usuario, haz que él reserve un vuelo de prueba de punta a punta mientras miras, y deja escrito en un doc compartido los pasos de login, autorización y códigos de centro de costo.",
+      "item_relacionado": "ki-5ce32921d4",
+      "estado": "pendiente",
+      "puntos": 22
+    },
+    {
+      "id": "q-002",
+      "asignado_a": "ana@empresa.com",
+      "accion": "Crea hoy una segunda cuenta de administrador del CRM para Laura, verifica con ella que puede crear usuarios y procesar un alta real, y registra ambas cuentas admin en el gestor de contraseñas del equipo para que no quede una sola llave.",
+      "item_relacionado": "ki-14308e4231",
+      "estado": "pendiente",
+      "puntos": 30
+    },
+    {
+      "id": "q-003",
+      "asignado_a": "ana@empresa.com",
+      "accion": "Escribe el runbook 'Alta de cliente' (solicitud en soporte → carga al CRM → generación de usuario → aviso a facturación) con capturas, y haz que Valentina ejecute el próximo alta siguiéndolo mientras tú solo revisas al final.",
+      "item_relacionado": "ki-28f707d701",
+      "estado": "pendiente",
+      "puntos": 26
+    },
+    {
+      "id": "q-004",
+      "asignado_a": "ana@empresa.com",
+      "accion": "Documenta en la ficha de viajes del jefe la regla de que solo se vuela en LATAM y por qué (cancelar y rehacer si se compra otra aerolínea), y envíasela a Camilo y Laura por Slack pidiendo confirmación de lectura.",
+      "item_relacionado": "ki-63dbd1e01c",
+      "estado": "pendiente",
+      "puntos": 16
+    },
+    {
+      "id": "q-005",
+      "asignado_a": "ana@empresa.com",
+      "accion": "Agrega a esa misma ficha de preferencias de viaje del jefe las reglas tácitas restantes (asiento de pasillo siempre, nunca escala en Lima) y repásalas en 15 minutos con Camilo para que pueda reservar sin consultarte.",
+      "item_relacionado": "ki-79477ef0a9",
+      "estado": "pendiente",
+      "puntos": 18
+    },
+    {
+      "id": "q-006",
+      "asignado_a": "ana@empresa.com",
+      "accion": "Define y publica el backup formal de tus ausencias: nombra a Laura para altas del CRM y a Camilo para reservas, anúncialo en el canal del equipo con fechas y accesos ya entregados, y elimina la práctica de congelar el trabajo hasta tu regreso.",
+      "item_relacionado": "ki-010b83f545",
+      "estado": "pendiente",
+      "puntos": 28
+    }
+  ],
+  "con_claude": true
+}

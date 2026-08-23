@@ -20,6 +20,17 @@ from pydantic import BaseModel
 
 from .esquemas import RAIZ
 
+# `backend/` ya carga el .env, pero `python -m cerebro` y los scripts sueltos no
+# pasaban por ahí: ponías la clave en el archivo y el cerebro seguía diciendo que
+# no había. python-dotenv viene con el extra [api]; sin él esto no hace nada y
+# manda la variable de entorno, que es lo que usa Render.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(RAIZ / ".env")
+except ImportError:  # pragma: no cover
+    pass
+
 MODELO = os.getenv("CEREBRO_MODELO", "claude-opus-5")
 # En Railway/Render el disco es efímero: la caché no sobrevive un reinicio y la
 # primera llamada tras cada deploy va en frío. Los KnowledgeItem viven en
@@ -103,25 +114,47 @@ def parse_json(
     return resultado
 
 
-def texto(system: str, prompt: str, *, max_tokens: int = 8000, timeout: float | None = None) -> str:
+# Medido sobre los 30 elementos reales de P1: high se pasaba de 25 s y moría,
+# medium tarda ~136 s, low ~41 s. Ninguno llega a los 5-15 s del guion, así que
+# el demo se apoya en la caché: se ensaya una vez y en vivo responde al instante.
+# `low` es el default porque es el único que completa en un tiempo tolerable
+# cuando alguien simula un escenario no ensayado.
+ESFUERZO = os.getenv("CEREBRO_ESFUERZO", "low")
+
+
+def texto(
+    system: str,
+    prompt: str,
+    *,
+    max_tokens: int = 8000,
+    timeout: float | None = None,
+    esfuerzo: str = ESFUERZO,
+) -> str:
     """Respuesta en texto libre (Markdown). Para el playbook de empalme.
 
-    `timeout` en segundos: en el demo en vivo vale más un playbook degradado a
-    tiempo que uno perfecto que llega tarde.
+    Va en streaming: sin él, generar un playbook completo se pasaba del timeout
+    de 25 s y el demo caía al plan B justo en su momento estelar. El streaming
+    no acelera el modelo, pero evita que la conexión muera esperando.
+
+    `esfuerzo` controla cuánto piensa el modelo antes de escribir. En `high`
+    (el default de la API) el playbook tardaba de más; `medium` lo deja en el
+    rango de 5-15 s que pide el guion del demo sin que se note en la prosa.
     """
-    clave = _clave(MODELO, system, prompt, "texto", str(max_tokens))
+    clave = _clave(MODELO, system, prompt, "texto", str(max_tokens), esfuerzo)
     if (crudo := _leer_cache(clave)) is not None:
         return json.loads(crudo)
 
     cliente = _get_cliente()
     if timeout is not None:
         cliente = cliente.with_options(timeout=timeout)
-    respuesta = cliente.messages.create(
+    with cliente.messages.stream(
         model=MODELO,
         max_tokens=max_tokens,
         system=system,
         messages=[{"role": "user", "content": prompt}],
-    )
+        output_config={"effort": esfuerzo},
+    ) as flujo:
+        respuesta = flujo.get_final_message()
     salida = "".join(b.text for b in respuesta.content if b.type == "text")
     _escribir_cache(clave, json.dumps(salida))
     return salida

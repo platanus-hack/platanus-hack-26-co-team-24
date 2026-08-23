@@ -25,7 +25,16 @@ import riesgoMock from './mocks/riesgo.json';
 import escenariosMock from './mocks/escenarios.json';
 import simularMock from './mocks/simular.json';
 
-const BASE = import.meta.env.VITE_API_URL as string | undefined;
+const CRUDO = import.meta.env.VITE_API_URL as string | undefined;
+
+// Render inyecta el host sin esquema (`bus-factor-api.onrender.com`) cuando la
+// variable viene de otro servicio del blueprint. Sin esto, `fetch` la trataría
+// como ruta relativa y pegaría contra el propio estático.
+const BASE = CRUDO?.trim()
+  ? /^https?:\/\//.test(CRUDO.trim())
+    ? CRUDO.trim().replace(/\/$/, '')
+    : `https://${CRUDO.trim().replace(/\/$/, '')}`
+  : undefined;
 
 /** Sin VITE_API_URL corremos contra los mocks locales: lo que dependa de eso
  * (avatar en localStorage, etc.) se guía por esta bandera. */

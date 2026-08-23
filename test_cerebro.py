@@ -8,6 +8,7 @@ colaboración, el filtrado por escenario y que el contrato serialice.
 
 import json
 import re
+from contextlib import contextmanager
 from pathlib import Path
 
 from cerebro import (ESCENARIOS_POR_ID, KnowledgeItem, RawEvent, bus_factor, calcular_riesgo,
@@ -19,6 +20,24 @@ from cerebro.validacion import (bus_factor_coherente, escenarios_sanos, monotoni
                                 sensibilidad_pesos, spearman)
 
 EVENTOS = cargar_eventos()
+
+
+@contextmanager
+def sin_api_key():
+    """Fuerza la ruta sin credenciales.
+
+    Sin esto, en una máquina con `.env` estas pruebas salían a la API real:
+    lentas, caras y probando algo distinto en cada equipo. Una prueba no puede
+    depender de si existe un archivo de configuración.
+    """
+    from cerebro import llm
+
+    original = llm.hay_api_key
+    llm.hay_api_key = lambda: False
+    try:
+        yield
+    finally:
+        llm.hay_api_key = original
 
 
 def item(id_, tipo, dueño, respaldos=()):
@@ -150,7 +169,8 @@ def test_los_7_escenarios_dan_resultados_distintos():
 def test_sin_api_key_el_playbook_es_del_escenario_correcto():
     """El plan B no puede devolver el playbook de otro escenario."""
     items = extraer([], mock=True)
-    r = simular("caida_github", items)
+    with sin_api_key():
+        r = simular("caida_github", items)
     assert r.generado_por == "respaldo"
     assert "GitHub" in r.playbook_md.splitlines()[0]
     assert r.advertencias and "API_KEY" in r.advertencias[0]
@@ -160,7 +180,8 @@ def test_sin_api_key_el_playbook_es_del_escenario_correcto():
 
 def test_playbook_de_respaldo_solo_usa_datos_reales():
     items = extraer([], mock=True)
-    md = simular("renuncia", items, "ana@empresa.com").playbook_md
+    with sin_api_key():
+        md = simular("renuncia", items, "ana@empresa.com").playbook_md
     reales = {i.dueño_principal for i in items} | {r for i in items for r in i.respaldos}
     assert set(re.findall(r"[\w.+-]+@[\w.-]+\.\w+", md)) <= reales
 
@@ -217,7 +238,8 @@ def test_bus_factor_coincide_con_el_riesgo():
 
 
 def test_autocritica_sin_api_key_no_revienta():
-    r = simular("renuncia", extraer([], mock=True), "ana@empresa.com", EVENTOS, autocritica=True)
+    with sin_api_key():
+        r = simular("renuncia", extraer([], mock=True), "ana@empresa.com", EVENTOS, autocritica=True)
     assert r.generado_por == "respaldo" and r.puntaje_playbook is None
 
 
@@ -280,7 +302,8 @@ def test_el_playbook_recibe_co_participacion():
 
 
 def test_el_respaldo_propone_sucesor():
-    r = simular("renuncia", extraer([], mock=True), "ana@empresa.com", EVENTOS)
+    with sin_api_key():
+        r = simular("renuncia", extraer([], mock=True), "ana@empresa.com", EVENTOS)
     assert "candidato por cercanía" in r.playbook_md
 
 
