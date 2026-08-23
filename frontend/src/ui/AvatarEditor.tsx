@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { putAvatar } from '../api';
 import { PALETTE, SPRITE_W, SPRITE_H } from '../game/palette';
@@ -10,7 +11,6 @@ const LABELS = {
   cuerpo: { light: 'Claro', dark: 'Oscuro' },
   peinado: { short: 'Corto', long: 'Largo' },
   ropa: { shirt: 'Camisa', suit: 'Traje' },
-  paleta: { blue: 'Azul', red: 'Rojo', green: 'Verde', yellow: 'Amarillo', purple: 'Morado', gray: 'Gris' },
 } as const;
 
 const DEFAULT_CONFIG: AvatarConfig = { cuerpo: 'light', peinado: 'short', ropa: 'shirt', paleta: 'blue' };
@@ -40,9 +40,9 @@ function loadImg(src: string): HTMLImageElement {
   return img;
 }
 
-// Editor de avatar: 4 selects nativos + preview animado (32x52 a 4x, es
-// decir 128x208) en canvas, compuesto de las 3 capas de Character.ts, con la
-// ropa tintada por PALETTE.
+// Editor de avatar: 3 selects nativos + 6 swatches de color (radiogroup) +
+// preview animado (32x52 a 4x, es decir 128x208) en canvas, compuesto de las
+// 3 capas de Character.ts, con la ropa tintada por PALETTE.
 export function AvatarEditor() {
   // El localStorage manda en ambos modos: P3 todavía no tiene `PUT /avatar`,
   // así que el avatar guardado aquí es el único que existe (y es el que
@@ -50,7 +50,7 @@ export function AvatarEditor() {
   const [cfg, setCfg] = useState<AvatarConfig>(
     () => loadAvatar() ?? DEFAULT_CONFIG,
   );
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<'saved' | 'error' | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef(0);
 
@@ -105,17 +105,18 @@ export function AvatarEditor() {
     try {
       await putAvatar(cfg);
       saveAvatar(cfg);
-      setStatus('Guardado ✓');
+      setStatus('saved');
     } catch (err) {
-      setStatus(err instanceof Error ? err.message : 'Error al guardar');
+      console.error('putAvatar', err);
+      setStatus('error');
     }
-    setTimeout(() => setStatus(null), 2000);
+    setTimeout(() => setStatus(null), 2500);
   }
 
-  function field<K extends keyof AvatarConfig>(key: K, label: string, options: readonly AvatarConfig[K][]) {
+  function field<K extends 'cuerpo' | 'peinado' | 'ropa'>(key: K, label: string, options: readonly AvatarConfig[K][]) {
     return (
       <label className="avatar-field">
-        {label}
+        <span className="avatar-field__label">{label}</span>
         <select
           value={cfg[key]}
           onChange={(e) => setCfg((c) => ({ ...c, [key]: e.target.value as AvatarConfig[K] }))}
@@ -130,29 +131,90 @@ export function AvatarEditor() {
     );
   }
 
+  function selectPaleta(index: number) {
+    const opt = PALETAS[(index + PALETAS.length) % PALETAS.length];
+    setCfg((c) => ({ ...c, paleta: opt }));
+    swatchRefs.current[PALETAS.indexOf(opt)]?.focus();
+  }
+
+  const swatchRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const activeIndex = PALETAS.indexOf(cfg.paleta);
+
+  function onSwatchKeyDown(e: KeyboardEvent, index: number) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectPaleta(index + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectPaleta(index - 1);
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      setCfg((c) => ({ ...c, paleta: PALETAS[index] }));
+    }
+  }
+
   return (
     <div className="avatar-page">
       <div className="avatar-panel">
-        <h1>Tu avatar</h1>
-        <div className="avatar-preview-box">
-          <canvas
-            ref={canvasRef}
-            width={SPRITE_W}
-            height={SPRITE_H}
-            className="avatar-preview-canvas"
-          />
+        <div className="avatar-panel__header">
+          <h1>TU AVATAR</h1>
+          {status && (
+            <span
+              className={`avatar-chip ${status === 'saved' ? 'avatar-chip--saved' : 'avatar-chip--error'}`}
+            >
+              {status === 'saved' ? 'GUARDADO ✓' : 'ERROR AL GUARDAR'}
+            </span>
+          )}
         </div>
-        {field('cuerpo', 'Cuerpo', CUERPOS)}
-        {field('peinado', 'Peinado', PEINADOS)}
-        {field('ropa', 'Ropa', ROPAS)}
-        {field('paleta', 'Color', PALETAS)}
+
+        <div className="avatar-panel__body">
+          <div className="avatar-preview-box">
+            <canvas
+              ref={canvasRef}
+              width={SPRITE_W}
+              height={SPRITE_H}
+              className="avatar-preview-canvas"
+            />
+          </div>
+
+          <div className="avatar-fields">
+            {field('cuerpo', 'Cuerpo', CUERPOS)}
+            {field('peinado', 'Peinado', PEINADOS)}
+            {field('ropa', 'Ropa', ROPAS)}
+
+            <div className="avatar-field">
+              <span className="avatar-field__label">Color</span>
+              <div className="avatar-swatches" role="radiogroup" aria-label="Color">
+                {PALETAS.map((opt, i) => (
+                  <button
+                    key={opt}
+                    ref={(el) => {
+                      swatchRefs.current[i] = el;
+                    }}
+                    type="button"
+                    role="radio"
+                    aria-checked={cfg.paleta === opt}
+                    aria-label={opt}
+                    tabIndex={i === activeIndex ? 0 : -1}
+                    className={`avatar-swatch ${cfg.paleta === opt ? 'avatar-swatch--active' : ''}`}
+                    style={{ background: toHex(PALETTE[opt]) }}
+                    onClick={() => setCfg((c) => ({ ...c, paleta: opt }))}
+                    onKeyDown={(e) => onSwatchKeyDown(e, i)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="avatar-actions">
-          <button type="button" onClick={handleSave}>
-            Guardar
+          <button type="button" className="avatar-btn avatar-btn--primary" onClick={handleSave}>
+            GUARDAR
           </button>
-          <Link to="/oficina">Ir a la oficina</Link>
+          <Link to="/oficina" className="avatar-btn avatar-btn--go">
+            IR A LA OFICINA ▶
+          </Link>
         </div>
-        {status && <p className="avatar-status">{status}</p>}
       </div>
     </div>
   );

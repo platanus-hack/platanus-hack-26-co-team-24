@@ -5,6 +5,7 @@ import type { ItemCritico } from '../types';
 import type { CSSProperties } from 'react';
 import { THEME } from '../game/palette';
 import { riskLevel, type RiskLevel } from '../game/risk';
+import { tipoChip, tipoChipColor } from './chips';
 import './ui.css';
 
 interface PersonClickPayload {
@@ -27,29 +28,13 @@ const SCORE_COLOR: Record<RiskLevel, string> = {
 const posesivo = (nombre: string): 'ELLA' | 'ÉL' =>
   nombre.trim().toLowerCase().endsWith('a') ? 'ELLA' : 'ÉL';
 
-const TIPO_LABEL: Record<string, string> = {
-  tarea: 'TAREA',
-  regla_tacita: 'TÁCITO',
-  acceso: 'ACCESO',
-  proceso: 'PROCESO',
-};
-
-const tipoChip = (tipo: string): string =>
-  TIPO_LABEL[tipo] ?? tipo.toUpperCase();
-
-// Fidelidad literal a guia-visual.dc.html (sección 07): cada tipo conocido
-// tiene su propio color de chip (sin borde). Los tipos sin receta en la guía
-// (conocimiento, resumen, item...) caen al chip neutro LINE ya definido en
-// `.risk-tooltip__chip` (bg LINE + borde 1px #6E4FA8).
-const TIPO_CHIP_COLOR: Record<string, { background: string; color: string }> =
-  {
-    tarea: { background: THEME.turquesa, color: THEME.base },
-    regla_tacita: { background: THEME.morado, color: THEME.texto },
-    acceso: { background: THEME.naranja, color: THEME.base },
-  };
-
+// El mapeo tipo -> etiqueta/color vive en `./chips` (compartido con
+// ResultPanel.tsx). Fidelidad literal a guia-visual.dc.html (sección 07):
+// cada tipo conocido tiene su propio color de chip (sin borde); los tipos
+// sin receta (conocimiento, resumen, item...) caen al chip neutro LINE ya
+// definido en `.risk-tooltip__chip` (bg LINE + borde 1px #6E4FA8).
 const tipoChipStyle = (tipo: string): CSSProperties | undefined => {
-  const c = TIPO_CHIP_COLOR[tipo];
+  const c = tipoChipColor(tipo);
   return c ? { ...c, border: 'none' } : undefined;
 };
 

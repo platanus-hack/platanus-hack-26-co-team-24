@@ -186,6 +186,7 @@ export class OfficeScene extends Phaser.Scene {
   }): Promise<void> {
     if (this.scenarioRunning) return;
     this.scenarioRunning = true;
+    const t0 = performance.now();
     try {
       // allSettled (y no all): si la API falla primero, el runner sigue
       // mutando la escena; restaurar antes de que termine haría que sus
@@ -195,7 +196,10 @@ export class OfficeScene extends Phaser.Scene {
         getRunner(scenario_id)(this, person_id),
       ]);
       if (sim.status === 'fulfilled' && anim.status === 'fulfilled') {
-        bus.emit('scenario:result', sim.value);
+        bus.emit('scenario:result', {
+          result: sim.value,
+          ms: performance.now() - t0,
+        });
       } else {
         const err =
           sim.status === 'rejected'
