@@ -19,3 +19,23 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+
+  # El estático de P4. Con esto un solo blueprint levanta la API y el juego, y
+  # VITE_API_URL se cablea sola: no hay que copiar la URL a mano después del
+  # primer deploy.
+  - type: web
+    name: bus-factor-web
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: bus-factor-api
+          property: host
+    routes:
+      # React Router: cualquier ruta la resuelve el cliente, no el servidor.
+      - type: rewrite
+        source: /*
+        destination: /index.html

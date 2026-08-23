@@ -279,3 +279,29 @@ describe('api (modo real, con VITE_API_URL)', () => {
     expect(api.DEMO_USER_ID).toBe('otro@empresa.com');
   });
 });
+
+describe('normalización de VITE_API_URL', () => {
+  // Render entrega el host pelado cuando la variable viene de otro servicio del
+  // blueprint. Sin esquema, fetch lo trata como ruta relativa y pega contra el
+  // propio estático en vez de contra la API.
+  const normalizar = (crudo: string | undefined) =>
+    crudo?.trim()
+      ? /^https?:\/\//.test(crudo.trim())
+        ? crudo.trim().replace(/\/$/, '')
+        : `https://${crudo.trim().replace(/\/$/, '')}`
+      : undefined;
+
+  it('le pone https al host pelado que inyecta Render', () => {
+    expect(normalizar('bus-factor-api.onrender.com')).toBe('https://bus-factor-api.onrender.com');
+  });
+
+  it('respeta una URL completa y le quita la barra final', () => {
+    expect(normalizar('http://localhost:8000/')).toBe('http://localhost:8000');
+    expect(normalizar('https://api.example.com')).toBe('https://api.example.com');
+  });
+
+  it('vacío sigue significando modo mock', () => {
+    expect(normalizar(undefined)).toBeUndefined();
+    expect(normalizar('   ')).toBeUndefined();
+  });
+});
