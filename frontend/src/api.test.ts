@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getOficina, simular } from './api';
+import { getOficina, miId, resolverMiId, simular } from './api';
 import { isValidAvatar } from './avatarStorage';
 
 describe('api (modo mock, sin VITE_API_URL)', () => {
@@ -14,6 +14,21 @@ describe('api (modo mock, sin VITE_API_URL)', () => {
       person_id: 'p_ana',
     });
     expect(result.playbook_md.length).toBeGreaterThan(0);
+  });
+
+  it('la identidad es el usuario demo y no toca la red, aunque haya token', async () => {
+    // Restricción dura del demo: sin VITE_API_URL el juego corre 100% offline.
+    // Ni siquiera con un token guardado se debe preguntar por el perfil.
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    stubAlmacen('tok-viejo');
+
+    expect(miId()).toBe('p_ana');
+    await expect(resolverMiId()).resolves.toBe('p_ana');
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    quitarAlmacen();
+    vi.unstubAllGlobals();
   });
 });
 
@@ -395,5 +410,164 @@ describe('normalización de VITE_API_URL', () => {
     const oficina = await api.getOficina();
     expect(oficina.people[0].id).toBe('p_ana');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Identidad del jugador. Antes la decidía una variable de build: te registrabas
+// como carlos@ y el juego te seguía tratando como Ana (su conocimiento, su
+// riesgo, tu avatar pintado encima de ella).
+// ---------------------------------------------------------------------------
+
+const PERFIL = {
+  email: 'carlos@empresa.com',
+  nombre: 'Carlos Pérez',
+  rol: 'Dev',
+  sprite: 'lpc-03',
+  avatar_config: {
+    cuerpo: 'dark',
+    peinado: 'short',
+    ropa: 'shirt',
+    paleta: 'green',
+  },
+};
+
+const ok = (payload: unknown) => ({
+  ok: true,
+  status: 200,
+  json: async () => payload,
+});
+
+/** localStorage en memoria (mismo stub que sesion.test.ts). Devuelve el mapa
+ * para poder comprobar que el token vencido se borró. */
+function stubAlmacen(token?: string): Map<string, string> {
+  const datos = new Map<string, string>();
+  if (token) datos.set('bfhq.token', token);
+  globalThis.localStorage = {
+    getItem: (k: string) => datos.get(k) ?? null,
+    setItem: (k: string, v: string) => void datos.set(k, v),
+    removeItem: (k: string) => void datos.delete(k),
+    clear: () => datos.clear(),
+    key: () => null,
+    get length() {
+      return datos.size;
+    },
+  } as Storage;
+  return datos;
+}
+
+function quitarAlmacen(): void {
+  delete (globalThis as { localStorage?: Storage }).localStorage;
+}
+
+/** Importa `./api` en modo real con un `fetch` que responde según la URL. */
+async function importApiConFetch(responder: (url: string) => unknown) {
+  vi.stubEnv('VITE_API_URL', 'http://x');
+  const fetchMock = vi.fn((url: string, _init?: RequestInit) =>
+    Promise.resolve(responder(url)),
+  );
+  vi.stubGlobal('fetch', fetchMock);
+  vi.resetModules();
+  const api = await import('./api');
+  return { api, fetchMock };
+}
+
+describe('identidad del jugador (miId / resolverMiId)', () => {
+  afterEach(() => {
+    quitarAlmacen();
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it('sin sesión manda el usuario demo y no se pide el perfil', async () => {
+    stubAlmacen();
+    const { api, fetchMock } = await importApiConFetch(() => ok(PERFIL));
+
+    expect(api.miId()).toBe('ana@empresa.com');
+    await expect(api.resolverMiId()).resolves.toBe('ana@empresa.com');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('con sesión manda el email del servidor, no el usuario demo', async () => {
+    stubAlmacen('tok-123');
+    const { api, fetchMock } = await importApiConFetch(() => ok(PERFIL));
+
+    await expect(api.resolverMiId()).resolves.toBe('carlos@empresa.com');
+    // Y queda disponible para los lectores síncronos (Character, la consola).
+    expect(api.miId()).toBe('carlos@empresa.com');
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://x/usuarios/me');
+    const init = fetchMock.mock.calls[0][1] as RequestInit & {
+      headers: Record<string, string>;
+    };
+    expect(init.headers.Authorization).toBe('Bearer tok-123');
+  });
+
+  it('el perfil se pide UNA vez aunque pregunten muchos', async () => {
+    // La escena, la consola y cada `restart()` preguntan por su cuenta.
+    stubAlmacen('tok-123');
+    const { api, fetchMock } = await importApiConFetch(() => ok(PERFIL));
+
+    await Promise.all([api.resolverMiId(), api.resolverMiId()]);
+    await api.resolverMiId();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('token vencido a mitad de sesión: cae al demo y borra el token', async () => {
+    const datos = stubAlmacen('tok-vencido');
+    const { api } = await importApiConFetch(() => ({
+      ok: false,
+      status: 401,
+      json: async () => ({ detail: 'La sesión venció.' }),
+    }));
+
+    await expect(api.resolverMiId()).resolves.toBe('ana@empresa.com');
+    expect(api.miId()).toBe('ana@empresa.com');
+    expect(datos.has('bfhq.token')).toBe(false);
+  });
+
+  it('API caída: no lanza, se sigue jugando como el usuario demo', async () => {
+    stubAlmacen('tok-123');
+    const { api } = await importApiConFetch(() => {
+      throw new TypeError('Failed to fetch');
+    });
+
+    await expect(api.resolverMiId()).resolves.toBe('ana@empresa.com');
+  });
+
+  it('entrar sin recargar (SPA) re-resuelve la identidad', async () => {
+    // /entrar navega con el router: el módulo sobrevive al cambio de cuenta.
+    const datos = stubAlmacen();
+    const { api } = await importApiConFetch(() => ok(PERFIL));
+
+    await expect(api.resolverMiId()).resolves.toBe('ana@empresa.com');
+    datos.set('bfhq.token', 'tok-nuevo');
+    await expect(api.resolverMiId()).resolves.toBe('carlos@empresa.com');
+    expect(api.miId()).toBe('carlos@empresa.com');
+  });
+
+  it('un perfil lento no cuelga el arranque y se corrige al llegar', async () => {
+    vi.useFakeTimers();
+    stubAlmacen('tok-123');
+    let responder: (r: unknown) => void = () => {};
+    const lenta = new Promise((r) => {
+      responder = r;
+    });
+    const { api } = await importApiConFetch(() => lenta);
+
+    const pendiente = api.resolverMiId();
+    await vi.advanceTimersByTimeAsync(3000);
+    // El techo: la oficina arranca como demo en vez de quedarse en blanco.
+    await expect(pendiente).resolves.toBe('ana@empresa.com');
+
+    responder(ok(PERFIL));
+    await vi.advanceTimersByTimeAsync(1);
+    // Y cuando el perfil llega tarde, corrige a quien pregunte después: la
+    // consola arcade, o el `restart()` de la escena tras restaurar.
+    expect(api.miId()).toBe('carlos@empresa.com');
+    await expect(api.resolverMiId()).resolves.toBe('carlos@empresa.com');
   });
 });
