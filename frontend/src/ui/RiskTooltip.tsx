@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { bus } from '../bus';
 import { getOficina } from '../api';
 import type { ItemCritico } from '../types';
+import type { CSSProperties } from 'react';
 import { THEME } from '../game/palette';
 import { riskLevel, type RiskLevel } from '../game/risk';
 import './ui.css';
@@ -35,6 +36,22 @@ const TIPO_LABEL: Record<string, string> = {
 
 const tipoChip = (tipo: string): string =>
   TIPO_LABEL[tipo] ?? tipo.toUpperCase();
+
+// Fidelidad literal a guia-visual.dc.html (sección 07): cada tipo conocido
+// tiene su propio color de chip (sin borde). Los tipos sin receta en la guía
+// (conocimiento, resumen, item...) caen al chip neutro LINE ya definido en
+// `.risk-tooltip__chip` (bg LINE + borde 1px #6E4FA8).
+const TIPO_CHIP_COLOR: Record<string, { background: string; color: string }> =
+  {
+    tarea: { background: THEME.turquesa, color: THEME.base },
+    regla_tacita: { background: THEME.morado, color: THEME.texto },
+    acceso: { background: THEME.naranja, color: THEME.base },
+  };
+
+const tipoChipStyle = (tipo: string): CSSProperties | undefined => {
+  const c = TIPO_CHIP_COLOR[tipo];
+  return c ? { ...c, border: 'none' } : undefined;
+};
 
 /** Tooltip flotante (esquina superior derecha, debajo de la tarjeta
  * RESILIENCIA) que muestra el riesgo y los items críticos del personaje
@@ -117,7 +134,12 @@ export function RiskTooltip() {
         <ul className="risk-tooltip__items">
           {payload.items.map((item) => (
             <li key={item.id} className="risk-tooltip__item">
-              <span className="risk-tooltip__chip">{tipoChip(item.tipo)}</span>
+              <span
+                className="risk-tooltip__chip"
+                style={tipoChipStyle(item.tipo)}
+              >
+                {tipoChip(item.tipo)}
+              </span>
               <span className="risk-tooltip__desc">{item.descripcion}</span>
             </li>
           ))}

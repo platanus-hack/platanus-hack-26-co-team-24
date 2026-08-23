@@ -325,7 +325,10 @@
 }
 
 .hud-resiliencia__value {
-  font-family: 'VT323', monospace;
+  /* Fidelidad literal al mockup (oficina-mockup.html): el "64" usa
+     Workbench, no VT323. Tamaño 38px por ruling explícito del controlador
+     (el mockup en sí usa 30px). */
+  font-family: 'Workbench', monospace;
   font-size: 38px;
   line-height: 1;
   color: var(--oro);
@@ -347,22 +350,26 @@
 }
 
 .arcade-open {
+  /* Fidelidad literal a oficina-mockup.html (sección 05): borde 5px,
+     padding 15x26, sombra dura vertical + glow, texto Workbench oscuro
+     sobre rosa (no el borde/sombra/texto VT323 claro que se usó antes). */
   position: absolute;
   right: 24px;
   bottom: 24px;
   z-index: 15;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 22px;
+  gap: 12px;
+  padding: 15px 26px;
   background: var(--rosa);
-  border: 3px solid #f3e8ff;
-  box-shadow: 7px 7px 0 var(--void);
-  color: #f3e8ff;
-  font-family: 'VT323', monospace;
+  border: 5px solid #f3e8ff;
+  box-shadow:
+    0 7px 0 #b0296b,
+    0 0 36px rgba(255, 77, 157, 0.5);
+  color: #2e0a1c;
+  font-family: 'Workbench', monospace;
   font-size: 24px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  letter-spacing: 1px;
   cursor: pointer;
   transition:
     transform 0.1s ease-out,
@@ -370,13 +377,17 @@
 }
 
 .arcade-open:hover:not(:disabled) {
-  transform: translate(-2px, -2px);
-  box-shadow: 9px 9px 0 var(--void);
+  transform: translateY(-2px);
+  box-shadow:
+    0 9px 0 #b0296b,
+    0 0 36px rgba(255, 77, 157, 0.5);
 }
 
 .arcade-open:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 5px 5px 0 var(--void);
+  transform: translateY(3px);
+  box-shadow:
+    0 4px 0 #b0296b,
+    0 0 36px rgba(255, 77, 157, 0.5);
 }
 
 .arcade-open:disabled {
@@ -494,10 +505,16 @@
 }
 
 .arcade-field {
+  /* flex: none -> nunca se encoge (a diferencia de .arcade-list, que sí
+     debe encogerse y scrollear). border-top + padding-top separan el
+     footer del final de la lista con un margen fijo, así "PERSONA" nunca
+     queda pegado/solapado con el último ítem visible. */
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 0 20px;
+  padding: 16px 20px 0;
+  border-top: 3px solid var(--line);
   font-family: 'VT323', monospace;
   font-size: 17px;
   letter-spacing: 2px;
@@ -514,6 +531,8 @@
 }
 
 .arcade-run {
+  /* flex: none -> igual que .arcade-field, nunca se encoge. */
+  flex: none;
   margin: 16px 20px 20px;
   padding: 12px 20px;
   background: var(--rosa);
