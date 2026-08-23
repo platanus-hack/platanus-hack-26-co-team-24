@@ -404,10 +404,24 @@ def cargar_desde_bd() -> bool:
 
 
 def reset() -> None:
-    """Vuelve al estado demo perfecto. Se corre veinte veces entre ensayos."""
+    """Vuelve al estado demo perfecto. Se corre veinte veces entre ensayos.
+
+    Borra también lo ingerido: si un evento vivo sobrevive al reset, el próximo
+    `procesar()` lo lee y `cargar_eventos()` descarta el fixture, así que el
+    ensayo seguiría mostrando el Slack de quien sincronizó. "Estado demo
+    perfecto" a medias es peor que no tener botón. Los crudos siguen en
+    Supabase de todas formas, y el token guardado permite resincronizar.
+    """
     global _mock, _eventos
     _mock = None
     _eventos = None
     _real.items, _real.scores, _real.quests = [], [], []
     _real.fuente = "vacio"
     ARCHIVO_ESTADO.unlink(missing_ok=True)
+    for archivo in DIR_EVENTOS.glob("ingesta-*.json"):
+        archivo.unlink(missing_ok=True)
+    if bd.hay_bd():
+        try:
+            bd.rest("DELETE", "raw_events", params={"office_id": f"eq.{OFICINA['id']}"})
+        except Exception as e:
+            print(f"[backend] reset no pudo limpiar raw_events ({type(e).__name__}: {e})")

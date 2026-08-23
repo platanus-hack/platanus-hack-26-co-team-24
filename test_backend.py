@@ -505,6 +505,23 @@ def evento(id_: str, autor="ana@empresa.com", contenido="Yo tengo el acceso al C
     }
 
 
+def test_reset_borra_lo_ingerido():
+    """`/admin/reset` promete el estado demo perfecto. Si un evento vivo
+    sobrevive, `cargar_eventos()` descarta el fixture y el ensayo sigue
+    mostrando el Slack de quien sincronizó."""
+    archivo = st.archivo_de_eventos("of-demo")
+    try:
+        cliente.post("/admin/eventos", json=[evento("e-sobrevive")])
+        assert archivo.exists()
+        assert cliente.post("/admin/reset").status_code == 200
+        assert not archivo.exists(), "el reset dejó datos vivos en disco"
+        st._eventos = None
+        assert "e-sobrevive" not in {e.id for e in st.eventos()}
+    finally:
+        archivo.unlink(missing_ok=True)
+        st._eventos = None
+
+
 def test_admin_eventos_persiste_y_deduplica():
     """Lo que hace posible meter datos en Render sin volver a desplegar."""
     archivo = st.archivo_de_eventos("of-test")
