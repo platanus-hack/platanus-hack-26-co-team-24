@@ -1,56 +1,221 @@
-.risk-tooltip {
+/* Paleta Synth Dusk (ver src/game/palette.ts THEME, fuente de verdad). CSS
+   no puede importar TS, así que estos valores se mantienen sincronizados a
+   mano. Componentes se restylean en Tasks C/D; aquí sólo se reemplazan los
+   hex navy/cyan viejos por la variable más cercana. */
+:root {
+  --void: #120a20;
+  --base: #1a0f2e;
+  --surface: #241543;
+  --line: #43276b;
+  --turquesa: #2bd9d0;
+  --rosa: #ff4d9d;
+  --lima: #b6ff3c;
+  --oro: #ffd166;
+  --naranja: #ff7a2f;
+  --lila: #a98bff;
+  --morado: #7b3fe4;
+  --rojo: #ff2e63;
+  --texto: #f3e8ff;
+  --texto2: #a98cd6;
+}
+
+/* Ninguna barra de scroll gris del sistema dentro de los paneles: se tiñen
+   con la paleta (LINE sobre SURFACE). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) var(--surface);
+}
+
+/* --- Lienzo del juego --- */
+
+/* El canvas cubre TODA la ventana (Scale.RESIZE) y la cámara centra la sala
+   dentro. Nada de anchos máximos ni centrados de CSS aquí. */
+.game-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.game-canvas-host {
+  width: 100%;
+  height: 100%;
+}
+
+/* Caja transparente del tamaño exacto de la sala: el HUD se posiciona contra
+   SUS bordes. `pointer-events: none` para no robarle los clics al canvas (los
+   personajes se clickean a través de ella); cada hijo los reactiva. */
+.room-overlay {
   position: absolute;
+  pointer-events: none;
+}
+
+.room-overlay > * {
+  pointer-events: auto;
+}
+
+/* --- Tooltip de riesgo (clic en un personaje) --- */
+
+.risk-tooltip {
+  /* fixed: el tooltip es un panel de pantalla, va contra el viewport (no
+     contra la sala, que puede ser mucho más chica que la ventana). */
+  position: fixed;
+  /* La tarjeta RESILIENCIA ya no vive arriba-derecha (bajó al hueco entre la
+     sala Meet y el rack, como en el mockup): el tooltip puede ocupar toda la
+     columna derecha y la tapa con su z-index mayor. */
   top: 12px;
   right: 12px;
   z-index: 10;
-  max-width: 280px;
-  padding: 12px;
-  border-radius: 6px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
-  border-left-width: 6px;
-  color: #ffffff;
-  font-family: monospace;
+  width: 360px;
+  /* Con 9 items la lista se sale de pantalla: el panel se topa con el alto
+     del viewport (dejando libre el botón CONSOLA de abajo-derecha) y el
+     cuerpo scrollea. */
+  max-height: calc(100vh - 116px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  /* Guía sección 07: borde 4px TURQUESA + glow puntual turquesa. */
+  border: 4px solid var(--turquesa);
+  box-shadow: 0 0 40px rgba(43, 217, 208, 0.2);
+  color: var(--texto);
+}
+
+/* La guía parte el panel en dos: cabecera (nombre, rol, cifra) sobre una
+   línea LINE de 3px, y cuerpo (items). */
+.risk-tooltip__top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 3px solid var(--line);
+}
+
+.risk-tooltip__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .risk-tooltip__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
 }
 
 .risk-tooltip__name {
   margin: 0;
-  font-size: 14px;
+  font-family: 'Workbench', monospace;
+  font-size: 32px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--texto);
 }
 
 .risk-tooltip__rol {
-  margin: 2px 0 0;
-  font-size: 12px;
-  opacity: 0.8;
+  /* Guía sección 07: VT323 20px TURQUESA (el título de sección es el que va
+     en texto2, no esta línea). */
+  margin: 6px 0 0;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--turquesa);
 }
 
 .risk-tooltip__close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   background: none;
-  border: none;
-  color: #ffffff;
-  font-family: monospace;
-  font-size: 16px;
+  border: 2px solid var(--line);
+  color: var(--texto2);
+  font-family: 'VT323', monospace;
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
-  padding: 0 0 0 8px;
+}
+
+.risk-tooltip__score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
 .risk-tooltip__score {
-  margin: 8px 0;
-  font-size: 12px;
+  /* Guía sección 07: Workbench 40px con glow del propio color de riesgo. */
+  margin: 0;
+  font-family: 'Workbench', monospace;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.risk-tooltip__score-label {
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  color: var(--texto2);
+}
+
+.risk-tooltip__section-title {
+  margin: 0;
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  letter-spacing: 2px;
+  color: var(--texto2);
 }
 
 .risk-tooltip__items {
+  list-style: none;
   margin: 0;
-  padding-left: 18px;
-  font-size: 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.risk-tooltip__item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.risk-tooltip__chip {
+  flex: none;
+  padding: 3px 7px;
+  background: var(--line);
+  border: 1px solid #6e4fa8;
+  color: var(--texto);
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.risk-tooltip__desc {
+  font-family: 'Jersey 15', monospace;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--texto);
+}
+
+.risk-tooltip__empty {
+  margin: 0;
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  color: var(--texto2);
+}
+
+@keyframes dusk-pop {
+  from {
+    transform: translateY(4px);
+    opacity: 0;
+  }
 }
 
 .avatar-page {
@@ -58,131 +223,327 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0b0b2b;
-  font-family: monospace;
-  color: #ffffff;
+  padding: 32px;
+  background: var(--base);
+  color: var(--texto);
+  box-sizing: border-box;
 }
 
 .avatar-panel {
+  width: 100%;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 32px;
-  border-radius: 8px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
+  gap: 22px;
+  padding: 28px;
+  background: var(--surface);
+  border: 3px solid var(--line);
+  box-sizing: border-box;
 }
 
-.avatar-panel h1 {
-  margin: 0 0 4px;
-  font-size: 18px;
-  text-align: center;
+.avatar-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.avatar-panel__header h1 {
+  margin: 0;
+  font-family: 'Workbench', monospace;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--texto);
+}
+
+/* Aviso "GUARDADO ✓" / "ERROR AL GUARDAR": vive en el encabezado (no bajo el
+   botón), dura 2,5 s y entra con un salto de 4px (dusk-pop), no con fade. */
+.avatar-chip {
+  flex: none;
+  padding: 5px 10px;
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: dusk-pop 120ms ease-out;
+}
+
+/* Fidelidad literal al mockup ("TU AVATAR"): relleno LIMA con texto
+   oscuro #1B2E06, sin borde (no el chip invertido que tenía antes). */
+.avatar-chip--saved {
+  background: var(--lima);
+  color: #1b2e06;
+}
+
+.avatar-chip--error {
+  background: #2e0a1c;
+  border: 1px solid var(--rojo);
+  color: var(--rojo);
+}
+
+.avatar-panel__body {
+  display: flex;
+  gap: 26px;
+  align-items: flex-start;
 }
 
 .avatar-preview-box {
-  width: 96px;
-  height: 144px;
+  /* preview del sprite 32x52 a 4x (guía, sección 04) */
+  flex: none;
+  width: 128px;
+  height: 208px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0b0b2b;
-  border: 2px solid #00e5ff;
-  border-radius: 4px;
+  background: var(--void);
+  border: 3px solid var(--turquesa);
 }
 
 .avatar-preview-canvas {
-  width: 96px;
-  height: 144px;
+  width: 128px;
+  height: 208px;
   image-rendering: pixelated;
+}
+
+.avatar-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
 .avatar-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 200px;
-  font-size: 13px;
+  gap: 7px;
+}
+
+.avatar-field__label {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--texto2);
 }
 
 .avatar-field select {
-  font-family: monospace;
-  font-size: 13px;
-  padding: 4px;
-  background: #0b0b2b;
-  color: #ffffff;
-  border: 1px solid #00e5ff;
-  border-radius: 4px;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--texto);
+  border: 3px solid var(--line);
+}
+
+.avatar-swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.avatar-swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+
+.avatar-swatch--active {
+  border-color: #f3e8ff;
 }
 
 .avatar-actions {
   display: flex;
-  align-items: center;
   gap: 12px;
-  margin-top: 8px;
 }
 
-.avatar-actions button {
-  font-family: monospace;
-  font-size: 13px;
-  padding: 8px 16px;
-  background: #00e5ff;
-  color: #0b0b2b;
-  border: none;
-  border-radius: 4px;
+.avatar-btn {
+  flex: 1;
+  padding: 14px;
+  border: 3px solid var(--line);
+  background: none;
+  color: var(--texto);
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
   cursor: pointer;
-  font-weight: bold;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
-.avatar-actions a {
-  color: #39ff14;
-  font-size: 13px;
+.avatar-btn--primary {
+  background: var(--rosa);
+  border-color: #f3e8ff;
+  color: #f3e8ff;
+  box-shadow: 4px 4px 0 var(--void);
 }
 
-.avatar-status {
-  margin: 0;
-  font-size: 13px;
-  color: #39ff14;
+.avatar-btn--go {
+  border-color: var(--lima);
+  color: var(--lima);
 }
 
-/* --- Mute --- */
+/* --- HUD (Hud.tsx: mute + tarjeta oficina + tarjeta resiliencia) --- */
+
+.hud-topleft {
+  /* `top`/`gap` ajustados para que la columna termine ANTES de la barra rosa
+     de la cafetera (tile (1,2)): con 12/12 la tapaba entera. */
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .mute-btn {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 15;
-  width: 36px;
-  height: 36px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border: 2px solid #00e5ff;
-  border-radius: 6px;
-  background: #120f3a;
-  color: #ffffff;
-  font-size: 16px;
+  gap: 10px;
+  padding: 9px 13px;
+  background: var(--surface);
+  border: 3px solid var(--turquesa);
+  color: var(--texto);
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 2px;
   cursor: pointer;
-  box-shadow: 0 0 12px #00e5ff55;
+}
+
+.mute-btn__icon {
+  font-size: 20px;
+}
+
+.hud-office {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 3px solid var(--line);
+}
+
+.hud-office__swatch {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  background: var(--rosa);
+  border: 3px solid #f3e8ff;
+}
+
+.hud-office__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-office__label {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 3px;
+  color: var(--texto2);
+}
+
+.hud-office__count {
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: var(--texto);
+}
+
+.hud-resiliencia {
+  /* Posición del mockup (oficina-mockup.html): columna derecha, en el hueco
+     entre la sala Meet y el rack de GitHub, no arriba-derecha (ahí tapaba la
+     pantalla de la sala Meet). El canvas es 16:9 y la sala se escala con el
+     mayor zoom que quepa (Scale.RESIZE, fraccionario), limitada por la
+     altura, así que el borde inferior de la sala Meet cae siempre en el
+     38,5 % de la altura del viewport y el 39 % es un `top` estable. */
+  position: absolute;
+  top: 38.5%;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 3px solid var(--oro);
+}
+
+.hud-resiliencia__label {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 2px;
+  color: var(--oro);
+}
+
+.hud-resiliencia__value {
+  /* Fidelidad literal al mockup (oficina-mockup.html): el "64" usa
+     Workbench 30px. Los 38px que se usaron mientras la tarjeta vivía
+     arriba-derecha ya no caben en el hueco Meet/rack del mockup. */
+  font-family: 'Workbench', monospace;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--oro);
+}
+
+.hud-resiliencia__delta {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: var(--lima);
 }
 
 /* --- Consola arcade (escenarios) --- */
 
+@keyframes dusk-slide {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
 .arcade-open {
+  /* Fidelidad literal a oficina-mockup.html (sección 05): borde 5px,
+     padding 15x26, sombra dura vertical + glow, texto Workbench oscuro
+     sobre rosa (no el borde/sombra/texto VT323 claro que se usó antes). */
   position: absolute;
-  right: 12px;
-  bottom: 12px;
+  right: 24px;
+  bottom: 24px;
   z-index: 15;
-  padding: 10px 16px;
-  border: 2px solid #00e5ff;
-  border-radius: 6px;
-  background: #ff00aa;
-  color: #ffffff;
-  font-family: monospace;
-  font-size: 14px;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 26px;
+  background: var(--rosa);
+  border: 5px solid #f3e8ff;
+  box-shadow:
+    0 7px 0 #b0296b,
+    0 0 36px rgba(255, 77, 157, 0.5);
+  color: #2e0a1c;
+  font-family: 'Workbench', monospace;
+  font-size: 24px;
+  letter-spacing: 1px;
   cursor: pointer;
-  box-shadow: 0 0 12px #ff00aa88;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.1s ease-out;
+}
+
+.arcade-open:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 9px 0 #b0296b,
+    0 0 36px rgba(255, 77, 157, 0.5);
+}
+
+.arcade-open:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    0 4px 0 #b0296b,
+    0 0 36px rgba(255, 77, 157, 0.5);
 }
 
 .arcade-open:disabled {
@@ -191,116 +552,187 @@
 }
 
 .arcade-panel {
-  position: absolute;
-  right: 12px;
-  bottom: 60px;
+  /* Guía sección 07: los SIETE escenarios quedan visibles sin hacer clic, en
+     rejilla de 2 columnas. Por eso el panel es ancho y va del borde de
+     arriba hasta justo encima del botón CONSOLA. */
+  position: fixed;
+  right: 24px;
+  bottom: 100px;
+  top: 12px;
   z-index: 15;
-  width: 320px;
-  max-height: 70vh;
+  width: 700px;
   display: flex;
   flex-direction: column;
-  padding: 12px;
-  border-radius: 6px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
-  color: #ffffff;
-  font-family: monospace;
+  background: var(--surface);
+  border: 3px solid var(--line);
+  color: var(--texto);
+  animation: dusk-slide 220ms ease-out;
 }
 
 .arcade-panel__header {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 3px solid var(--line);
+}
+
+.arcade-panel__title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.arcade-panel__icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.arcade-panel__header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .arcade-panel__title {
   margin: 0;
-  font-size: 14px;
-  color: #39ff14;
+  font-family: 'Workbench', monospace;
+  font-size: 32px;
+  line-height: 1;
+  color: #f3e8ff;
+}
+
+.arcade-panel__count {
+  white-space: nowrap;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--texto2);
 }
 
 .arcade-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   background: none;
-  border: none;
-  color: #ffffff;
-  font-family: monospace;
-  font-size: 16px;
+  border: 2px solid var(--line);
+  color: var(--texto2);
+  font-family: 'VT323', monospace;
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
-  padding: 0 0 0 8px;
 }
 
 .arcade-list {
   list-style: none;
-  margin: 10px 0;
-  padding: 0;
-  /* Sólo la lista scrollea: el select de persona y "Simular" quedan siempre
-     visibles al fondo del panel. */
-  overflow-y: auto;
+  margin: 0;
+  padding: 16px 20px 12px;
+  flex: 1;
+  /* Sólo la lista scrollea (y con la rejilla de 2 columnas ya casi nunca
+     hace falta): el select de persona y "Simular" quedan siempre visibles
+     al fondo del panel. */
+  overflow: auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 10px;
 }
 
 .arcade-item {
+  /* Guía: sólo canto izquierdo de 6px (LINE), fondo BASE. El seleccionado
+     pasa el canto y el nombre a ROSA, con un glow rosa suave. */
   display: flex;
   flex-direction: column;
   gap: 2px;
   width: 100%;
+  height: 100%;
   text-align: left;
-  padding: 6px 8px;
-  border: 1px solid #00e5ff55;
-  border-radius: 4px;
-  background: #0b0b2b;
-  color: #ffffff;
-  font-family: monospace;
+  padding: 10px 13px;
+  background: var(--base);
+  border: none;
+  border-left: 6px solid var(--line);
+  color: var(--texto);
   cursor: pointer;
 }
 
 .arcade-item--active {
-  border-color: #39ff14;
-  box-shadow: 0 0 8px #39ff1466;
+  border-left-color: var(--rosa);
+  box-shadow: 0 0 22px rgba(255, 77, 157, 0.18);
+}
+
+.arcade-item--active .arcade-item__name {
+  color: var(--rosa);
 }
 
 .arcade-item__name {
-  font-size: 13px;
-  font-weight: bold;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #f3e8ff;
 }
 
 .arcade-item__desc {
-  font-size: 11px;
-  opacity: 0.75;
+  /* La guía pide que los SIETE escenarios se vean sin scroll; las
+     descripciones que manda la API son bastante más largas que las del
+     mockup, así que se recortan a 2 líneas. El nombre ya dice qué es. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  line-height: 1.05;
+  color: var(--texto2);
 }
 
 .arcade-field {
+  /* flex: none -> nunca se encoge (a diferencia de .arcade-list, que sí
+     debe encogerse y scrollear). border-top + padding-top separan el
+     footer del final de la lista con un margen fijo, así "PERSONA" nunca
+     queda pegado/solapado con el último ítem visible. */
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  margin-bottom: 10px;
+  gap: 6px;
+  padding: 14px 20px 0;
+  border-top: 3px solid var(--line);
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 2px;
+  color: var(--texto2);
 }
 
 .arcade-field select {
-  font-family: monospace;
-  font-size: 12px;
-  padding: 4px;
-  background: #0b0b2b;
-  color: #ffffff;
-  border: 1px solid #00e5ff;
-  border-radius: 4px;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--texto);
+  border: 3px solid var(--line);
 }
 
 .arcade-run {
-  width: 100%;
-  padding: 8px;
-  border: none;
-  border-radius: 4px;
-  background: #00e5ff;
-  color: #0b0b2b;
-  font-family: monospace;
-  font-size: 13px;
-  font-weight: bold;
+  /* flex: none -> igual que .arcade-field, nunca se encoge. */
+  flex: none;
+  margin: 12px 20px 16px;
+  padding: 10px 20px;
+  background: var(--rosa);
+  border: 3px solid #f3e8ff;
+  box-shadow: 4px 4px 0 var(--void);
+  color: #f3e8ff;
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
@@ -309,7 +741,26 @@
   cursor: not-allowed;
 }
 
-/* --- Panel de resultado --- */
+/* --- Panel de resultado (guía, sección 07: "SIN ANA · OPS") ---
+   Layout: cabecera fija + región central scrolleable (tiles/impacto/2
+   columnas) + pie fijo con los botones. max-height 90vh para que nada se
+   corte a 1366x768 (ni a resoluciones mayores). */
+
+/* Keyframe propio (no dusk-slide): dusk-slide anima sólo `transform:
+   translateY(24px)` en su `from`, que al mezclarse con el
+   `translate(-50%,-50%)` de centrado de este panel interpola como una
+   matriz distinta (el panel entra en diagonal y arranca descentrado). Este
+   keyframe anima explícitamente entre los dos estados "centrado + 24px
+   abajo" y "centrado", así el 50%/50% nunca se pierde. */
+@keyframes result-slide {
+  from {
+    transform: translate(-50%, calc(-50% + 24px));
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+  }
+}
 
 .result-panel {
   position: absolute;
@@ -318,109 +769,294 @@
   transform: translate(-50%, -50%);
   z-index: 20;
   width: calc(100% - 32px);
-  max-width: 640px;
-  max-height: 80vh;
+  max-width: 680px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  border-radius: 8px;
-  background: #120f3a;
-  border: 2px solid #00e5ff;
-  color: #ffffff;
-  font-family: monospace;
-  box-shadow: 0 0 24px #00e5ff55;
+  overflow: hidden;
+  background: var(--surface);
+  border: 4px solid var(--rojo);
+  color: var(--texto);
+  box-shadow: 0 0 50px rgba(255, 46, 99, 0.16);
+  animation: result-slide 220ms ease-out;
+}
+
+.result-panel__header {
+  /* flex-wrap: a 680px de ancho, título + chip demo + "GENERADO EN..." no
+     siempre caben en una fila; que la fila entera baje de línea (chips
+     debajo del título) en vez de partir el título a la mitad de una
+     palabra. */
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+  padding: 20px 24px;
+  border-bottom: 3px solid var(--line);
+}
+
+.result-panel__title-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  min-width: 0;
 }
 
 .result-panel__title {
-  margin: 0 0 12px;
-  font-size: 16px;
-  color: #39ff14;
+  margin: 0;
+  white-space: nowrap;
+  font-family: 'Workbench', monospace;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--texto);
 }
 
-.result-panel__error {
-  margin: 0 0 12px;
-  font-size: 12px;
-  color: #ff1744;
+.result-panel__meta {
+  flex: none;
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  letter-spacing: 1px;
+  color: var(--texto2);
+}
+
+.result-chip {
+  flex: none;
+  padding: 5px 10px;
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Fidelidad literal al mockup: chip relleno ORO con texto BASE (no borde). */
+.result-chip--mock {
+  background: var(--oro);
+  color: var(--base);
+}
+
+.result-chip--markdown {
+  background: none;
+  color: var(--texto2);
+}
+
+/* --- Región central scrolleable --- */
+
+.result-panel__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .result-stats {
-  display: flex;
-  gap: 8px;
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  background: var(--line);
 }
 
 .result-stat {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 6px;
-  border: 1px solid #00e5ff55;
-  border-radius: 6px;
-  background: #0b0b2b;
+  gap: 4px;
+  padding: 20px 24px;
+  background: var(--base);
 }
 
 .result-stat__value {
-  font-size: 22px;
-  font-weight: bold;
-  color: #00e5ff;
+  font-family: 'Workbench', monospace;
+  font-size: 56px;
+  line-height: 1;
+}
+
+/* Color fijo por métrica (mockup: tareas ROJO, días ORO, impacto TURQUESA). */
+.result-stat__value--rojo {
+  color: var(--rojo);
+}
+
+.result-stat__value--oro {
+  color: var(--oro);
+}
+
+.result-stat__value--turquesa {
+  color: var(--turquesa);
 }
 
 .result-stat__label {
-  font-size: 11px;
-  opacity: 0.8;
-  text-align: center;
+  font-family: 'Jersey 15', monospace;
+  font-size: 24px;
+  color: var(--texto2);
 }
 
 .result-panel__impacto {
   /* Frase de impacto de la API real (el mock trae además los tiles). */
-  margin: 12px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #ffd166;
+  flex: none;
+  margin: 0;
+  padding: 16px 24px 0;
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--texto);
+}
+
+.result-panel__body {
+  flex: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  background: var(--line);
+}
+
+.result-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 24px;
+  min-height: 0;
+}
+
+.result-section--items {
+  background: var(--surface);
+}
+
+.result-section--playbook {
+  background: var(--void);
+}
+
+.result-section__title {
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  letter-spacing: 2px;
+  color: var(--texto2);
+}
+
+.result-section__title--lima {
+  color: var(--lima);
 }
 
 .result-items {
   flex: none;
-  margin: 12px 0;
-  padding-left: 18px;
-  font-size: 12px;
-  line-height: 1.5;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.result-item__chip {
+  flex: none;
+  padding: 3px 7px;
+  background: var(--line);
+  border: 1px solid #6e4fa8;
+  color: var(--texto);
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.result-item__desc {
+  font-family: 'Jersey 15', monospace;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--texto);
+}
+
+.result-playbook__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .result-playbook {
-  /* Sólo el playbook scrollea: los botones quedan pegados al fondo. */
   overflow: auto;
-  min-height: 0;
   margin: 0;
-  padding: 10px;
-  border-radius: 6px;
-  background: #0b0b2b;
-  border: 1px solid #00e5ff33;
-  font-size: 12px;
-  line-height: 1.5;
+  padding: 18px;
+  background: var(--void);
+  border: 2px solid var(--line);
+  color: var(--texto);
+  font-family: 'VT323', monospace;
+  font-size: 21px;
+  line-height: 1.25;
+  white-space: pre-wrap;
+}
+
+/* --- Pie fijo (nunca scrollea) --- */
+
+.result-panel__footer {
+  flex: none;
+  display: flex;
+  gap: 12px;
+  padding: 18px 24px;
+  border-top: 3px solid var(--line);
+}
+
+.result-panel__footer .result-btn {
+  flex: 1;
 }
 
 .result-panel__actions {
+  flex: none;
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 12px;
 }
 
 .result-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  background: #39ff14;
-  color: #0b0b2b;
-  font-family: monospace;
-  font-size: 13px;
-  font-weight: bold;
+  padding: 12px 20px;
+  border: 3px solid var(--line);
+  background: none;
+  color: var(--texto);
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
-.result-btn--ghost {
+.result-btn--primary {
+  background: var(--lima);
+  border-color: #f3e8ff;
+  color: var(--void);
+  font-family: 'Workbench', monospace;
+  font-size: 22px;
+  box-shadow: 4px 4px 0 var(--void);
+}
+
+.result-btn--secondary {
   background: none;
-  border: 1px solid #00e5ff;
-  color: #ffffff;
+  border-color: var(--line);
+  color: var(--texto);
+}
+
+.result-panel__error-title {
+  margin: 0;
+  font-family: 'Workbench', monospace;
+  font-size: 32px;
+  color: var(--rojo);
+}
+
+.result-panel__error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 22px 24px;
+}
+
+.result-panel__error-msg {
+  margin: 0;
+  font-family: 'Jersey 15', monospace;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--texto);
 }

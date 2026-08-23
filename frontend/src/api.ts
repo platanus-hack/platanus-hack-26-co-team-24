@@ -46,6 +46,11 @@ export const DEMO_USER_ID =
   (import.meta.env.VITE_DEMO_USER_ID as string | undefined) ||
   (IS_MOCK ? 'p_ana' : 'ana@empresa.com');
 
+// Escritorios que dibuja el mapa (`desk_0`..`desk_8`, ver scripts/gen-map.mjs).
+// La oficina real puede tener más gente que puestos: el índice se cicla en vez
+// de apuntar a un `desk_9` que no existe.
+const DESK_COUNT = 9;
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(BASE + path, {
     headers: { 'Content-Type': 'application/json' },
@@ -66,6 +71,8 @@ interface RawMiembro {
 interface RawOficina {
   oficina: { id: string; nombre: string };
   miembros: RawMiembro[];
+  // 0-100, cobertura de conocimiento del equipo (ver cerebro/README.md).
+  resiliencia_equipo?: number;
 }
 interface RawScore {
   persona_id: string;
@@ -106,38 +113,60 @@ const toAvatarConfig = (raw: unknown, i: number): AvatarConfig =>
 
 // --- Endpoints -------------------------------------------------------------
 
+// Última /oficina exitosa: si la API se cae justo cuando OfficeScene.restore()
+// (scene.restart()) vuelve a pedirla, sin esto la oficina se queda vacía en
+// vez de restaurar los 9 personajes (ver integ-report.md check f).
+let lastOficina: Oficina | null = null;
+
 export async function getOficina(): Promise<Oficina> {
   if (IS_MOCK) return structuredClone(oficinaMock as Oficina);
-  const raw = await req<RawOficina>('/oficina');
-  const people: Person[] = raw.miembros.map((m, i) => ({
-    id: m.email,
-    nombre: m.nombre,
-    rol: m.rol,
-    desk: i,
-    avatar_config: toAvatarConfig(m.avatar_config, i),
-  }));
-  return { office: raw.oficina, people };
+  try {
+    const raw = await req<RawOficina>('/oficina');
+    const people: Person[] = raw.miembros.map((m, i) => ({
+      id: m.email,
+      nombre: m.nombre,
+      rol: m.rol,
+      desk: i % DESK_COUNT,
+      avatar_config: toAvatarConfig(m.avatar_config, i),
+    }));
+    lastOficina = { office: raw.oficina, people, resiliencia: raw.resiliencia_equipo };
+    return structuredClone(lastOficina);
+  } catch (err) {
+    if (lastOficina) return structuredClone(lastOficina);
+    throw err;
+  }
 }
+
+// Mismo trato que `/oficina` (ver arriba): si la API se cae en el `restart()`
+// de `restore()`, la sala vuelve con sus auras de riesgo en vez de con todo el
+// mundo en verde.
+let lastRiesgo: Riesgo | null = null;
 
 export async function getRiesgo(): Promise<Riesgo> {
   if (IS_MOCK) return structuredClone(riesgoMock as Riesgo);
-  const raw = await req<{ scores: RawScore[] }>('/riesgo');
-  return {
-    // ponytail: P3 sólo manda ids de item; el `detalle` (frase legible) va
-    // como primer "item" para que el tooltip diga algo útil.
-    scores: raw.scores.map((s) => ({
-      person_id: s.persona_id,
-      score: s.score,
-      items_criticos: [
-        { id: 'detalle', tipo: 'resumen', descripcion: s.detalle },
-        ...s.items_criticos.map((id) => ({
-          id,
-          tipo: 'item',
-          descripcion: id,
-        })),
-      ],
-    })),
-  };
+  try {
+    const raw = await req<{ scores: RawScore[] }>('/riesgo');
+    lastRiesgo = {
+      // ponytail: P3 sólo manda ids de item; el `detalle` (frase legible) va
+      // como primer "item" para que el tooltip diga algo útil.
+      scores: raw.scores.map((s) => ({
+        person_id: s.persona_id,
+        score: s.score,
+        items_criticos: [
+          { id: 'detalle', tipo: 'resumen', descripcion: s.detalle },
+          ...s.items_criticos.map((id) => ({
+            id,
+            tipo: 'item',
+            descripcion: id,
+          })),
+        ],
+      })),
+    };
+    return structuredClone(lastRiesgo);
+  } catch (err) {
+    if (lastRiesgo) return structuredClone(lastRiesgo);
+    throw err;
+  }
 }
 
 export async function getEscenarios(): Promise<{ scenarios: Scenario[] }> {
@@ -185,9 +214,15 @@ export async function simular(body: {
 }
 
 export async function putAvatar(cfg: AvatarConfig): Promise<{ ok: boolean }> {
-  // P3 todavía no expone PUT /avatar: no llamamos a la red para no ensuciar
-  // la demo con un 404. El editor ya guarda en localStorage en ambos modos.
-  if (!IS_MOCK)
-    console.info('PUT /avatar pendiente en P3; guardado local', cfg);
+  // En modo demo no hay red: el editor guarda en localStorage igual.
+  if (IS_MOCK) return { ok: true };
+  // P3 (`backend/app.py::put_avatar`) acepta las capas en la raíz del body y
+  // el email por query, sin token. La respuesta (`guardar_avatar`) no nos
+  // aporta nada: nos basta con que no sea un error.
+  const { cuerpo, peinado, ropa, paleta } = cfg;
+  await req(`/avatar?email=${encodeURIComponent(DEMO_USER_ID)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ cuerpo, peinado, ropa, paleta }),
+  });
   return { ok: true };
 }

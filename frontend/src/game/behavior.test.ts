@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { nextState, durationMs, pointFor } from './behavior';
+import {
+  nextState,
+  durationMs,
+  pointFor,
+  canMove,
+  decMoving,
+  MAX_MOVING,
+} from './behavior';
 
 describe('nextState', () => {
   it('trabajando aparece entre 0.67 y 0.73 de las veces en 10000 muestras', () => {
@@ -47,5 +54,35 @@ describe('pointFor', () => {
     expect(pointFor('caminar', 0, () => 0)).toBe('coffee');
     expect(pointFor('caminar', 0, () => 0.34)).toBe('meeting');
     expect(pointFor('caminar', 0, () => 0.99)).toBe('door');
+  });
+});
+
+describe('canMove', () => {
+  it('MAX_MOVING es 3', () => {
+    expect(MAX_MOVING).toBe(3);
+  });
+
+  it('canMove(2) === true, todavía hay cupo', () => {
+    expect(canMove(2)).toBe(true);
+  });
+
+  it('canMove(3) === false, ya hay 3 moviéndose', () => {
+    expect(canMove(3)).toBe(false);
+  });
+
+  it('canMove(0) === true', () => {
+    expect(canMove(0)).toBe(true);
+  });
+});
+
+describe('decMoving', () => {
+  it('descuenta uno cuando hay gente caminando', () => {
+    expect(decMoving(3)).toBe(2);
+    expect(decMoving(1)).toBe(0);
+  });
+
+  it('nunca baja de 0 (restaurar resetea el contador a mitad de un walkTo)', () => {
+    expect(decMoving(0)).toBe(0);
+    expect(decMoving(-2)).toBe(0);
   });
 });

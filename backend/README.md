@@ -14,6 +14,9 @@ uv pip install anthropic pydantic fastapi "uvicorn[standard]"
 uv run uvicorn backend.app:app --reload --port 8000
 ```
 
+Si `/avatar` o `/usuarios/*` responden 404, falta `httpx`: las rutas de auth
+revientan al importarse. Se arregla con `uv pip install -e ".[api]"`.
+
 Sin `ANTHROPIC_API_KEY` funciona igual: el cerebro cae a datos escritos a mano.
 
 ```bash

@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Workbench&family=Jersey+15&family=VT323&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; background: #120A20; }
+  a { color: #2BD9D0; text-decoration: none; }
+  a:hover { color: #FF4D9D; }
+  @keyframes blip { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+  @keyframes pulsar { 0%,100% { opacity: .8; transform: scale(1) } 50% { opacity: .35; transform: scale(1.2) } }
+  @keyframes humo { 0% { opacity: 0; transform: translateY(0) scale(.7) } 40% { opacity: .55 } 100% { opacity: 0; transform: translateY(-56px) scale(1.5) } }
+</style>
+</helmet>
+
+<div style="width: 1440px; background: #1A0F2E; color: #F3E8FF; font-family: 'Jersey 15', monospace; box-sizing: border-box; display: flex; flex-direction: column">
+
+  <div style="padding: 72px 64px 56px; background: linear-gradient(180deg, #241543 0%, #1A0F2E 100%); border-bottom: 4px solid #43276B; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 18px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 4px; color: #2BD9D0">GUÍA DE ARTE · v1 · SYNTH DUSK</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 76px; line-height: .95; color: #F3E8FF; text-shadow: 0 0 30px rgba(255,77,157,.45)">BUS FACTOR HQ</span>
+      <span style="font-size: 30px; line-height: 1.2; color: #A98CD6; max-width: 760px">Atardecer sintético con acento lima. Ciruela profunda de base, turquesa para datos, rosa para acción, lima para lo que está vivo. Cálido y eléctrico al mismo tiempo.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; text-align: right; font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; line-height: 1.3">
+      <span>TILE 32PX · SPRITE 32×52</span>
+      <span>WORKBENCH + JERSEY 15 + VT323</span>
+      <span style="color: #B6FF3C">8 PANTALLAS · 9 PERSONAJES</span>
+    </div>
+  </div>
+
+  <div style="padding: 64px; display: flex; flex-direction: column; gap: 28px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">01</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">PALETA</span>
+      <span style="font-size: 26px; color: #A98CD6">11 colores. Nada fuera de esta lista.</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; border: 4px solid #43276B">
+      <div style="height: 132px; background: #120A20; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6">VOID</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF">#120A20</span><span style="font-size: 22px; color: #A98CD6; line-height: 1">Fuera de la sala, sombra</span></div></div>
+      <div style="height: 132px; background: #1A0F2E; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6">BASE</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF">#1A0F2E</span><span style="font-size: 22px; color: #A98CD6; line-height: 1">Fondo de todo</span></div></div>
+      <div style="height: 132px; background: #241543; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6">SURFACE</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF">#241543</span><span style="font-size: 22px; color: #A98CD6; line-height: 1">Paneles, tarjetas</span></div></div>
+      <div style="height: 132px; background: #43276B; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #F3E8FF">LINE</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF">#43276B</span><span style="font-size: 22px; color: #F3E8FF; line-height: 1">Bordes, divisores</span></div></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; border: 4px solid #43276B">
+      <div style="height: 156px; background: #2BD9D0; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #0E2E2C">TURQUESA · DATOS</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 24px; color: #0E2E2C">#2BD9D0</span><span style="font-size: 23px; color: #0E2E2C; line-height: 1.05">Pantallas, cifras, bordes de panel activo</span></div></div>
+      <div style="height: 156px; background: #FF4D9D; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #2E0A1C">ROSA · ACCIÓN</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 24px; color: #2E0A1C">#FF4D9D</span><span style="font-size: 23px; color: #2E0A1C; line-height: 1.05">Consola, botón primario, foco</span></div></div>
+      <div style="height: 156px; background: #B6FF3C; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #1B2E06">LIMA · VIVO</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 24px; color: #1B2E06">#B6FF3C</span><span style="font-size: 23px; color: #1B2E06; line-height: 1.05">Infra sana, quest hecha, restaurar</span></div></div>
+      <div style="height: 156px; background: #FFD166; padding: 14px; display: flex; flex-direction: column; justify-content: space-between"><span style="font-family: 'VT323', monospace; font-size: 17px; color: #33240A">ORO · PUNTAJE</span><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 24px; color: #33240A">#FFD166</span><span style="font-size: 23px; color: #33240A; line-height: 1.05">Resiliencia, puntos, premios</span></div></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; border: 4px solid #43276B">
+      <div style="height: 108px; background: #FF7A2F; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #331304">#FF7A2F</span><span style="font-size: 21px; color: #331304; line-height: 1">Naranja · luz cálida</span></div>
+      <div style="height: 108px; background: #A98BFF; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #1E1140">#A98BFF</span><span style="font-size: 21px; color: #1E1140; line-height: 1">Lila · mobiliario</span></div>
+      <div style="height: 108px; background: #7B3FE4; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF">#7B3FE4</span><span style="font-size: 21px; color: #F3E8FF; line-height: 1">Morado · sala de juntas</span></div>
+      <div style="height: 108px; background: #FF2E63; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF">#FF2E63</span><span style="font-size: 21px; color: #F3E8FF; line-height: 1">Rojo · solo emergencia</span></div>
+      <div style="height: 108px; background: #A98CD6; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #1E1140">#A98CD6</span><span style="font-size: 21px; color: #1E1140; line-height: 1">Texto secundario</span></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 8px">
+      <div style="border-left: 5px solid #2BD9D0; padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #2BD9D0; letter-spacing: 1px">UN COLOR, UN PAPEL</span><span style="font-size: 24px; line-height: 1.2; color: #F3E8FF">El turquesa nunca es un botón. El rosa nunca es un dato. El lima nunca decora: significa que algo funciona.</span></div>
+      <div style="border-left: 5px solid #FF2E63; padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #FF2E63; letter-spacing: 1px">EL ROJO SE GANA</span><span style="font-size: 24px; line-height: 1.2; color: #F3E8FF">Rojo solo durante una emergencia activa o riesgo ≥ 70. Si el rojo está siempre presente, deja de alarmar.</span></div>
+      <div style="border-left: 5px solid #FFD166; padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #FFD166; letter-spacing: 1px">DOS FONDOS Y NADA MÁS</span><span style="font-size: 24px; line-height: 1.2; color: #F3E8FF">Base #1A0F2E para escena, surface #241543 para paneles. Sin degradados de fondo en la UI.</span></div>
+    </div>
+  </div>
+
+  <div style="padding: 64px; display: flex; flex-direction: column; gap: 32px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">02</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">TIPOGRAFÍA</span>
+      <span style="font-size: 26px; color: #A98CD6">Tres cortes, jerarquía sin ambigüedad.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; border: 4px solid #43276B">
+      <div style="background: #241543; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'Workbench', monospace; font-size: 46px; color: #F3E8FF; line-height: 1">Workbench</span>
+        <div style="height: 2px; background: #43276B"></div>
+        <span style="font-size: 24px; color: #A98CD6; line-height: 1.2">Solo títulos de pantalla y el logo. Nunca párrafos, nunca menos de 32px.</span>
+        <span style="font-family: 'VT323', monospace; font-size: 18px; color: #FFD166">32 / 38 / 56 / 76 PX</span>
+      </div>
+      <div style="background: #241543; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'Jersey 15', monospace; font-size: 46px; color: #F3E8FF; line-height: 1">Jersey 15</span>
+        <div style="height: 2px; background: #43276B"></div>
+        <span style="font-size: 24px; color: #A98CD6; line-height: 1.2">Cuerpo, descripciones, listas de tareas. El texto que la gente lee de verdad.</span>
+        <span style="font-family: 'VT323', monospace; font-size: 18px; color: #FFD166">22 / 24 / 30 PX</span>
+      </div>
+      <div style="background: #241543; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'VT323', monospace; font-size: 46px; color: #F3E8FF; line-height: 1">VT323</span>
+        <div style="height: 2px; background: #43276B"></div>
+        <span style="font-size: 24px; color: #A98CD6; line-height: 1.2">Etiquetas, HUD, cifras, código del playbook. Siempre en MAYÚSCULAS con tracking.</span>
+        <span style="font-family: 'VT323', monospace; font-size: 18px; color: #FFD166">17 / 20 / 24 PX</span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 16px; align-items: center; background: #120A20; border: 3px dashed #43276B; padding: 18px 22px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; color: #B6FF3C; letter-spacing: 1px">MÍNIMO LEGIBLE</span>
+      <span style="font-size: 24px; color: #F3E8FF">Ningún texto por debajo de 17px en pantalla de juego. En el panel de resultado, nada por debajo de 22px: el jurado lo lee proyectado.</span>
+    </div>
+  </div>
+
+  <div style="padding: 64px; display: flex; flex-direction: column; gap: 34px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">03</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">TILES · 32PX</span>
+      <span style="font-size: 26px; color: #A98CD6">Mostrados a 2×. Cada pieza cabe en una celda de la grilla de pathfinding.</span>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: repeating-conic-gradient(#2A1747 0% 25%, #331D53 0% 50%) 0 0 / 64px 64px; border: 2px solid #43276B"></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #A98CD6">PISO</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: repeating-linear-gradient(90deg, #4B2170 0 30px, #3A1959 30px 34px), repeating-linear-gradient(0deg, #4B2170 0 14px, #3A1959 14px 18px); border: 2px solid #43276B"></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #A98CD6">MURO</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1A0F2E; border: 2px solid #43276B; position: relative"><div style="position: absolute; left: 4px; right: 4px; top: 28px; height: 26px; background: #6E4FA8; border-top: 5px solid #A98BFF"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #A98CD6">ESCRITORIO</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1A0F2E; border: 2px solid #43276B; position: relative"><div style="position: absolute; left: 18px; top: 16px; width: 28px; height: 22px; background: #FF7A2F"></div><div style="position: absolute; left: 22px; top: 38px; width: 20px; height: 12px; background: #B7561F"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #A98CD6">SILLA</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1A0F2E; border: 2px solid #43276B; position: relative"><div style="position: absolute; left: 10px; top: 14px; width: 44px; height: 30px; background: #3A1959; border: 3px solid #2BD9D0; box-shadow: 0 0 16px rgba(43,217,208,.5)"></div><div style="position: absolute; left: 24px; top: 46px; width: 16px; height: 8px; background: #43276B"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #2BD9D0">MONITOR ON</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1A0F2E; border: 2px solid #43276B; position: relative"><div style="position: absolute; left: 10px; top: 14px; width: 44px; height: 30px; background: #241543; border: 3px solid #43276B"></div><div style="position: absolute; left: 24px; top: 46px; width: 16px; height: 8px; background: #43276B"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #A98CD6">MONITOR OFF</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1F2B12; border: 3px solid #B6FF3C; box-shadow: 0 0 18px rgba(182,255,60,.3); display: flex; flex-direction: column; gap: 6px; padding: 8px"><div style="display: flex; gap: 4px"><div style="width: 8px; height: 8px; background: #B6FF3C"></div><div style="width: 8px; height: 8px; background: #B6FF3C; opacity: .3"></div><div style="width: 8px; height: 8px; background: #2BD9D0"></div></div><div style="height: 3px; background: #43276B"></div><div style="display: flex; gap: 4px"><div style="width: 8px; height: 8px; background: #B6FF3C; opacity: .3"></div><div style="width: 8px; height: 8px; background: #B6FF3C"></div><div style="width: 8px; height: 8px; background: #2BD9D0; opacity: .4"></div></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #B6FF3C">RACK GITHUB</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #241543; border: 3px solid #A98CD6; position: relative"><div style="position: absolute; left: 14px; top: 10px; width: 36px; height: 10px; background: #FF4D9D"></div><div style="position: absolute; left: 20px; top: 32px; width: 24px; height: 18px; background: #FFD166; box-shadow: 0 0 14px rgba(255,209,102,.6)"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #A98CD6">CAFETERA</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FF7A2F; border: 2px solid #43276B; position: relative"><div style="position: absolute; right: 8px; top: 28px; width: 8px; height: 8px; background: #FFD166"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #A98CD6">PUERTA</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1A0F2E; border: 2px solid #43276B; position: relative"><div style="position: absolute; left: 16px; top: 12px; width: 32px; height: 32px; border-radius: 50%; background: #FFD166; box-shadow: 0 0 26px 8px rgba(255,209,102,.4)"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #FFD166">LÁMPARA</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1A0F2E; border: 2px solid #43276B; position: relative"><div style="position: absolute; left: 6px; top: 8px; right: 6px; height: 34px; background: #2BD9D0; box-shadow: 0 0 20px rgba(43,217,208,.5)"></div><div style="position: absolute; left: 6px; top: 46px; right: 6px; height: 8px; background: #7B3FE4"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #2BD9D0">PANTALLA MEET</span></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #1A0F2E; border: 2px solid #43276B; position: relative"><div style="position: absolute; left: 22px; bottom: 6px; width: 20px; height: 14px; background: #FF7A2F"></div><div style="position: absolute; left: 14px; bottom: 20px; width: 36px; height: 26px; background: #B6FF3C"></div></div><span style="font-family: 'VT323', monospace; font-size: 16px; color: #B6FF3C">PLANTA</span></div>
+    </div>
+  </div>
+
+  <div style="padding: 64px; display: flex; flex-direction: column; gap: 34px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">04</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">SPRITE SHEET · 9 PERSONAJES</span>
+      <span style="font-size: 26px; color: #A98CD6">32×52 base, mostrados a 2×.</span>
+    </div>
+
+    <div style="background: #120A20; border: 3px solid #FF2E63; padding: 20px 24px; display: flex; gap: 20px; align-items: flex-start">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; color: #FF2E63; letter-spacing: 1px; flex: none; padding-top: 3px">ARREGLA ESTO</span>
+      <span style="font-size: 25px; line-height: 1.25; color: #F3E8FF; max-width: 1080px">Sentados no se distinguen porque solo se ve pelo y torso. Regla: <b style="color: #B6FF3C">cada personaje tiene pelo único Y ropa única</b>, y esos dos colores solos deben identificarlo. Nunca dos personajes con el mismo par. Además, sentado conserva su aura de riesgo bajo la silla.</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border: 4px solid #43276B">
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -14px; top: 44px; width: 60px; height: 18px; border-radius: 50%; background: #FF2E63; opacity: .8; filter: blur(3px); animation: pulsar 1.4s ease-in-out infinite"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #2BD9D0"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF4D9D"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">ANA · OPS</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo turquesa + ropa rosa</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #FF2E63">RIESGO 87 · AURA ROJA PULSA</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #B6FF3C; opacity: .55; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #FF7A2F"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #C98A5E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #B6FF3C"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">DAVID · INFRA</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo naranja + ropa lima</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #B6FF3C">RIESGO 24 · AURA LIMA</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #B6FF3C; opacity: .55; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #A98BFF"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #8A5C3E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #2BD9D0"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">SAMUEL · BACKEND</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo lila + ropa turquesa</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #B6FF3C">RIESGO 31 · AURA LIMA</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #FFD166; opacity: .6; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #FFD166"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #7B3FE4"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">ANDRÉS · FRONTEND</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo oro + ropa morada</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #FFD166">RIESGO 58 · AURA ORO</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #B6FF3C; opacity: .55; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #FF4D9D"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #C98A5E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FFD166"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">SLOT 5 · LIBRE</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo rosa + ropa oro</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6">PAR RESERVADO</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #B6FF3C; opacity: .55; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #331D53"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #8A5C3E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF7A2F"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">SLOT 6 · LIBRE</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo ciruela + ropa naranja</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6">PAR RESERVADO</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #FFD166; opacity: .6; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #B6FF3C"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #A98BFF"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">SLOT 7 · LIBRE</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo lima + ropa lila</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6">PAR RESERVADO</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #B6FF3C; opacity: .55; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #E8B98A"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #C98A5E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #7B3FE4"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">SLOT 8 · LIBRE</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo rubio + ropa morada</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6">PAR RESERVADO</span>
+        </div>
+      </div>
+
+      <div style="background: #241543; padding: 22px; display: flex; gap: 20px; align-items: center">
+        <div style="width: 64px; height: 116px; position: relative; flex: none">
+          <div style="position: absolute; left: 0; top: 0; width: 32px; height: 58px; transform: scale(2); transform-origin: top left">
+            <div style="position: absolute; left: -10px; top: 44px; width: 52px; height: 16px; border-radius: 50%; background: #FFD166; opacity: .6; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #7B3FE4"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #8A5C3E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF7A2F"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF">SLOT 9 · LIBRE</span>
+          <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Pelo morado + ropa naranja</span>
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6">PAR RESERVADO</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+      <div style="background: #241543; border: 3px solid #43276B; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+        <span style="font-family: 'VT323', monospace; font-size: 20px; color: #FFD166; letter-spacing: 2px">POSES MÍNIMAS POR PERSONAJE</span>
+        <div style="display: flex; gap: 34px; align-items: flex-end; padding: 10px 0">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+            <div style="width: 64px; height: 104px; position: relative"><div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+              <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #2BD9D0"></div>
+              <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+              <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF4D9D"></div>
+              <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+              <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            </div></div>
+            <span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6">FRENTE</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+            <div style="width: 64px; height: 104px; position: relative"><div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+              <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 13px; background: #2BD9D0"></div>
+              <div style="position: absolute; left: 8px; top: 13px; width: 16px; height: 10px; background: #C98A5E"></div>
+              <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF4D9D"></div>
+              <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+              <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            </div></div>
+            <span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6">ESPALDA</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+            <div style="width: 64px; height: 104px; position: relative">
+              <div style="position: absolute; left: 4px; bottom: 0; width: 56px; height: 30px; background: #FF7A2F"></div>
+              <div style="position: absolute; left: 0; top: 16px; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+                <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #2BD9D0"></div>
+                <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+                <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF4D9D"></div>
+              </div>
+              <div style="position: absolute; left: -6px; bottom: -6px; width: 76px; height: 14px; border-radius: 50%; background: #FF2E63; opacity: .6; filter: blur(3px)"></div>
+            </div>
+            <span style="font-family: 'VT323', monospace; font-size: 17px; color: #B6FF3C">SENTADO + AURA</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+            <div style="display: flex; gap: 6px; align-items: flex-end">
+              <div style="width: 44px; height: 74px; position: relative"><div style="position: absolute; left: 0; top: 0; width: 22px; height: 37px; transform: scale(2); transform-origin: top left"><div style="position: absolute; left: 3px; top: 0; width: 16px; height: 6px; background: #2BD9D0"></div><div style="position: absolute; left: 4px; top: 6px; width: 14px; height: 10px; background: #E8B98A"></div><div style="position: absolute; left: 1px; top: 16px; width: 20px; height: 13px; background: #FF4D9D"></div><div style="position: absolute; left: 2px; top: 29px; width: 6px; height: 8px; background: #331D53"></div><div style="position: absolute; left: 14px; top: 29px; width: 6px; height: 8px; background: #331D53"></div></div></div>
+              <div style="width: 44px; height: 74px; position: relative"><div style="position: absolute; left: 0; top: 0; width: 22px; height: 37px; transform: scale(2); transform-origin: top left"><div style="position: absolute; left: 3px; top: 1px; width: 16px; height: 6px; background: #2BD9D0"></div><div style="position: absolute; left: 4px; top: 7px; width: 14px; height: 10px; background: #E8B98A"></div><div style="position: absolute; left: 1px; top: 17px; width: 20px; height: 12px; background: #FF4D9D"></div><div style="position: absolute; left: 6px; top: 29px; width: 6px; height: 8px; background: #331D53"></div><div style="position: absolute; left: 12px; top: 31px; width: 6px; height: 6px; background: #331D53"></div></div></div>
+            </div>
+            <span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6">CAMINAR (2 CUADROS)</span>
+          </div>
+        </div>
+        <span style="font-size: 23px; color: #A98CD6; line-height: 1.2">Cinco poses cubren todo el demo: frente, espalda, sentado, y dos cuadros de caminata alternando pierna. Teclear = el cuadro sentado con las manos moviéndose 2px.</span>
+      </div>
+
+      <div style="background: #241543; border: 3px solid #43276B; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+        <span style="font-family: 'VT323', monospace; font-size: 20px; color: #2BD9D0; letter-spacing: 2px">AURAS DE RIESGO</span>
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; gap: 18px"><div style="width: 84px; height: 26px; border-radius: 50%; background: #B6FF3C; opacity: .55; filter: blur(3px); flex: none"></div><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #B6FF3C">0–39 · BAJO</span><span style="font-size: 22px; color: #A98CD6; line-height: 1">Aura lima estática, sin movimiento</span></div></div>
+          <div style="display: flex; align-items: center; gap: 18px"><div style="width: 84px; height: 26px; border-radius: 50%; background: #FFD166; opacity: .6; filter: blur(3px); flex: none"></div><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #FFD166">40–69 · MEDIO</span><span style="font-size: 22px; color: #A98CD6; line-height: 1">Aura oro, respiración lenta de 3 s</span></div></div>
+          <div style="display: flex; align-items: center; gap: 18px"><div style="width: 84px; height: 26px; border-radius: 50%; background: #FF2E63; opacity: .8; filter: blur(3px); animation: pulsar 1.4s ease-in-out infinite; flex: none"></div><div style="display: flex; flex-direction: column"><span style="font-family: 'VT323', monospace; font-size: 20px; color: #FF2E63">70–100 · ALTO</span><span style="font-size: 22px; color: #A98CD6; line-height: 1">Aura roja pulsando cada 1,4 s + etiqueta flotante</span></div></div>
+        </div>
+        <div style="height: 2px; background: #43276B"></div>
+        <span style="font-size: 23px; color: #F3E8FF; line-height: 1.2">La etiqueta flotante (<span style="font-family: 'VT323', monospace; color: #FF2E63">ANA 87</span>) aparece solo en riesgo alto. Si flotara sobre los nueve, el ojo no encontraría el problema.</span>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="05 Oficina" style="padding: 64px; display: flex; flex-direction: column; gap: 30px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">05</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">/OFICINA</span>
+      <span style="font-size: 26px; color: #A98CD6">La pantalla que decide el pitch.</span>
+    </div>
+
+    <div style="position: relative; width: 1312px; height: 620px; background: #1A0F2E; border: 4px solid #43276B; overflow: hidden; image-rendering: pixelated">
+
+      <div style="position: absolute; left: 0; right: 0; top: 0; height: 120px; background: repeating-linear-gradient(90deg, #4B2170 0 62px, #3A1959 62px 66px), repeating-linear-gradient(0deg, #4B2170 0 30px, #3A1959 30px 34px)"></div>
+      <div style="position: absolute; left: 0; right: 0; top: 116px; height: 6px; background: #FF4D9D; opacity: .45"></div>
+      <div style="position: absolute; left: 0; right: 0; top: 122px; bottom: 0; background: repeating-conic-gradient(#2A1747 0% 25%, #331D53 0% 50%) 0 0 / 64px 64px"></div>
+
+      <div style="position: absolute; left: 232px; top: 22px; width: 56px; height: 56px; border-radius: 50%; background: #FFD166; box-shadow: 0 0 54px 18px rgba(255,209,102,.3)"></div>
+      <div style="position: absolute; left: 616px; top: 22px; width: 56px; height: 56px; border-radius: 50%; background: #FFD166; box-shadow: 0 0 54px 18px rgba(255,209,102,.3)"></div>
+      <div style="position: absolute; left: 1000px; top: 22px; width: 56px; height: 56px; border-radius: 50%; background: #FFD166; box-shadow: 0 0 54px 18px rgba(255,209,102,.3)"></div>
+
+      <div style="position: absolute; left: 40px; top: 40px; width: 76px; height: 100px; background: #241543; border: 4px solid #A98BFF; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; padding-bottom: 10px">
+        <div style="width: 44px; height: 12px; background: #FF4D9D"></div>
+        <div style="width: 30px; height: 24px; background: #FFD166; box-shadow: 0 0 20px rgba(255,209,102,.65)"></div>
+      </div>
+
+      <div style="position: absolute; right: 34px; top: 30px; width: 356px; height: 196px; border: 5px solid #7B3FE4; background: rgba(36,21,67,.6); box-shadow: inset 0 0 40px rgba(123,63,228,.4)">
+        <div style="position: absolute; left: 50%; top: 20px; transform: translateX(-50%); width: 208px; height: 84px; background: #2BD9D0; box-shadow: 0 0 38px rgba(43,217,208,.55); animation: blip 3.6s steps(2, end) infinite"></div>
+        <div style="position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); width: 224px; height: 26px; background: #6E4FA8; border-top: 5px solid #A98BFF"></div>
+        <div style="position: absolute; left: 84px; bottom: 52px; width: 32px; height: 52px; transform: scale(1.4); transform-origin: bottom left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 13px; background: #B6FF3C"></div>
+          <div style="position: absolute; left: 8px; top: 13px; width: 16px; height: 10px; background: #E8B98A"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #A98BFF"></div>
+        </div>
+        <div style="position: absolute; right: 84px; bottom: 52px; width: 32px; height: 52px; transform: scale(1.4); transform-origin: bottom right">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 13px; background: #FFD166"></div>
+          <div style="position: absolute; left: 8px; top: 13px; width: 16px; height: 10px; background: #8A5C3E"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #7B3FE4"></div>
+        </div>
+        <span style="position: absolute; left: 14px; top: -30px; font-family: 'VT323', monospace; font-size: 19px; color: #A98BFF; letter-spacing: 1px">SALA MEET</span>
+      </div>
+
+      <div style="position: absolute; right: 62px; top: 274px; width: 118px; height: 214px; background: #1F2B12; border: 5px solid #B6FF3C; box-shadow: 0 0 40px rgba(182,255,60,.28); display: flex; flex-direction: column; gap: 13px; padding: 15px">
+        <div style="display: flex; gap: 7px"><div style="width: 14px; height: 14px; background: #B6FF3C; animation: blip 1.1s steps(2,end) infinite"></div><div style="width: 14px; height: 14px; background: #B6FF3C; opacity: .3"></div><div style="width: 14px; height: 14px; background: #2BD9D0; animation: blip 1.7s steps(2,end) infinite"></div></div>
+        <div style="height: 5px; background: #43276B"></div>
+        <div style="display: flex; gap: 7px"><div style="width: 14px; height: 14px; background: #2BD9D0; opacity: .4"></div><div style="width: 14px; height: 14px; background: #B6FF3C; animation: blip 2.3s steps(2,end) infinite"></div><div style="width: 14px; height: 14px; background: #B6FF3C; opacity: .3"></div></div>
+        <div style="height: 5px; background: #43276B"></div>
+        <div style="display: flex; gap: 7px"><div style="width: 14px; height: 14px; background: #B6FF3C; opacity: .3"></div><div style="width: 14px; height: 14px; background: #B6FF3C; animation: blip 1.4s steps(2,end) infinite"></div><div style="width: 14px; height: 14px; background: #2BD9D0; opacity: .4"></div></div>
+        <div style="height: 5px; background: #43276B"></div>
+        <div style="display: flex; gap: 7px"><div style="width: 14px; height: 14px; background: #B6FF3C; animation: blip 1.9s steps(2,end) infinite"></div><div style="width: 14px; height: 14px; background: #2BD9D0; opacity: .4"></div><div style="width: 14px; height: 14px; background: #B6FF3C; opacity: .3"></div></div>
+        <span style="position: absolute; left: -4px; top: -30px; font-family: 'VT323', monospace; font-size: 19px; color: #B6FF3C; letter-spacing: 1px">GITHUB</span>
+      </div>
+
+      <div style="position: absolute; left: 0; top: 420px; width: 30px; height: 150px; background: #FF7A2F; border-right: 5px solid #FFD166"></div>
+      <div style="position: absolute; left: 42px; bottom: 26px; width: 52px; height: 40px; background: #B6FF3C"></div>
+      <div style="position: absolute; left: 58px; bottom: 12px; width: 22px; height: 18px; background: #FF7A2F"></div>
+
+      <div style="position: absolute; left: 130px; top: 258px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #2BD9D0; box-shadow: 0 0 22px rgba(43,217,208,.45)"></div>
+        <div style="position: absolute; right: 18px; top: 18px; width: 30px; height: 18px; background: #F3E8FF; opacity: .8"></div>
+      </div>
+      <div style="position: absolute; left: 342px; top: 258px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #2BD9D0; box-shadow: 0 0 22px rgba(43,217,208,.45)"></div>
+      </div>
+      <div style="position: absolute; left: 554px; top: 258px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #FFD166; box-shadow: 0 0 22px rgba(255,209,102,.4)"></div>
+      </div>
+      <div style="position: absolute; left: 130px; top: 396px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #2BD9D0; box-shadow: 0 0 22px rgba(43,217,208,.45)"></div>
+      </div>
+      <div style="position: absolute; left: 342px; top: 396px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #FF4D9D; box-shadow: 0 0 22px rgba(255,77,157,.45)"></div>
+        <div style="position: absolute; right: 18px; top: 18px; width: 30px; height: 18px; background: #FFD166; opacity: .85"></div>
+      </div>
+      <div style="position: absolute; left: 554px; top: 396px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #2BD9D0; box-shadow: 0 0 22px rgba(43,217,208,.45)"></div>
+      </div>
+      <div style="position: absolute; left: 130px; top: 522px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #B6FF3C; box-shadow: 0 0 22px rgba(182,255,60,.4)"></div>
+      </div>
+      <div style="position: absolute; left: 342px; top: 522px; width: 168px; height: 66px; background: #6E4FA8; border-top: 6px solid #A98BFF">
+        <div style="position: absolute; left: 20px; top: -40px; width: 62px; height: 40px; background: #3A1959; border: 4px solid #2BD9D0; box-shadow: 0 0 22px rgba(43,217,208,.45)"></div>
+      </div>
+
+      <div style="position: absolute; left: 232px; top: 214px; width: 64px; height: 104px">
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 13px; background: #FF7A2F"></div>
+          <div style="position: absolute; left: 8px; top: 13px; width: 16px; height: 10px; background: #C98A5E"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #B6FF3C"></div>
+        </div>
+      </div>
+      <div style="position: absolute; left: 444px; top: 214px; width: 64px; height: 104px">
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 13px; background: #A98BFF"></div>
+          <div style="position: absolute; left: 8px; top: 13px; width: 16px; height: 10px; background: #8A5C3E"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #2BD9D0"></div>
+        </div>
+      </div>
+      <div style="position: absolute; left: 232px; top: 352px; width: 64px; height: 104px">
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 13px; background: #FFD166"></div>
+          <div style="position: absolute; left: 8px; top: 13px; width: 16px; height: 10px; background: #E8B98A"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #7B3FE4"></div>
+        </div>
+      </div>
+      <div style="position: absolute; left: 232px; top: 478px; width: 64px; height: 104px">
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 13px; background: #B6FF3C"></div>
+          <div style="position: absolute; left: 8px; top: 13px; width: 16px; height: 10px; background: #E8B98A"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #A98BFF"></div>
+        </div>
+      </div>
+
+      <div style="position: absolute; left: 800px; top: 350px; width: 64px; height: 104px">
+        <div style="position: absolute; left: -14px; top: 88px; width: 92px; height: 26px; border-radius: 50%; background: #FF2E63; opacity: .8; filter: blur(4px); animation: pulsar 1.4s ease-in-out infinite"></div>
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #2BD9D0"></div>
+          <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF4D9D"></div>
+          <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+        </div>
+        <div style="position: absolute; left: -14px; top: -34px; background: #1A0F2E; border: 3px solid #FF2E63; padding: 3px 8px; box-shadow: 0 0 18px rgba(255,46,99,.5)"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #FF2E63; white-space: nowrap">ANA 87</span></div>
+      </div>
+
+      <div style="position: absolute; left: 620px; top: 484px; width: 64px; height: 104px">
+        <div style="position: absolute; left: -10px; top: 90px; width: 84px; height: 22px; border-radius: 50%; background: #B6FF3C; opacity: .5; filter: blur(4px)"></div>
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #FF4D9D"></div>
+          <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #C98A5E"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FFD166"></div>
+          <div style="position: absolute; left: 6px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          <div style="position: absolute; left: 18px; top: 43px; width: 8px; height: 9px; background: #331D53"></div>
+        </div>
+      </div>
+
+      <div style="position: absolute; left: 396px; top: 140px; width: 64px; height: 104px">
+        <div style="position: absolute; left: -10px; top: 90px; width: 84px; height: 22px; border-radius: 50%; background: #FFD166; opacity: .5; filter: blur(4px)"></div>
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #331D53"></div>
+          <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #8A5C3E"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF7A2F"></div>
+          <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+        </div>
+      </div>
+
+      <div style="position: absolute; left: 960px; top: 500px; width: 64px; height: 104px">
+        <div style="position: absolute; left: -10px; top: 90px; width: 84px; height: 22px; border-radius: 50%; background: #B6FF3C; opacity: .5; filter: blur(4px)"></div>
+        <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+          <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #7B3FE4"></div>
+          <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #8A5C3E"></div>
+          <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF7A2F"></div>
+          <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+        </div>
+      </div>
+
+      <div style="position: absolute; left: 26px; top: 146px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 10px; background: rgba(26,15,46,.92); border: 3px solid #2BD9D0; padding: 9px 13px">
+          <span style="font-size: 22px">🔊</span>
+          <span style="font-family: 'VT323', monospace; font-size: 18px; color: #F3E8FF; letter-spacing: 1px">CHIPTUNE</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; background: rgba(26,15,46,.92); border: 3px solid #43276B; padding: 10px 14px">
+          <div style="width: 30px; height: 30px; background: #FF4D9D; border: 3px solid #F3E8FF; flex: none"></div>
+          <div style="display: flex; flex-direction: column">
+            <span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6; letter-spacing: 1px">OFICINA INERXIA</span>
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF">9 PERSONAJES</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="position: absolute; right: 34px; top: 250px; display: flex; align-items: center; gap: 14px; background: rgba(26,15,46,.92); border: 3px solid #FFD166; padding: 10px 16px">
+        <span style="font-family: 'VT323', monospace; font-size: 18px; color: #FFD166; letter-spacing: 1px">RESILIENCIA</span>
+        <span style="font-family: 'Workbench', monospace; font-size: 30px; color: #FFD166; line-height: 1">64</span>
+        <span style="font-family: 'VT323', monospace; font-size: 18px; color: #B6FF3C">▲12</span>
+      </div>
+
+      <div style="position: absolute; right: 34px; bottom: 28px; display: flex; align-items: center; gap: 12px; background: #FF4D9D; border: 5px solid #F3E8FF; padding: 15px 26px; box-shadow: 0 7px 0 #B0296B, 0 0 36px rgba(255,77,157,.5)">
+        <span style="font-size: 24px">🕹️</span>
+        <span style="font-family: 'Workbench', monospace; font-size: 24px; color: #2E0A1C; letter-spacing: 1px">CONSOLA</span>
+      </div>
+
+      <sc-if value="{{ grid }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(43,217,208,.22) 0 1px, transparent 1px 64px), repeating-linear-gradient(0deg, rgba(43,217,208,.22) 0 1px, transparent 1px 64px)"></div>
+      </sc-if>
+      <sc-if value="{{ crt }}" hint-placeholder-val="{{ true }}">
+        <div style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 2px, transparent 2px 5px)"></div>
+        <div style="position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 150px 40px rgba(18,10,32,.85)"></div>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px">
+      <div style="border-left: 5px solid #B6FF3C; padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #B6FF3C; letter-spacing: 1px">LA SALA RESPIRA</span><span style="font-size: 24px; line-height: 1.2; color: #F3E8FF">Nunca más de 3 personajes moviéndose a la vez, y con desfases de 2–4 s. Nueve caminando al mismo tiempo se ve roto, no vivo.</span></div>
+      <div style="border-left: 5px solid #2BD9D0; padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #2BD9D0; letter-spacing: 1px">UN SOLO FOCO</span><span style="font-size: 24px; line-height: 1.2; color: #F3E8FF">Solo Ana lleva etiqueta y aura roja. El ojo del jurado tiene que ir ahí en el primer segundo, sin que nadie lo señale.</span></div>
+      <div style="border-left: 5px solid #FF4D9D; padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 6px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #FF4D9D; letter-spacing: 1px">LA CONSOLA ES EL BOTÓN</span><span style="font-size: 24px; line-height: 1.2; color: #F3E8FF">Rosa, con sombra dura de 7px y borde blanco. Es el único elemento de la escena con ese tratamiento: se lee como pulsable.</span></div>
+    </div>
+  </div>
+
+  <sc-if value="{{ estados }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="06 Estados" style="padding: 64px; display: flex; flex-direction: column; gap: 30px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">06</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">ESTADOS DE EMERGENCIA</span>
+      <span style="font-size: 26px; color: #A98CD6">Cada escenario cambia la sala antes de mostrar un solo dato.</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px">
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="position: relative; height: 250px; background: #120A20; border: 4px solid #43276B; overflow: hidden">
+          <div style="position: absolute; left: 0; right: 0; top: 0; height: 62px; background: repeating-linear-gradient(90deg, #1E1035 0 40px, #180C2B 40px 44px)"></div>
+          <div style="position: absolute; left: 0; right: 0; top: 62px; bottom: 0; background: repeating-conic-gradient(#160C29 0% 25%, #1A0F2E 0% 50%) 0 0 / 44px 44px"></div>
+          <div style="position: absolute; left: 60px; top: 16px; width: 34px; height: 34px; border-radius: 50%; background: #2E2440"></div>
+          <div style="position: absolute; right: 60px; top: 16px; width: 34px; height: 34px; border-radius: 50%; background: #2E2440"></div>
+          <div style="position: absolute; left: 40px; top: 132px; width: 116px; height: 44px; background: #2E2144; border-top: 5px solid #4A3568">
+            <div style="position: absolute; left: 14px; top: -30px; width: 46px; height: 30px; background: #0E2422; border: 3px solid #2BD9D0; box-shadow: 0 0 26px rgba(43,217,208,.7)"></div>
+          </div>
+          <div style="position: absolute; right: 34px; top: 118px; width: 66px; height: 110px; background: #1A1A12; border: 4px solid #3E4A2A"></div>
+          <div style="position: absolute; left: 176px; top: 120px; width: 32px; height: 52px">
+            <div style="position: absolute; left: -8px; top: 44px; width: 48px; height: 14px; border-radius: 50%; background: #FFD166; opacity: .35; filter: blur(3px)"></div>
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #3A2A55"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #6B5570"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #4A3568"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #241543"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #241543"></div>
+          </div>
+          <div style="position: absolute; inset: 0; background: rgba(18,10,32,.55)"></div>
+          <span style="position: absolute; left: 16px; bottom: 14px; font-family: 'VT323', monospace; font-size: 22px; color: #2BD9D0; letter-spacing: 1px; text-shadow: 0 0 12px rgba(43,217,208,.8)">APAGÓN</span>
+        </div>
+        <span style="font-size: 24px; color: #A98CD6; line-height: 1.2">Todo baja a un 45% de luminosidad. Solo los monitores y el aura conservan color. El rack se apaga: sin LEDs.</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="position: relative; height: 250px; background: #1A0F2E; border: 4px solid #FF2E63; overflow: hidden">
+          <div style="position: absolute; left: 0; right: 0; top: 0; height: 62px; background: repeating-linear-gradient(90deg, #4B2170 0 40px, #3A1959 40px 44px)"></div>
+          <div style="position: absolute; left: 0; right: 0; top: 62px; bottom: 0; background: repeating-conic-gradient(#2A1747 0% 25%, #331D53 0% 50%) 0 0 / 44px 44px"></div>
+          <div style="position: absolute; left: 40px; top: 132px; width: 116px; height: 44px; background: #6E4FA8; border-top: 5px solid #A98BFF">
+            <div style="position: absolute; left: 14px; top: -30px; width: 46px; height: 30px; background: #3A0A18; border: 3px solid #FF2E63; box-shadow: 0 0 24px rgba(255,46,99,.75)"></div>
+          </div>
+          <div style="position: absolute; right: 34px; top: 118px; width: 66px; height: 110px; background: #3A0A18; border: 4px solid #FF2E63; box-shadow: 0 0 30px rgba(255,46,99,.5); display: flex; flex-direction: column; gap: 8px; padding: 10px">
+            <div style="display: flex; gap: 5px"><div style="width: 10px; height: 10px; background: #FF2E63; animation: blip .6s steps(2,end) infinite"></div><div style="width: 10px; height: 10px; background: #FF2E63; opacity: .3"></div></div>
+            <div style="display: flex; gap: 5px"><div style="width: 10px; height: 10px; background: #FF2E63; opacity: .3"></div><div style="width: 10px; height: 10px; background: #FF2E63; animation: blip .9s steps(2,end) infinite"></div></div>
+          </div>
+          <div style="position: absolute; right: 52px; top: 40px; width: 30px; height: 30px; border-radius: 50%; background: #A98CD6; animation: humo 2.4s ease-out infinite"></div>
+          <div style="position: absolute; right: 68px; top: 52px; width: 22px; height: 22px; border-radius: 50%; background: #A98CD6; animation: humo 2.4s ease-out .8s infinite"></div>
+          <div style="position: absolute; left: 200px; top: 120px; width: 32px; height: 52px">
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #FF7A2F"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #C98A5E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #B6FF3C"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <span style="position: absolute; left: 8px; top: -22px; font-family: 'VT323', monospace; font-size: 20px; color: #FFD166">!</span>
+          </div>
+          <span style="position: absolute; left: 16px; bottom: 14px; font-family: 'VT323', monospace; font-size: 22px; color: #FF2E63; letter-spacing: 1px; text-shadow: 0 0 12px rgba(255,46,99,.8)">CAÍDA DE GITHUB</span>
+        </div>
+        <span style="font-size: 24px; color: #A98CD6; line-height: 1.2">El lima del rack se vuelve rojo, humo gris sube en dos tiempos y dos devs se levantan con un signo de interrogación.</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="position: relative; height: 250px; background: #1A0F2E; border: 4px solid #FFD166; overflow: hidden">
+          <div style="position: absolute; left: 0; right: 0; top: 0; height: 62px; background: repeating-linear-gradient(90deg, #4B2170 0 40px, #3A1959 40px 44px)"></div>
+          <div style="position: absolute; left: 0; right: 0; top: 62px; bottom: 0; background: repeating-conic-gradient(#2A1747 0% 25%, #331D53 0% 50%) 0 0 / 44px 44px"></div>
+          <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 180px; transform: translateX(-50%); background: linear-gradient(180deg, rgba(255,46,99,.45), rgba(255,46,99,0)); animation: blip 1.2s steps(2,end) infinite"></div>
+          <div style="position: absolute; left: 40px; top: 132px; width: 116px; height: 44px; background: #6E4FA8; border-top: 5px solid #A98BFF">
+            <div style="position: absolute; left: 14px; top: -30px; width: 46px; height: 30px; border: 3px dashed #FF2E63; background: rgba(255,46,99,.12)"></div>
+            <span style="position: absolute; left: 20px; top: -26px; font-family: 'VT323', monospace; font-size: 20px; color: #FF2E63">?</span>
+          </div>
+          <div style="position: absolute; right: 30px; top: 96px; width: 56px; height: 56px; border: 5px solid #FFD166; background: rgba(255,209,102,.14); display: flex; align-items: center; justify-content: center"><span style="font-size: 26px">🔒</span></div>
+          <div style="position: absolute; left: 210px; top: 120px; width: 32px; height: 52px">
+            <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #A98BFF"></div>
+            <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #8A5C3E"></div>
+            <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #2BD9D0"></div>
+            <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+          </div>
+          <span style="position: absolute; left: 16px; bottom: 14px; font-family: 'VT323', monospace; font-size: 22px; color: #FFD166; letter-spacing: 1px; text-shadow: 0 0 12px rgba(255,209,102,.7)">ROBO DEL PC</span>
+        </div>
+        <span style="font-size: 24px; color: #A98CD6; line-height: 1.2">El PC deja un hueco punteado, haz rojo giratorio y un candado oro sobre los accesos comprometidos. Efecto que faltaba en la demo.</span>
+      </div>
+    </div>
+
+    <div style="background: #120A20; border: 3px solid #FFD166; padding: 20px 24px; display: flex; gap: 20px; align-items: flex-start">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; color: #FFD166; letter-spacing: 1px; flex: none; padding-top: 3px">REGLA DE ORO</span>
+      <span style="font-size: 25px; line-height: 1.25; color: #F3E8FF; max-width: 1080px">Primero espectáculo, después sustancia. La animación dura 3–5 s y el panel entra deslizándose <b style="color: #2BD9D0">solo cuando la animación terminó</b>. Si el panel aparece encima del efecto, se pierden los dos.</span>
+    </div>
+  </div>
+  </sc-if>
+
+  <div data-screen-label="07 Paneles" style="padding: 64px; display: flex; flex-direction: column; gap: 30px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">07</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">TOOLTIP · CONSOLA · RESULTADO</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 460px 1fr; gap: 24px; align-items: start">
+
+      <div style="background: #241543; border: 4px solid #2BD9D0; box-shadow: 0 0 40px rgba(43,217,208,.2); display: flex; flex-direction: column">
+        <div style="display: flex; align-items: flex-start; gap: 18px; padding: 22px; border-bottom: 3px solid #43276B">
+          <div style="width: 64px; height: 104px; position: relative; flex: none">
+            <div style="position: absolute; left: 0; top: 0; width: 32px; height: 52px; transform: scale(2); transform-origin: top left">
+              <div style="position: absolute; left: 5px; top: 0; width: 22px; height: 9px; background: #2BD9D0"></div>
+              <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+              <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #FF4D9D"></div>
+              <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+              <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; flex: 1">
+            <span style="font-family: 'Workbench', monospace; font-size: 32px; color: #F3E8FF; line-height: 1">ANA</span>
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #2BD9D0; letter-spacing: 1px">OPS · OFICINA INERXIA</span>
+            <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 4px">
+              <span style="font-family: 'Workbench', monospace; font-size: 40px; color: #FF2E63; line-height: 1; text-shadow: 0 0 16px rgba(255,46,99,.6)">87</span>
+              <span style="font-size: 23px; color: #A98CD6; white-space: nowrap">riesgo</span>
+            </div>
+            <div style="height: 14px; background: #1A0F2E; border: 2px solid #43276B; margin-top: 2px"><div style="width: 87%; height: 100%; background: linear-gradient(90deg, #FFD166, #FF2E63)"></div></div>
+          </div>
+          <div style="width: 34px; height: 34px; border: 3px solid #43276B; display: flex; align-items: center; justify-content: center; flex: none"><span style="font-family: 'VT323', monospace; font-size: 22px; color: #A98CD6">×</span></div>
+        </div>
+        <div style="padding: 22px; display: flex; flex-direction: column; gap: 14px">
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6; letter-spacing: 2px">SOLO ELLA SABE HACER ESTO</span>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #2BD9D0; padding: 3px 7px; flex: none">TAREA</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Comprar los vuelos del jefe</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #2BD9D0; padding: 3px 7px; flex: none">TAREA</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Administrar el CRM</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #F3E8FF; background: #7B3FE4; padding: 3px 7px; flex: none">TÁCITO</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Al jefe solo le gusta viajar en LATAM</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #FF7A2F; padding: 3px 7px; flex: none">ACCESO</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Panel de facturación</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #241543; border: 4px solid #43276B; display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 3px solid #43276B">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="font-size: 24px">🕹️</span>
+            <span style="font-family: 'Workbench', monospace; font-size: 26px; color: #F3E8FF">CONSOLA DE EMERGENCIAS</span>
+          </div>
+          <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 1px">7 ESCENARIOS</span>
+        </div>
+        <div style="padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div style="background: #1A0F2E; border-left: 6px solid #FF4D9D; padding: 13px 16px; display: flex; flex-direction: column; gap: 3px; box-shadow: 0 0 22px rgba(255,77,157,.18)">
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #FF4D9D; letter-spacing: 1px">RENUNCIA / AUSENCIA</span>
+            <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Sale por la puerta; su escritorio queda gris</span>
+          </div>
+          <div style="background: #1A0F2E; border-left: 6px solid #43276B; padding: 13px 16px; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF; letter-spacing: 1px">ROBO DEL PC DEL CTO</span>
+            <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Alarma y luz roja giratoria</span>
+          </div>
+          <div style="background: #1A0F2E; border-left: 6px solid #43276B; padding: 13px 16px; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF; letter-spacing: 1px">CAÍDA DE GITHUB</span>
+            <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">El servidor echa humo</span>
+          </div>
+          <div style="background: #1A0F2E; border-left: 6px solid #43276B; padding: 13px 16px; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF; letter-spacing: 1px">CAÍDA DE MEET</span>
+            <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">La pantalla queda en estática</span>
+          </div>
+          <div style="background: #1A0F2E; border-left: 6px solid #43276B; padding: 13px 16px; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF; letter-spacing: 1px">APAGÓN</span>
+            <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Solo brillan las pantallas</span>
+          </div>
+          <div style="background: #1A0F2E; border-left: 6px solid #43276B; padding: 13px 16px; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF; letter-spacing: 1px">LA OFICINA SE CAE</span>
+            <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Screen shake, todos a la salida</span>
+          </div>
+          <div style="background: #1A0F2E; border-left: 6px solid #43276B; padding: 13px 16px; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-family: 'VT323', monospace; font-size: 20px; color: #F3E8FF; letter-spacing: 1px">RANSOMWARE</span>
+            <span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Candados por todas partes</span>
+          </div>
+          <div style="border: 3px dashed #43276B; padding: 13px 16px; display: flex; align-items: center"><span style="font-size: 22px; color: #A98CD6; line-height: 1.1">Los siete quedan visibles: la profundidad del producto se ve sin hacer clic.</span></div>
+        </div>
+        <div style="padding: 0 24px 22px; display: flex; align-items: flex-end; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 7px; flex: 1">
+            <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">PERSONA</span>
+            <div style="background: #1A0F2E; border: 3px solid #2BD9D0; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between">
+              <span style="font-size: 24px; color: #F3E8FF">Ana (Ops)</span>
+              <span style="font-family: 'VT323', monospace; font-size: 20px; color: #2BD9D0">▼</span>
+            </div>
+          </div>
+          <div style="background: #B6FF3C; padding: 16px 34px; box-shadow: 0 6px 0 #7FA82A"><span style="font-family: 'Workbench', monospace; font-size: 24px; color: #1B2E06; letter-spacing: 1px">SIMULAR ▶</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #241543; border: 4px solid #FF2E63; box-shadow: 0 0 50px rgba(255,46,99,.16); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px 28px; border-bottom: 3px solid #43276B">
+        <div style="display: flex; align-items: center; gap: 18px">
+          <span style="font-family: 'Workbench', monospace; font-size: 30px; color: #F3E8FF">SIN ANA · OPS</span>
+          <span style="font-family: 'VT323', monospace; font-size: 17px; color: #1A0F2E; background: #FFD166; padding: 5px 10px; letter-spacing: 1px">RESULTADO SIMULADO (DEMO)</span>
+        </div>
+        <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6; letter-spacing: 1px">GENERADO EN 9,4 S</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #43276B">
+        <div style="background: #1A0F2E; padding: 24px 28px; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Workbench', monospace; font-size: 56px; color: #FF2E63; line-height: 1">7</span><span style="font-size: 24px; color: #A98CD6">tareas huérfanas</span></div>
+        <div style="background: #1A0F2E; padding: 24px 28px; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Workbench', monospace; font-size: 56px; color: #FFD166; line-height: 1">12</span><span style="font-size: 24px; color: #A98CD6">días de empalme estimados</span></div>
+        <div style="background: #1A0F2E; padding: 24px 28px; display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Workbench', monospace; font-size: 56px; color: #2BD9D0; line-height: 1">64</span><span style="font-size: 24px; color: #A98CD6">impacto sobre la operación</span></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #43276B">
+        <div style="background: #241543; padding: 26px 28px; display: flex; flex-direction: column; gap: 16px">
+          <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6; letter-spacing: 2px">QUÉ QUEDA SIN DUEÑO</span>
+          <div style="display: flex; flex-direction: column; gap: 11px">
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #2BD9D0; padding: 3px 7px; flex: none">TAREA</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Comprar los vuelos del jefe</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #2BD9D0; padding: 3px 7px; flex: none">TAREA</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Administrar el CRM y su limpieza mensual</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #2BD9D0; padding: 3px 7px; flex: none">TAREA</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Conciliar facturas con contabilidad</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #F3E8FF; background: #7B3FE4; padding: 3px 7px; flex: none">TÁCITO</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Al jefe solo le gusta viajar en LATAM</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #F3E8FF; background: #7B3FE4; padding: 3px 7px; flex: none">TÁCITO</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">El proveedor de viáticos responde solo por WhatsApp</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #FF7A2F; padding: 3px 7px; flex: none">ACCESO</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Panel de facturación (único administrador)</span></div>
+            <div style="display: flex; gap: 12px; align-items: flex-start"><span style="font-family: 'VT323', monospace; font-size: 16px; color: #1A0F2E; background: #FF7A2F; padding: 3px 7px; flex: none">ACCESO</span><span style="font-size: 24px; color: #F3E8FF; line-height: 1.1">Cuenta del CRM y su plan de cobro</span></div>
+          </div>
+        </div>
+
+        <div style="background: #120A20; padding: 26px 28px; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span style="font-family: 'VT323', monospace; font-size: 19px; color: #B6FF3C; letter-spacing: 2px">PLAYBOOK GENERADO</span>
+            <span style="font-family: 'VT323', monospace; font-size: 17px; color: #A98CD6">MARKDOWN</span>
+          </div>
+          <div style="border: 2px solid #43276B; padding: 18px; display: flex; flex-direction: column; gap: 9px; font-family: 'VT323', monospace; font-size: 21px; line-height: 1.25">
+            <span style="color: #FF4D9D"># Empalme de Ana · Ops</span>
+            <span style="color: #A98CD6">## 1. Lo urgente (48 h)</span>
+            <span style="color: #F3E8FF">- Rotar credenciales del panel de facturación</span>
+            <span style="color: #F3E8FF">- Pasar el CRM a Samuel como admin temporal</span>
+            <span style="color: #A98CD6">## 2. Reglas no escritas</span>
+            <span style="color: #F3E8FF">- Vuelos del jefe: siempre LATAM, pasillo</span>
+            <span style="color: #F3E8FF">- Viáticos: el proveedor solo contesta WhatsApp</span>
+            <span style="color: #A98CD6">## 3. Evidencia</span>
+            <span style="color: #2BD9D0">slack#operaciones · 14 mensajes</span>
+            <span style="color: #2BD9D0">meet · reunión del 4 jun · min 12:30</span>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 2px">
+            <div style="background: #B6FF3C; padding: 14px 26px; box-shadow: 0 6px 0 #7FA82A"><span style="font-family: 'Workbench', monospace; font-size: 21px; color: #1B2E06">RESTAURAR OFICINA</span></div>
+            <div style="border: 3px solid #43276B; padding: 14px 22px; display: flex; align-items: center"><span style="font-family: 'VT323', monospace; font-size: 21px; color: #F3E8FF; letter-spacing: 1px">DESCARGAR .MD</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="08 Acceso y avatar" style="padding: 64px; display: flex; flex-direction: column; gap: 30px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">08</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">ENTRADA Y AVATAR</span>
+      <span style="font-size: 26px; color: #A98CD6">Los dos primeros minutos de cualquier usuario nuevo.</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px">
+
+      <div style="position: relative; height: 560px; background: #120A20; border: 4px solid #43276B; overflow: hidden; display: flex; align-items: center; justify-content: center">
+        <div style="position: absolute; left: -60px; top: -60px; width: 300px; height: 300px; border-radius: 50%; background: rgba(255,77,157,.22); filter: blur(40px)"></div>
+        <div style="position: absolute; right: -60px; bottom: -60px; width: 300px; height: 300px; border-radius: 50%; background: rgba(43,217,208,.18); filter: blur(40px)"></div>
+        <div style="position: absolute; inset: 0; background: repeating-conic-gradient(rgba(42,23,71,.5) 0% 25%, rgba(51,29,83,.5) 0% 50%) 0 0 / 44px 44px"></div>
+        <div style="position: relative; width: 420px; background: #241543; border: 4px solid #FF4D9D; box-shadow: 0 10px 0 #B0296B, 0 0 60px rgba(255,77,157,.3); padding: 34px; display: flex; flex-direction: column; gap: 22px">
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
+            <span style="font-size: 34px">🕹️</span>
+            <span style="font-family: 'Workbench', monospace; font-size: 34px; color: #F3E8FF; line-height: 1; text-align: center">BUS FACTOR HQ</span>
+            <span style="font-size: 23px; color: #A98CD6; text-align: center; line-height: 1.15">Entra a tu oficina. Tu personaje te está esperando.</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">USUARIO</span>
+              <div style="background: #1A0F2E; border: 3px solid #43276B; padding: 12px 14px"><span style="font-size: 24px; color: #F3E8FF">ana@inerxia.co</span></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">CONTRASEÑA</span>
+              <div style="background: #1A0F2E; border: 3px solid #2BD9D0; padding: 12px 14px; display: flex; align-items: center; gap: 3px">
+                <div style="width: 11px; height: 11px; background: #2BD9D0"></div><div style="width: 11px; height: 11px; background: #2BD9D0"></div><div style="width: 11px; height: 11px; background: #2BD9D0"></div><div style="width: 11px; height: 11px; background: #2BD9D0"></div><div style="width: 11px; height: 11px; background: #2BD9D0"></div><div style="width: 11px; height: 11px; background: #2BD9D0"></div>
+                <div style="width: 3px; height: 22px; background: #2BD9D0; margin-left: 4px; animation: blip 1s steps(2,end) infinite"></div>
+              </div>
+            </div>
+          </div>
+          <div style="background: #FF4D9D; padding: 16px; text-align: center; box-shadow: 0 6px 0 #B0296B"><span style="font-family: 'Workbench', monospace; font-size: 24px; color: #2E0A1C; letter-spacing: 1px">ENTRAR ▶</span></div>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 10px"><span style="font-size: 22px; color: #A98CD6">Sin cuenta todavía?</span><span style="font-size: 22px; color: #B6FF3C">Crear oficina</span></div>
+        </div>
+        <span style="position: absolute; left: 20px; bottom: 16px; font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6; letter-spacing: 1px">/LOGIN</span>
+      </div>
+
+      <div style="position: relative; height: 560px; background: #1A0F2E; border: 4px solid #43276B; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box">
+        <div style="width: 100%; background: #241543; border: 4px solid #2BD9D0; box-shadow: 0 0 50px rgba(43,217,208,.2); padding: 28px; display: flex; flex-direction: column; gap: 22px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span style="font-family: 'Workbench', monospace; font-size: 30px; color: #F3E8FF">TU AVATAR</span>
+            <span style="font-family: 'VT323', monospace; font-size: 18px; color: #1B2E06; background: #B6FF3C; padding: 5px 10px; letter-spacing: 1px">GUARDADO ✓</span>
+          </div>
+          <div style="display: flex; gap: 26px; align-items: flex-start">
+            <div style="width: 168px; height: 216px; background: #120A20; border: 4px solid #2BD9D0; box-shadow: inset 0 0 40px rgba(43,217,208,.18); position: relative; flex: none">
+              <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 52px; background: repeating-conic-gradient(#2A1747 0% 25%, #331D53 0% 50%) 0 0 / 26px 26px"></div>
+              <div style="position: absolute; left: 36px; top: 34px; width: 32px; height: 52px; transform: scale(3); transform-origin: top left">
+                <div style="position: absolute; left: -12px; top: 46px; width: 56px; height: 10px; border-radius: 50%; background: #2BD9D0; opacity: .35; filter: blur(2px)"></div>
+                <div style="position: absolute; left: 4px; top: 0; width: 24px; height: 16px; background: #A98BFF"></div>
+                <div style="position: absolute; left: 6px; top: 9px; width: 20px; height: 14px; background: #E8B98A"></div>
+                <div style="position: absolute; left: 2px; top: 23px; width: 28px; height: 18px; background: #7B3FE4"></div>
+                <div style="position: absolute; left: 4px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+                <div style="position: absolute; left: 20px; top: 41px; width: 8px; height: 11px; background: #331D53"></div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 16px; flex: 1">
+              <div style="display: flex; flex-direction: column; gap: 7px">
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">CUERPO</span>
+                <div style="display: flex; gap: 8px"><div style="flex: 1; background: #2BD9D0; padding: 10px; text-align: center"><span style="font-size: 22px; color: #0E2E2C">Claro</span></div><div style="flex: 1; background: #1A0F2E; border: 3px solid #43276B; padding: 10px; text-align: center"><span style="font-size: 22px; color: #A98CD6">Oscuro</span></div></div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 7px">
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">PEINADO</span>
+                <div style="display: flex; gap: 8px"><div style="flex: 1; background: #1A0F2E; border: 3px solid #43276B; padding: 10px; text-align: center"><span style="font-size: 22px; color: #A98CD6">Corto</span></div><div style="flex: 1; background: #2BD9D0; padding: 10px; text-align: center"><span style="font-size: 22px; color: #0E2E2C">Largo</span></div></div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 7px">
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">ROPA</span>
+                <div style="display: flex; gap: 8px"><div style="flex: 1; background: #1A0F2E; border: 3px solid #43276B; padding: 10px; text-align: center"><span style="font-size: 22px; color: #A98CD6">Camisa</span></div><div style="flex: 1; background: #2BD9D0; padding: 10px; text-align: center"><span style="font-size: 22px; color: #0E2E2C">Traje</span></div></div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 7px">
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">COLOR</span>
+                <div style="display: flex; gap: 8px">
+                  <div style="width: 40px; height: 40px; background: #2BD9D0"></div>
+                  <div style="width: 40px; height: 40px; background: #FF4D9D"></div>
+                  <div style="width: 40px; height: 40px; background: #B6FF3C"></div>
+                  <div style="width: 40px; height: 40px; background: #FFD166"></div>
+                  <div style="width: 40px; height: 40px; background: #FF7A2F"></div>
+                  <div style="width: 40px; height: 40px; background: #7B3FE4; box-shadow: 0 0 0 4px #F3E8FF"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 12px">
+            <div style="flex: 1; border: 3px solid #43276B; padding: 14px; text-align: center"><span style="font-family: 'VT323', monospace; font-size: 22px; color: #F3E8FF; letter-spacing: 1px">GUARDAR</span></div>
+            <div style="flex: 2; background: #B6FF3C; padding: 14px; text-align: center; box-shadow: 0 6px 0 #7FA82A"><span style="font-family: 'Workbench', monospace; font-size: 22px; color: #1B2E06">IR A LA OFICINA ▶</span></div>
+          </div>
+        </div>
+        <span style="position: absolute; left: 20px; bottom: 12px; font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6; letter-spacing: 1px">/AVATAR</span>
+      </div>
+    </div>
+
+    <div style="background: #120A20; border: 3px solid #B6FF3C; padding: 20px 24px; display: flex; gap: 20px; align-items: flex-start">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; color: #B6FF3C; letter-spacing: 1px; flex: none; padding-top: 3px">FEEDBACK VISIBLE</span>
+      <span style="font-size: 25px; line-height: 1.25; color: #F3E8FF; max-width: 1080px">El aviso <b style="color: #B6FF3C">GUARDADO ✓</b> vive en el encabezado de la tarjeta, no debajo del botón: ahí sí se nota. Dura 2,5 s y entra con un salto de 4px, no con fade.</span>
+    </div>
+  </div>
+
+  <div data-screen-label="09 Dashboard" style="padding: 64px; display: flex; flex-direction: column; gap: 30px; border-bottom: 4px solid #43276B">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">09</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">DIGEST DEL VIERNES</span>
+      <span style="font-size: 26px; color: #A98CD6">La prevención, convertida en juego.</span>
+    </div>
+
+    <div style="background: #1A0F2E; border: 4px solid #43276B; display: flex; flex-direction: column">
+      <div style="display: grid; grid-template-columns: 380px 1fr; gap: 4px; background: #43276B">
+
+        <div style="background: #241543; padding: 30px; display: flex; flex-direction: column; gap: 26px">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6; letter-spacing: 2px">PUNTAJE DE RESILIENCIA</span>
+            <div style="display: flex; align-items: baseline; gap: 14px">
+              <span style="font-family: 'Workbench', monospace; font-size: 88px; color: #FFD166; line-height: .9; text-shadow: 0 0 30px rgba(255,209,102,.45)">64</span>
+              <span style="font-family: 'VT323', monospace; font-size: 26px; color: #B6FF3C">▲ 12</span>
+            </div>
+            <span style="font-size: 24px; color: #A98CD6; line-height: 1.15">Mejor semana desde que empezaron a medir.</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 2px">ÚLTIMAS 8 SEMANAS</span>
+            <div style="display: flex; gap: 6px; align-items: flex-end; height: 96px">
+              <div style="flex: 1; height: 28%; background: #43276B"></div>
+              <div style="flex: 1; height: 34%; background: #43276B"></div>
+              <div style="flex: 1; height: 31%; background: #43276B"></div>
+              <div style="flex: 1; height: 45%; background: #7B3FE4"></div>
+              <div style="flex: 1; height: 52%; background: #7B3FE4"></div>
+              <div style="flex: 1; height: 48%; background: #7B3FE4"></div>
+              <div style="flex: 1; height: 64%; background: #FFD166"></div>
+              <div style="flex: 1; height: 100%; background: #B6FF3C; box-shadow: 0 0 20px rgba(182,255,60,.45)"></div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 24px; color: #F3E8FF">Personas en riesgo alto</span><span style="font-family: 'VT323', monospace; font-size: 26px; color: #FF2E63">1</span></div>
+            <div style="height: 2px; background: #43276B"></div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 24px; color: #F3E8FF">Conocimiento con un solo dueño</span><span style="font-family: 'VT323', monospace; font-size: 26px; color: #FFD166">18</span></div>
+            <div style="height: 2px; background: #43276B"></div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 24px; color: #F3E8FF">Quests completadas</span><span style="font-family: 'VT323', monospace; font-size: 26px; color: #B6FF3C">7 / 10</span></div>
+          </div>
+        </div>
+
+        <div style="background: #241543; padding: 30px; display: flex; flex-direction: column; gap: 20px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span style="font-family: 'VT323', monospace; font-size: 19px; color: #A98CD6; letter-spacing: 2px">QUESTS DE ESTA SEMANA</span>
+            <span style="font-family: 'VT323', monospace; font-size: 19px; color: #FF4D9D; letter-spacing: 1px">CIERRAN EL VIERNES 18:00</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+
+            <div style="background: #1A0F2E; border-left: 6px solid #B6FF3C; padding: 18px 20px; display: flex; align-items: center; gap: 20px">
+              <div style="width: 34px; height: 34px; background: #B6FF3C; display: flex; align-items: center; justify-content: center; flex: none"><span style="font-family: 'VT323', monospace; font-size: 24px; color: #1B2E06">✓</span></div>
+              <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                <span style="font-size: 25px; color: #F3E8FF; line-height: 1.1">David → compartir acceso del servidor con Samuel</span>
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #B6FF3C; letter-spacing: 1px">COMPLETADA · +30 PTS</span>
+              </div>
+            </div>
+
+            <div style="background: #1A0F2E; border-left: 6px solid #FFD166; padding: 18px 20px; display: flex; align-items: center; gap: 20px">
+              <div style="width: 34px; height: 34px; border: 3px solid #FFD166; flex: none"></div>
+              <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                <span style="font-size: 25px; color: #F3E8FF; line-height: 1.1">Andrés → documentar el flujo del PR pendiente</span>
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #FFD166; letter-spacing: 1px">EN CURSO · +20 PTS</span>
+              </div>
+              <div style="width: 120px; height: 12px; background: #43276B; flex: none"><div style="width: 60%; height: 100%; background: #FFD166"></div></div>
+            </div>
+
+            <div style="background: #1A0F2E; border-left: 6px solid #FF2E63; padding: 18px 20px; display: flex; align-items: center; gap: 20px">
+              <div style="width: 34px; height: 34px; border: 3px solid #FF2E63; flex: none"></div>
+              <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                <span style="font-size: 25px; color: #F3E8FF; line-height: 1.1">Ana → grabar cómo se compran los vuelos del jefe</span>
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #FF2E63; letter-spacing: 1px">CRÍTICA · +50 PTS · BAJA EL RIESGO DE 87 A 61</span>
+              </div>
+            </div>
+
+            <div style="background: #1A0F2E; border-left: 6px solid #43276B; padding: 18px 20px; display: flex; align-items: center; gap: 20px">
+              <div style="width: 34px; height: 34px; border: 3px solid #43276B; flex: none"></div>
+              <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                <span style="font-size: 25px; color: #F3E8FF; line-height: 1.1">Samuel → segundo administrador del panel de facturación</span>
+                <span style="font-family: 'VT323', monospace; font-size: 18px; color: #A98CD6; letter-spacing: 1px">PENDIENTE · +20 PTS</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px">
+            <div style="background: #FF4D9D; padding: 15px 28px; box-shadow: 0 6px 0 #B0296B"><span style="font-family: 'Workbench', monospace; font-size: 22px; color: #2E0A1C">VER PLAYBOOKS</span></div>
+            <span style="font-size: 23px; color: #A98CD6; line-height: 1.15">Completar la quest crítica de Ana es lo único que mueve el puntaje por encima de 70.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 64px 64px 88px; display: flex; flex-direction: column; gap: 30px">
+    <div style="display: flex; align-items: baseline; gap: 20px">
+      <span style="font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 3px; color: #FF4D9D">10</span>
+      <span style="font-family: 'Workbench', monospace; font-size: 38px; color: #F3E8FF">MOVIMIENTO</span>
+      <span style="font-size: 26px; color: #A98CD6">Lo que separa "juguete" de "producto".</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; border: 4px solid #43276B">
+      <div style="background: #241543; padding: 24px; display: flex; flex-direction: column; gap: 8px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #2BD9D0; letter-spacing: 1px">CAMINAR</span><span style="font-family: 'Workbench', monospace; font-size: 26px; color: #F3E8FF">64 px/s</span><span style="font-size: 23px; color: #A98CD6; line-height: 1.15">Dos tiles por segundo. Easing lineal, cambio de cuadro cada 8 px.</span></div>
+      <div style="background: #241543; padding: 24px; display: flex; flex-direction: column; gap: 8px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #2BD9D0; letter-spacing: 1px">SENTARSE</span><span style="font-family: 'Workbench', monospace; font-size: 26px; color: #F3E8FF">280 ms</span><span style="font-size: 23px; color: #A98CD6; line-height: 1.15">Ease-out. Nunca aparecer sentado de golpe.</span></div>
+      <div style="background: #241543; padding: 24px; display: flex; flex-direction: column; gap: 8px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #2BD9D0; letter-spacing: 1px">PANEL ENTRA</span><span style="font-family: 'Workbench', monospace; font-size: 26px; color: #F3E8FF">220 ms</span><span style="font-size: 23px; color: #A98CD6; line-height: 1.15">Desliza 24 px desde abajo con ease-out. Sin rebote.</span></div>
+      <div style="background: #241543; padding: 24px; display: flex; flex-direction: column; gap: 8px"><span style="font-family: 'VT323', monospace; font-size: 19px; color: #FF2E63; letter-spacing: 1px">EMERGENCIA</span><span style="font-family: 'Workbench', monospace; font-size: 26px; color: #F3E8FF">3–5 s</span><span style="font-size: 23px; color: #A98CD6; line-height: 1.15">Después, el panel. Nunca simultáneos.</span></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 8px">
+      <div style="border: 3px solid #43276B; padding: 26px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'VT323', monospace; font-size: 20px; color: #B6FF3C; letter-spacing: 2px">SÍ</span>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Todo movimiento con tween y easing, sobre la grilla de 32 px.</span>
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Desfasar los ambientes: cafetera a los 10 s, servidor a los 14 s, paseo a los 19 s.</span>
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Etiqueta "Resultado simulado (demo)" mientras el mock esté activo.</span>
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Titileo de pantallas con steps(2), no con opacidad continua: se ve pixel-art.</span>
+        </div>
+      </div>
+      <div style="border: 3px solid #43276B; padding: 26px; display: flex; flex-direction: column; gap: 14px">
+        <span style="font-family: 'VT323', monospace; font-size: 20px; color: #FF2E63; letter-spacing: 2px">NO</span>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Teletransportes, saltos de posición o personajes atravesando escritorios.</span>
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Degradados de fondo, sombras suaves grandes, bordes redondeados en la UI.</span>
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Rojo como color decorativo. Rojo significa emergencia y nada más.</span>
+          <span style="font-size: 24px; color: #F3E8FF; line-height: 1.15">Más de dos tipografías en una misma pantalla del juego.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;crt&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Escena&quot;}, &quot;grid&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Escena&quot;}, &quot;estados&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Escena&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      crt: this.props.crt ?? true,
+      grid: this.props.grid ?? false,
+      estados: this.props.estados ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,9 @@
-// Generates placeholder pixel-art assets for Bus Factor HQ.
-// Node built-ins only (zlib for PNG deflate, hand-written PNG chunks + CRC32).
-// Real Kenney/LPC art is a drop-in swap later — see public/assets/ATTRIBUTION.md.
+// Genera el pixel art de Bus Factor HQ dibujando las recetas de la guía de
+// arte "Synth Dusk" de Claude Design (docs/design/guia-visual.dc.html,
+// secciones 03 TILES · 32PX y 04 SPRITE SHEET). La guía muestra cada pieza a
+// 2x dentro de cajas de 64 px: todas las coordenadas de aquí son las suyas
+// divididas por 2.
+// Sólo built-ins de Node (zlib para el deflate del PNG + chunks/CRC32 a mano).
 
 import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -89,26 +92,6 @@ function fillRect(cv, x, y, rw, rh, [r, g, b, a = 255]) {
   }
 }
 
-function darken([r, g, b, a = 255], factor = 0.45) {
-  return [Math.round(r * factor), Math.round(g * factor), Math.round(b * factor), a];
-}
-
-// Move a channel toward white by `factor` (0..1). Used for the cartoon 1px
-// top-left highlight (~+35% brightness) — additive-toward-white avoids the
-// clipping/banding a flat `c * 1.35` multiply gives on already-bright colors.
-function lighten([r, g, b, a = 255], factor = 0.35) {
-  const l = (c) => Math.min(255, Math.round(c + (255 - c) * factor));
-  return [l(r), l(g), l(b), a];
-}
-
-// Pull a color toward mid-gray. Used for "_off"/dim variants so they read as
-// visibly de-energized next to their lit counterpart.
-function desaturate([r, g, b, a = 255], amount = 0.6) {
-  const avg = (r + g + b) / 3;
-  const mix = (c) => Math.round(c + (avg - c) * amount);
-  return [mix(r), mix(g), mix(b), a];
-}
-
 function writePNG(relPath, cv) {
   const full = join(ASSETS, relPath);
   mkdirSync(dirname(full), { recursive: true });
@@ -116,30 +99,45 @@ function writePNG(relPath, cv) {
   console.log('wrote', relPath, `${cv.w}x${cv.h}`);
 }
 
-// ---------- vibrant cartoon sci-fi palette ----------
-// keep in sync with src/game/palette.ts THEME
+// ---------- paleta Synth Dusk ----------
+// Espejo manual de src/game/palette.ts THEME (un script Node standalone no
+// puede importar TS). Los hex "de dibujo" (floorA/B, deskTop, chairSeat...)
+// salen literalmente del CSS de la guía, divididos por 2 donde son medidas.
+
 const COLORS = {
-  bg: '#0b0b2b',
-  floorA: '#2b2d7a',
-  floorB: '#34378f',
-  wall: '#120f3a',
-  wallEdge: '#00e5ff',
-  desk: '#ff7a00',
-  deskEdge: '#3a1a00',
-  chair: '#ff2e88',
-  server: '#00e5ff',
-  serverAlt: '#7c4dff',
-  coffee: '#ffd600',
-  meeting: '#39ff14',
-  console: '#ff00aa',
-  skinLight: '#ffcc99',
-  skinDark: '#8d5524',
-  hairDark: '#1a1a1a',
-  hairRed: '#ff3d00',
-  clothesBase: '#d8d8d8',
-  riskLow: '#00ff88',
-  riskMid: '#ffea00',
-  riskHigh: '#ff1744',
+  void: '#120A20',
+  base: '#1A0F2E',
+  surface: '#241543',
+  line: '#43276B',
+  turquesa: '#2BD9D0',
+  rosa: '#FF4D9D',
+  lima: '#B6FF3C',
+  oro: '#FFD166',
+  naranja: '#FF7A2F',
+  lila: '#A98BFF',
+  morado: '#7B3FE4',
+  rojo: '#FF2E63',
+  texto: '#F3E8FF',
+  texto2: '#A98CD6',
+
+  // --- Recetas de la guía (sección 03 · TILES 32PX) ---
+  floorA: '#2A1747', // damero, tono A
+  floorB: '#331D53', // damero, tono B
+  wallFill: '#4B2170', // muro, franja ancha
+  wallLine: '#3A1959', // muro, junta oscura
+  deskTop: '#A98BFF', // = lila, canto superior del escritorio
+  deskBody: '#6E4FA8', // cuerpo del escritorio / mesa de juntas
+  chairSeat: '#FF7A2F', // = naranja
+  chairBase: '#B7561F', // naranja quemado (base de la silla)
+  screenOff: '#3A1959', // fondo de la pantalla del monitor encendido
+  screenDead: '#241543', // = surface, pantalla apagada
+  rackBox: '#1F2B12', // caja del rack GitHub
+  legs: '#331D53', // pantalón de todos los personajes (guía sección 04)
+  skinLight: '#E8B98A',
+  skinLightShade: '#C98A5E', // nuca / vista de espalda (piel clara)
+  skinDark: '#8A5C3E',
+  skinDarkShade: '#6E4630', // nuca / vista de espalda (piel oscura)
+  tintable: '#d8d8d8', // pelo y ropa: gris claro para tintar en runtime
 };
 
 function hexToRgba(hex, a = 255) {
@@ -151,257 +149,508 @@ function col(name, a = 255) {
   return hexToRgba(COLORS[name], a);
 }
 
-// ---------- tiles/office.png : 8 tiles of 16x16 in a row ----------
-
-const TILE = 16;
-
-// Generic "cartoon" bevel: fill + 1px dark outline (all sides) + 1px light
-// highlight on the inner top/left edge, so every tile/object reads as a
-// raised, outlined block instead of a flat rectangle.
-function drawBeveledCell(cv, x0, y0, w, h, fill, opts = {}) {
-  const outline = opts.outline || darken(fill, 0.45);
-  const highlight = opts.highlight || lighten(fill, 0.35);
-  fillRect(cv, x0, y0, w, h, fill);
-  for (let x = x0; x < x0 + w; x++) {
-    setPixel(cv, x, y0, ...outline);
-    setPixel(cv, x, y0 + h - 1, ...outline);
-  }
-  for (let y = y0; y < y0 + h; y++) {
-    setPixel(cv, x0, y, ...outline);
-    setPixel(cv, x0 + w - 1, y, ...outline);
-  }
-  for (let x = x0 + 1; x < x0 + w - 1; x++) setPixel(cv, x, y0 + 1, ...highlight);
-  for (let y = y0 + 1; y < y0 + h - 1; y++) setPixel(cv, x0 + 1, y, ...highlight);
+/** Mezcla `fg` sobre `bg` con opacidad `alpha`. La guía usa `opacity: .3/.4`
+ * en los LEDs apagados del rack; el PNG es opaco, así que se pre-mezcla. */
+function over(fg, bg, alpha) {
+  return [
+    Math.round(fg[0] * alpha + bg[0] * (1 - alpha)),
+    Math.round(fg[1] * alpha + bg[1] * (1 - alpha)),
+    Math.round(fg[2] * alpha + bg[2] * (1 - alpha)),
+    255,
+  ];
 }
 
-// floor: 2-tone checkerboard in 8x8 quadrants, no outline (an outlined 16x16
-// floor tile reads as a grid of boxes rather than a floor).
-function drawFloorTile(cv, ix) {
-  const x0 = ix * TILE;
-  const a = col('floorA');
-  const b = col('floorB');
-  fillRect(cv, x0, 0, 8, 8, a);
-  fillRect(cv, x0 + 8, 0, 8, 8, b);
-  fillRect(cv, x0, 8, 8, 8, b);
-  fillRect(cv, x0 + 8, 8, 8, 8, a);
+/** Marco de `t` px de grosor (la guía dibuja bordes planos, no biseles). */
+function strokeRect(cv, x, y, w, h, t, color) {
+  fillRect(cv, x, y, w, t, color);
+  fillRect(cv, x, y + h - t, w, t, color);
+  fillRect(cv, x, y, t, h, color);
+  fillRect(cv, x + w - t, y, t, h, color);
+}
+
+function fillCircle(cv, cx, cy, r, color) {
+  for (let y = cy - r; y <= cy + r; y++) {
+    for (let x = cx - r; x <= cx + r; x++) {
+      const dx = x - cx + 0.5;
+      const dy = y - cy + 0.5;
+      if (dx * dx + dy * dy <= r * r) setPixel(cv, x, y, ...color);
+    }
+  }
+}
+
+// ---------- tiles/office.png : 9 tiles de 32x32 en fila ----------
+//
+// Orden fijo (lo consume scripts/gen-map.mjs vía GID = índice + 1):
+//   0 piso · 1 muro · 2 escritorio · 3 silla · 4 cafetera · 5 puerta
+//   6 lámpara · 7 pantalla_meet · 8 planta
+//
+// Los 9 están vivos: `src/game/map.test.ts` falla si alguno deja de usarse en
+// el mapa. Monitor y rack ya no son tiles -- se dibujan como sprites de
+// `objects.png` para poder animarlos, tintarlos por puesto y ordenarlos por
+// profundidad; sus recetas viven ahí y no se duplican aquí.
+//
+// Los tiles de mobiliario tienen FONDO TRANSPARENTE a propósito: se pintan en
+// la capa `furniture`, encima de la capa `floor`, igual que en el mockup de
+// la guía (sección 05), donde los muebles se apoyan sobre el damero sin caja
+// oscura alrededor. El recuadro `#43276B` de las muestras de la sección 03 es
+// el marco de la muestra, no parte del tile: el mockup no dibuja rejilla
+// alguna sobre el piso.
+
+const TILE = 32;
+
+/** Un segmento del rack GitHub. El rack del mockup es una torre de 3 celdas,
+ * así que los segmentos se apilan: sólo llevan borde LIMA a izquierda y
+ * derecha, y los de los extremos (`cap`) añaden la tapa superior (el de abajo
+ * se dibuja con `setFlipY`). Repartido así, la torre completa enseña 4 filas
+ * de LEDs, como el mockup. `live` = LEDs sanos; si no, todo se apaga a rojo.
+ *
+ * `rows`: posiciones Y de las filas de LEDs dentro del segmento. */
+function drawRackSegment(cv, x0, { live, cap, rows }) {
+  const box = col('rackBox');
+  const edge = live ? col('lima') : col('rojo');
+  fillRect(cv, x0, 0, 32, 32, box);
+  fillRect(cv, x0, 0, 2, 32, edge);
+  fillRect(cv, x0 + 30, 0, 2, 32, edge);
+  if (cap) fillRect(cv, x0, 0, 32, 2, edge);
+
+  const lima = live ? col('lima') : over(col('rojo'), box, 0.6);
+  const turq = live ? col('turquesa') : over(col('rojo'), box, 0.35);
+  // Patrón de la guía: lima / lima .3 / turquesa, alternado en la fila par.
+  const PATTERN = [
+    [lima, over(lima, box, 0.3), turq],
+    [over(lima, box, 0.3), lima, over(turq, box, 0.4)],
+  ];
+  rows.forEach((y, i) => {
+    PATTERN[i % 2].forEach((c, j) => fillRect(cv, x0 + 8 + j * 6, y, 4, 4, c));
+    fillRect(cv, x0 + 6, y + 8, 20, 2, col('line'));
+  });
+}
+
+const TILE_DRAW = [
+  // 0 · PISO: damero 16x16. `repeating-conic-gradient(#2A1747 0 25%, #331D53
+  // 0 50%)` arranca a las 12 y gira en horario -> arriba-derecha y
+  // abajo-izquierda son el tono A; arriba-izquierda y abajo-derecha el B.
+  (cv, x0) => {
+    fillRect(cv, x0, 0, 16, 16, col('floorB'));
+    fillRect(cv, x0 + 16, 0, 16, 16, col('floorA'));
+    fillRect(cv, x0, 16, 16, 16, col('floorA'));
+    fillRect(cv, x0 + 16, 16, 16, 16, col('floorB'));
+  },
+  // 1 · MURO: franjas #4B2170 con juntas #3A1959 de 2 px cada 32 px. La guía
+  // declara dos `repeating-linear-gradient` (90deg y 0deg), pero el de 90deg
+  // va primero y es opaco: lo que el mockup dibuja de verdad son sólo las
+  // juntas verticales, una por celda.
+  (cv, x0) => {
+    fillRect(cv, x0, 0, 32, 32, col('wallFill'));
+    fillRect(cv, x0 + 30, 0, 2, 32, col('wallLine'));
+  },
+  // 2 · ESCRITORIO: tablero a todo el ancho (dos tiles contiguos forman una
+  // mesa de 64 px como en el mockup) con canto superior LILA de 3 px. El
+  // mockup dibuja la mesa de 66 px a 2x = 33 px, o sea prácticamente el alto
+  // completo de la celda: ocupa de y=10 al borde inferior.
+  (cv, x0) => {
+    fillRect(cv, x0, 10, 32, 22, col('deskBody'));
+    fillRect(cv, x0, 10, 32, 3, col('deskTop'));
+  },
+  // 3 · SILLA: respaldo NARANJA 14x11 en (9,8) + base 10x6 en (11,19).
+  (cv, x0) => {
+    fillRect(cv, x0 + 9, 8, 14, 11, col('chairSeat'));
+    fillRect(cv, x0 + 11, 19, 10, 6, col('chairBase'));
+  },
+  // 4 · CAFETERA: SURFACE con borde 2 px #A98CD6, barra ROSA 18x5 en (7,5),
+  // taza ORO 12x9 en (10,16).
+  (cv, x0) => {
+    fillRect(cv, x0, 0, 32, 32, col('surface'));
+    strokeRect(cv, x0, 0, 32, 32, 2, col('texto2'));
+    fillRect(cv, x0 + 7, 5, 18, 5, col('rosa'));
+    fillRect(cv, x0 + 10, 16, 12, 9, col('oro'));
+  },
+  // 5 · PUERTA: NARANJA con pomo ORO 4x4 y marco ORO de 2 px en el canto
+  // derecho, el que da al interior (el mockup la pone en el muro izquierdo:
+  // `left: 0; width: 30px; border-right: 5px solid #FFD166`). Dos tiles
+  // apilados forman la hoja alta del mockup.
+  (cv, x0) => {
+    fillRect(cv, x0, 0, 32, 32, col('naranja'));
+    fillRect(cv, x0 + 30, 0, 2, 32, col('oro'));
+    fillRect(cv, x0 + 22, 14, 4, 4, col('oro'));
+  },
+  // 6 · LÁMPARA: círculo ORO centrado en (16,15). El mockup la dibuja mucho
+  // más gorda que la muestra de la sección 03: r10 es el punto medio. Sin
+  // glow horneado (lo pone OfficeScene).
+  (cv, x0) => fillCircle(cv, x0 + 16, 15, 10, col('oro')),
+  // 7 · PANTALLA MEET: TURQUESA a todo el ancho (y=4, alto 17) + base MORADO
+  // (y=23, alto 4). La muestra de la guía la deja con 3 px de aire a los
+  // lados, pero el mockup la dibuja de 208 px a 2x (= 1,6 celdas): a todo el
+  // ancho, dos tiles contiguos forman el panel de 64 px sin costura.
+  (cv, x0) => {
+    fillRect(cv, x0, 4, 32, 17, col('turquesa'));
+    fillRect(cv, x0, 23, 32, 4, col('morado'));
+  },
+  // 8 · PLANTA: follaje LIMA 18x13 en (7,9) sobre maceta NARANJA 10x7 en (11,22).
+  (cv, x0) => {
+    fillRect(cv, x0 + 7, 9, 18, 13, col('lima'));
+    fillRect(cv, x0 + 11, 22, 10, 7, col('naranja'));
+  },
+];
+
+// ---------- sprites/glow.png : halo radial de 64x64 para los glows ----------
+//
+// La guía pinta los glows con `box-shadow` (caída suave). Una elipse plana de
+// Phaser en modo aditivo se ve como un disco duro, así que se genera una
+// textura blanca con alfa en caída cuadrática y OfficeScene la tinta del color
+// del objeto. No va horneada en ningún tile: es una capa aparte.
+
+function genGlow() {
+  const R = 32;
+  const cv = makeCanvas(R * 2, R * 2);
+  for (let y = 0; y < R * 2; y++) {
+    for (let x = 0; x < R * 2; x++) {
+      const dx = (x - R + 0.5) / R;
+      const dy = (y - R + 0.5) / R;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d >= 1) continue;
+      const a = (1 - d) * (1 - d);
+      setPixel(cv, x, y, 255, 255, 255, Math.round(a * 255));
+    }
+  }
+  writePNG('sprites/glow.png', cv);
+}
+
+/** Extruye 1 px el borde de cada tile (margin 1, spacing 2 en Tiled).
+ * Sin esto, el juego escala el mapa a un factor no entero (FIT: 736x416 en la
+ * ventana) y el muestreo del borde de cada tile chupa el píxel del tile
+ * vecino de la tira, pintando una rejilla de líneas del color del muro sobre
+ * todo el piso. */
+function extrude(src, tile, count) {
+  const cell = tile + 2;
+  const cv = makeCanvas(count * cell, cell);
+  const clamp = (v) => Math.min(tile - 1, Math.max(0, v));
+  for (let i = 0; i < count; i++) {
+    for (let y = -1; y <= tile; y++) {
+      for (let x = -1; x <= tile; x++) {
+        const si = (clamp(y) * src.w + i * tile + clamp(x)) * 4;
+        setPixel(
+          cv,
+          i * cell + 1 + x,
+          1 + y,
+          src.data[si],
+          src.data[si + 1],
+          src.data[si + 2],
+          src.data[si + 3],
+        );
+      }
+    }
+  }
+  return cv;
 }
 
 function genTiles() {
-  const specs = [
-    null, // 0 floor - handled separately (checkerboard)
-    { fill: col('wall'), outline: col('wallEdge') }, // 1 wall - dark navy, neon cyan trim
-    { fill: col('desk'), outline: col('deskEdge') }, // 2 desk - orange, dark umber trim
-    { fill: col('chair') }, // 3 chair - hot pink
-    { fill: col('coffee') }, // 4 coffee machine - electric yellow
-    { fill: col('meeting') }, // 5 meeting table - neon green
-    { fill: col('serverAlt') }, // 6 server - purple housing (serverAlt), cyan core lives in objects.png
-    { fill: col('console') }, // 7 console - magenta
-  ];
-
-  const cv = makeCanvas(TILE * specs.length, TILE);
-  specs.forEach((spec, i) => {
-    if (!spec) {
-      drawFloorTile(cv, i);
-      return;
-    }
-    drawBeveledCell(cv, i * TILE, 0, TILE, TILE, spec.fill, { outline: spec.outline });
-  });
-  writePNG('tiles/office.png', cv);
+  const cv = makeCanvas(TILE * TILE_DRAW.length, TILE);
+  TILE_DRAW.forEach((draw, i) => draw(cv, i * TILE));
+  writePNG('tiles/office.png', extrude(cv, TILE, TILE_DRAW.length));
 }
 
-// ---------- sprites/objects.png : 12 frames of 16x16 in a row ----------
+// ---------- sprites/objects.png : 16 frames de 32x32 (512x32) ----------
+//
+// Los 12 primeros mantienen su orden histórico (lo consumen OfficeScene.ANIMS,
+// scenarios/fx.ts `QUESTION_FRAME = 11` y scenarios/*):
+//   0 server_on · 1 server_off · 2 pc_on · 3 pc_off · 4 coffee_a · 5 coffee_b
+//   6 lamp_a · 7 lamp_b · 8 meet_on · 9 meet_off · 10 console · 11 question
+// y se añaden al final (los índices viejos no se mueven):
+//   12 desk · 13 monitor_frame · 14 rack_cap_on · 15 rack_cap_off
+//
+// - `desk` es sprite, no tile, porque tiene que dibujarse POR ENCIMA de las
+//   piernas del personaje sentado detrás (profundidad por Y, ver OfficeScene).
+// - `monitor_frame` es sólo el marco, en `#d8d8d8`, para que OfficeScene lo
+//   tinte por escritorio (el mockup varía el color del bisel de puesto a
+//   puesto). Por eso `pc_on`/`pc_off` ya no llevan borde: son sólo el
+//   interior de la pantalla + la peana, y el marco va superpuesto sin teñir
+//   el `#3A1959` del interior.
+// - `server_on`/`server_off` son ahora el segmento CENTRAL del rack (2 filas
+//   de LEDs, sin tapas) y `rack_cap_*` el segmento de los extremos (1 fila +
+//   tapa); el de abajo se dibuja con `setFlipY`.
+//
+// Fondo transparente: son sprites que se superponen al mapa.
 
-// A small square "core" with an even brighter inset (the "2px brighter inner
-// core") so lit server/meeting/console objects read as glowing.
-function drawGlowCore(cv, x0, color, lit) {
-  if (lit) {
-    fillRect(cv, x0 + 5, 5, 6, 6, color);
-    fillRect(cv, x0 + 7, 7, 2, 2, lighten(color, 0.6));
-  } else {
-    fillRect(cv, x0 + 5, 5, 6, 6, desaturate(darken(color, 0.5), 0.5));
-  }
+// "?" de 5x7 px (la guía pide un signo real, no un cuadrado), pintado a 2x
+// para que se lea sobre una celda de 32 px.
+const QUESTION_GLYPH = [
+  '.###.',
+  '#...#',
+  '....#',
+  '...#.',
+  '..#..',
+  '.....',
+  '..#..',
+];
+
+function drawQuestion(cv, x0, color) {
+  QUESTION_GLYPH.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      if (ch === '#') fillRect(cv, x0 + 11 + x * 2, 9 + y * 2, 2, 2, color);
+    });
+  });
+}
+
+function drawCoffeeMachine(cv, x0, lit) {
+  fillRect(cv, x0, 0, 32, 32, col('surface'));
+  strokeRect(cv, x0, 0, 32, 32, 2, col('texto2'));
+  fillRect(cv, x0 + 7, 5, 18, 5, col('rosa'));
+  const cup = lit ? col('oro') : over(col('oro'), col('surface'), 0.55);
+  fillRect(cv, x0 + 10, 16, 12, 9, cup);
+}
+
+/** Interior de la pantalla + peana. El marco va en su propio frame
+ * (`monitor_frame`) para poder tintarlo por escritorio sin ensuciar el
+ * `#3A1959` del interior, que el tinte multiplicativo dejaría casi negro. */
+function drawMonitor(cv, x0, on) {
+  fillRect(cv, x0 + 5, 7, 22, 15, on ? col('screenOff') : col('screenDead'));
+  fillRect(cv, x0 + 12, 22, 8, 4, col('line'));
 }
 
 function genObjects() {
   const frames = [
-    // [housingFill, extra(cv, x0)]
-    [darken(col('serverAlt'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), true)], // server_on
-    [darken(col('serverAlt'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('server'), false)], // server_off
-    [hexToRgba('#252538'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, col('server'))], // pc_on (screen glow)
-    [
-      hexToRgba('#252538'),
-      (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, desaturate(hexToRgba('#111118'), 0.3)),
-    ], // pc_off (dark screen)
-    [hexToRgba('#3a2a1a'), (cv, x0) => fillRect(cv, x0 + 6, 3, 4, 4, col('coffee'))], // coffee_a (lit)
-    [
-      hexToRgba('#3a2a1a'),
-      (cv, x0) => fillRect(cv, x0 + 6, 3, 4, 4, desaturate(darken(col('coffee'), 0.6), 0.5)),
-    ], // coffee_b (dim)
-    [lighten(col('coffee'), 0.25), null], // lamp_a (bright)
-    [desaturate(darken(col('coffee'), 0.5), 0.6), null], // lamp_b (dim)
-    [darken(col('meeting'), 0.5), (cv, x0) => drawGlowCore(cv, x0, col('meeting'), true)], // meet_on
-    [darken(col('meeting'), 0.5), (cv, x0) => drawGlowCore(cv, x0, col('meeting'), false)], // meet_off
-    [darken(col('console'), 0.4), (cv, x0) => drawGlowCore(cv, x0, col('console'), true)], // console (always lit)
-    [col('riskMid'), (cv, x0) => fillRect(cv, x0 + 5, 5, 6, 6, darken(col('riskMid'), 0.4))], // question
+    // 0/1 · segmento CENTRAL del rack (2 filas de LEDs, sin tapas)
+    (cv, x0) => drawRackSegment(cv, x0, { live: true, cap: false, rows: [4, 18] }),
+    (cv, x0) => drawRackSegment(cv, x0, { live: false, cap: false, rows: [4, 18] }),
+    (cv, x0) => drawMonitor(cv, x0, true), // 2 pc_on
+    (cv, x0) => drawMonitor(cv, x0, false), // 3 pc_off
+    (cv, x0) => drawCoffeeMachine(cv, x0, true), // 4 coffee_a
+    (cv, x0) => drawCoffeeMachine(cv, x0, false), // 5 coffee_b
+    (cv, x0) => fillCircle(cv, x0 + 16, 15, 10, col('oro')), // 6 lamp_a
+    (cv, x0) =>
+      fillCircle(cv, x0 + 16, 15, 10, over(col('oro'), col('base'), 0.78)), // 7 lamp_b
+    (cv, x0) => {
+      // 8 meet_on -- a todo el ancho: dos sprites contiguos forman el panel
+      // de 64 px del mockup sin costura.
+      fillRect(cv, x0, 4, 32, 17, col('turquesa'));
+      fillRect(cv, x0, 23, 32, 4, col('morado'));
+    },
+    (cv, x0) => {
+      // 9 meet_off
+      fillRect(cv, x0, 4, 32, 17, col('screenDead'));
+      fillRect(cv, x0, 23, 32, 4, col('morado'));
+    },
+    (cv, x0) => {
+      // 10 console: caja ROSA con borde `texto` (el trato de la guía para la
+      // acción principal) + pantallita y dos botones.
+      fillRect(cv, x0 + 3, 6, 26, 22, col('rosa'));
+      strokeRect(cv, x0 + 3, 6, 26, 22, 2, col('texto'));
+      fillRect(cv, x0 + 8, 11, 16, 8, col('screenDead'));
+      fillRect(cv, x0 + 10, 22, 4, 3, col('oro'));
+      fillRect(cv, x0 + 18, 22, 4, 3, col('turquesa'));
+    },
+    (cv, x0) => drawQuestion(cv, x0, col('oro')), // 11 question
+    // 12 · ESCRITORIO (misma receta que el tile 2, pero como sprite para poder
+    // ordenarlo por profundidad delante de las piernas del que está sentado).
+    (cv, x0) => {
+      fillRect(cv, x0, 10, 32, 22, col('deskBody'));
+      fillRect(cv, x0, 10, 32, 3, col('deskTop'));
+    },
+    // 13 · MARCO DEL MONITOR: sólo el bisel de 2 px, en gris tintable.
+    (cv, x0) => strokeRect(cv, x0 + 5, 7, 22, 15, 2, col('tintable')),
+    // 14/15 · segmento EXTREMO del rack (1 fila de LEDs + tapa arriba).
+    (cv, x0) => drawRackSegment(cv, x0, { live: true, cap: true, rows: [12] }),
+    (cv, x0) => drawRackSegment(cv, x0, { live: false, cap: true, rows: [12] }),
   ];
 
   const cv = makeCanvas(TILE * frames.length, TILE);
-  frames.forEach(([bg, extra], i) => {
-    const x0 = i * TILE;
-    drawBeveledCell(cv, x0, 0, TILE, TILE, bg);
-    if (extra) extra(cv, x0);
-  });
+  frames.forEach((draw, i) => draw(cv, i * TILE));
   writePNG('sprites/objects.png', cv);
 }
 
-// ---------- character layers: 4 rows (down,left,right,up) x 3 cols (walk) of 16x24 ----------
+// ---------- capas de personaje: 3 col x 4 filas de 32x52 (96x208) ----------
+//
+// Filas: 0 frente · 1 izquierda · 2 derecha · 3 espalda.
+// Columnas: 1 = reposo; 0 y 2 = pasos alternos (una pierna 2 px más corta y,
+// en la columna 2, el cuerpo 1 px más abajo — los dos cuadros de caminata de
+// la guía, sección 04 · POSES MÍNIMAS).
+//
+// Rectángulos de la guía (32x52): pelo 22x9 en (5,0) · cara 20x14 en (6,9) ·
+// torso 28x18 en (2,23) · piernas 8x11 en (4,41) y (20,41).
+// Espalda: pelo 22x13 en (5,0) · nuca 16x10 en (8,13).
 
-const CW = 16;
-const CH = 24;
-const ROWS = ['down', 'left', 'right', 'up'];
-const COLS = 3;
+const CW = 32;
+const CH = 52;
+const CROWS = 4; // frente, izquierda, derecha, espalda
+const CCOLS = 3;
 
-function frameOrigin(row, col) {
-  return [col * CW, row * CH];
-}
+// Piernas por columna: [x, y, w, h] de la pierna izquierda y la derecha.
+const LEGS_FRONT = [
+  [
+    [2, 41, 8, 11],
+    [20, 41, 8, 9],
+  ], // col 0 · paso A
+  [
+    [4, 41, 8, 11],
+    [20, 41, 8, 11],
+  ], // col 1 · reposo
+  [
+    [4, 41, 8, 9],
+    [22, 41, 8, 11],
+  ], // col 2 · paso B
+];
+const LEGS_SIDE = [
+  [
+    [8, 41, 8, 11],
+    [18, 41, 8, 9],
+  ],
+  [
+    [10, 41, 8, 11],
+    [16, 41, 8, 11],
+  ],
+  [
+    [10, 41, 8, 9],
+    [16, 41, 8, 11],
+  ],
+];
+// Rebote del torso/cabeza: la columna 2 va 1 px más abajo (cuadro B).
+const BOB = [0, 0, 1];
 
 function makeCharSheet() {
-  return makeCanvas(CW * COLS, CH * ROWS.length);
+  return makeCanvas(CW * CCOLS, CH * CROWS);
 }
 
-// Fill a rect and outline it with a 1px darkened border, approximating a
-// silhouette outline around each body part (cartoon look).
-function fillRectOutlined(cv, x, y, w, h, fill) {
-  fillRect(cv, x, y, w, h, fill);
-  const outline = darken(fill, 0.45);
-  for (let xx = x; xx < x + w; xx++) {
-    setPixel(cv, xx, y, ...outline);
-    setPixel(cv, xx, y + h - 1, ...outline);
+function frameOrigin(row, c) {
+  return [c * CW, row * CH];
+}
+
+function drawBody(cv, row, c, skin, shade) {
+  const [x0, y0] = frameOrigin(row, c);
+  const dy = BOB[c];
+  if (row === 3) {
+    fillRect(cv, x0 + 8, y0 + 13 + dy, 16, 10, shade); // nuca (espalda)
+  } else if (row === 0) {
+    fillRect(cv, x0 + 6, y0 + 9 + dy, 20, 14, skin); // cara de frente
+  } else {
+    fillRect(cv, x0 + 8, y0 + 9 + dy, 16, 14, skin); // cara de perfil
+    fillRect(cv, x0 + 22, y0 + 9 + dy, 2, 14, shade); // canto sombreado
   }
-  for (let yy = y; yy < y + h; yy++) {
-    setPixel(cv, x, yy, ...outline);
-    setPixel(cv, x + w - 1, yy, ...outline);
+  const legs = row === 1 || row === 2 ? LEGS_SIDE[c] : LEGS_FRONT[c];
+  for (const [lx, ly, lw, lh] of legs) {
+    fillRect(cv, x0 + lx, y0 + ly, lw, lh, col('legs'));
   }
 }
 
-// body: skin-colored head + torso/legs silhouette, legs animate slightly per walk frame
-function drawBody(cv, row, col, skin) {
-  const [x0, y0] = frameOrigin(row, col);
-  // head 8x8
-  fillRectOutlined(cv, x0 + 4, y0 + 2, 8, 8, skin);
-  // torso 10x9
-  fillRectOutlined(cv, x0 + 3, y0 + 10, 10, 9, skin);
-  // legs: two 3x5 blocks, offset per walk phase for a subtle walk cycle
-  const phase = col - 1; // -1, 0, 1
-  fillRectOutlined(cv, x0 + 4 + phase, y0 + 19, 3, 5, skin);
-  fillRectOutlined(cv, x0 + 9 - phase, y0 + 19, 3, 5, skin);
-}
-
-// clothes: torso block only, light gray so runtime tint (paleta) reads vivid
-function drawClothes(cv, row, col, base) {
-  const [x0, y0] = frameOrigin(row, col);
-  fillRectOutlined(cv, x0 + 3, y0 + 10, 10, 8, base);
-}
-
-// hair: cap on top of head; "long" extends down the sides
-function drawHair(cv, row, col, color, long) {
-  const [x0, y0] = frameOrigin(row, col);
-  fillRectOutlined(cv, x0 + 4, y0 + 1, 8, 3, color);
-  if (long) {
-    fillRectOutlined(cv, x0 + 3, y0 + 4, 2, 6, color);
-    fillRectOutlined(cv, x0 + 11, y0 + 4, 2, 6, color);
+function drawClothes(cv, row, c, suit) {
+  const [x0, y0] = frameOrigin(row, c);
+  const dy = BOB[c];
+  const [tx, tw] = row === 1 || row === 2 ? [3, 26] : [2, 28];
+  fillRect(cv, x0 + tx, y0 + 23 + dy, tw, 18, col('tintable'));
+  if (!suit) return;
+  // Traje: cuello en V que converge en el centro + línea central VOID desde
+  // donde acaba la V hacia abajo. Distingue traje de camisa sin gastar un
+  // color de la paleta.
+  const top = y0 + 23 + dy;
+  for (let i = 0; i < 6; i++) {
+    fillRect(cv, x0 + 11 + i, top + i, 2, 1, col('void'));
+    fillRect(cv, x0 + 19 - i, top + i, 2, 1, col('void'));
   }
+  fillRect(cv, x0 + 15, top + 6, 2, 12, col('void'));
+}
+
+function drawHair(cv, row, c, long) {
+  const [x0, y0] = frameOrigin(row, c);
+  const dy = BOB[c];
+  const cap = row === 3 ? 13 : 9; // de espalda el pelo cubre toda la coronilla
+  fillRect(cv, x0 + 5, y0 + dy, 22, cap, col('tintable'));
+  if (!long) return;
+  fillRect(cv, x0 + 3, y0 + dy, 2, 16, col('tintable'));
+  fillRect(cv, x0 + 27, y0 + dy, 2, 16, col('tintable'));
 }
 
 function genCharLayer(name, drawFn) {
   const cv = makeCharSheet();
-  ROWS.forEach((_, row) => {
-    for (let colIdx = 0; colIdx < COLS; colIdx++) drawFn(cv, row, colIdx);
-  });
+  for (let row = 0; row < CROWS; row++) {
+    for (let c = 0; c < CCOLS; c++) drawFn(cv, row, c);
+  }
   writePNG(`sprites/${name}.png`, cv);
 }
 
 function genCharacters() {
-  genCharLayer('char_body_light', (cv, r, c) => drawBody(cv, r, c, col('skinLight')));
-  genCharLayer('char_body_dark', (cv, r, c) => drawBody(cv, r, c, col('skinDark')));
-  genCharLayer('char_hair_short', (cv, r, c) => drawHair(cv, r, c, col('hairDark'), false));
-  genCharLayer('char_hair_long', (cv, r, c) => drawHair(cv, r, c, col('hairRed'), true));
-  // light-gray base clothing so the runtime tint (paleta) reads cleanly and vividly
-  genCharLayer('char_clothes_shirt', (cv, r, c) => drawClothes(cv, r, c, col('clothesBase')));
-  genCharLayer('char_clothes_suit', (cv, r, c) => drawClothes(cv, r, c, col('clothesBase')));
-}
-
-// ---------- audio placeholder ----------
-
-function genAudioReadme() {
-  const full = join(ASSETS, 'audio', 'README.md');
-  mkdirSync(dirname(full), { recursive: true });
-  const content = `# Audio (pending)
-
-No audio files are generated by \`gen-assets.mjs\` — synthesizing usable game
-audio from scratch is out of scope for placeholders. Drop these 4 files in
-this folder before Task 8 (audio + mute):
-
-- \`music.ogg\` — background chiptune loop (played on first click, volume ~0.2).
-- \`door.ogg\` — door sound for the "renuncia" scenario.
-- \`alarm.ogg\` — alarm loop for the "robo_pc" scenario.
-- \`click.ogg\` — UI click feedback (arcade console, buttons).
-
-Suggested CC0 source: Kenney Audio packs (https://kenney.nl/assets?q=audio) or freesound.org (CC0 filter).
-`;
-  writeFileSync(full, content);
-  console.log('wrote audio/README.md');
+  genCharLayer('char_body_light', (cv, r, c) =>
+    drawBody(cv, r, c, col('skinLight'), col('skinLightShade')),
+  );
+  genCharLayer('char_body_dark', (cv, r, c) =>
+    drawBody(cv, r, c, col('skinDark'), col('skinDarkShade')),
+  );
+  genCharLayer('char_hair_short', (cv, r, c) => drawHair(cv, r, c, false));
+  genCharLayer('char_hair_long', (cv, r, c) => drawHair(cv, r, c, true));
+  genCharLayer('char_clothes_shirt', (cv, r, c) => drawClothes(cv, r, c, false));
+  genCharLayer('char_clothes_suit', (cv, r, c) => drawClothes(cv, r, c, true));
 }
 
 // ---------- ATTRIBUTION.md ----------
+// Nota: no hay un genAudioReadme() aqui a proposito -- public/assets/audio/
+// README.md esta mantenido a mano (el audio real vive sintetizado en
+// src/audio.ts, no como placeholder generado) y este script no debe pisarlo.
 
 function genAttribution() {
   const full = join(ASSETS, 'ATTRIBUTION.md');
   const content = `# Attribution
 
-All art in this folder is **programmatically generated placeholder pixel art**
-(solid-color blocks with 1px darker borders), produced by
-\`frontend/scripts/gen-assets.mjs\`. It exists so the game is playable and
-demoable without shipping third-party binaries in an agent-authored commit.
+Todo el arte de esta carpeta es **pixel art generado por script**
+(\`frontend/scripts/gen-assets.mjs\`), dibujado rectángulo a rectángulo según
+la guía de arte "Synth Dusk" de Claude Design
+(\`docs/design/guia-visual.dc.html\`, secciones 03 TILES y 04 SPRITE SHEET).
+Las coordenadas de la guía se muestran a 2x en cajas de 64 px: aquí van
+divididas por 2.
 
-Real art is intended to be a **drop-in swap**: replace the files below with
-matching filenames and frame sizes, no code changes required (frame geometry
-is fixed in \`game/config.ts\` / scene code).
+No se usa arte de terceros, así que no se debe atribución externa.
 
-## Expected files & frame sizes
+## Archivos y geometría de frames
 
-### \`tiles/office.png\` — 128x16, 8 tiles of 16x16 in a row
-Index 0 floor, 1 wall, 2 desk, 3 chair, 4 coffee machine, 5 meeting table, 6 server, 7 console.
+### \`tiles/office.png\` — 306x34, 9 tiles de 32x32 (margin 1, spacing 2)
 
-### \`sprites/objects.png\` — 192x16, 12 frames of 16x16 in a row
-\`server_on, server_off, pc_on, pc_off, coffee_a, coffee_b, lamp_a, lamp_b, meet_on, meet_off, console, question\`.
+\`0 piso · 1 muro · 2 escritorio · 3 silla · 4 cafetera · 5 puerta ·
+6 lámpara · 7 pantalla Meet · 8 planta\`
 
-### Character layers — each a 4-row x 3-col sheet of 16x24 frames (48x96)
-Rows: down, left, right, up. Cols: 3 walk frames.
+Los 9 se usan en el mapa (\`src/game/map.test.ts\` lo comprueba). El monitor y
+el rack no son tiles: viven en \`objects.png\` porque hay que animarlos,
+tintarlos por puesto y ordenarlos por profundidad.
+
+Los tiles de mobiliario tienen fondo transparente: se pintan en la capa
+\`furniture\` sobre la capa \`floor\`.
+
+### \`sprites/glow.png\` — 64x64, halo radial blanco
+
+Textura de un solo uso: \`OfficeScene\` la tinta y la escala para los glows
+aditivos (monitores encendidos, rack, lámparas, pantalla Meet).
+
+### \`sprites/objects.png\` — 512x32, 16 frames de 32x32 en fila
+
+\`server_on, server_off, pc_on, pc_off, coffee_a, coffee_b, lamp_a, lamp_b,
+meet_on, meet_off, console, question, desk, monitor_frame, rack_cap_on,
+rack_cap_off\`. Fondo transparente. Los 12 primeros índices no se mueven
+nunca (\`scenarios/fx.ts\` referencia el 11 y \`OfficeScene\` el 10).
+
+\`desk\` es sprite y no tile porque tiene que dibujarse por encima de las
+piernas de quien está sentado detrás. \`monitor_frame\` es el bisel en
+\`#d8d8d8\`, que \`OfficeScene\` tinta por escritorio; por eso \`pc_on\`/\`pc_off\`
+sólo llevan el interior de la pantalla y la peana. \`server_on\`/\`server_off\`
+son el segmento central de la torre del rack y \`rack_cap_*\` los extremos.
+
+### Capas de personaje — 96x208 (3 columnas x 4 filas de 32x52)
+
+Filas: frente, izquierda, derecha, espalda. Columnas: 1 = reposo, 0 y 2 =
+pasos alternos.
 
 - \`sprites/char_body_light.png\`, \`sprites/char_body_dark.png\`
 - \`sprites/char_hair_short.png\`, \`sprites/char_hair_long.png\`
 - \`sprites/char_clothes_shirt.png\`, \`sprites/char_clothes_suit.png\`
 
-Clothing layers are kept light-gray/grayscale-ish so the runtime \`paleta\` tint
-(applied via Phaser sprite tint) reads correctly on top of them.
+Pelo y ropa se dibujan en \`#d8d8d8\` para que el tinte en runtime
+(\`HAIR_PALETTE\` / \`PALETTE\`) lea vivo. La piel va en \`#E8B98A\` (clara) o
+\`#8A5C3E\` (oscura) y el pantalón siempre en \`#331D53\`.
+
+Los glows (\`box-shadow\` en la guía) **no** están horneados en los PNG: los
+añade \`OfficeScene\` como elipses aditivas detrás de monitores encendidos,
+rack, lámparas y pantalla Meet.
 
 ### \`audio/\`
-See \`audio/README.md\` — 4 files to be dropped in later (\`music.ogg\`, \`door.ogg\`,
-\`alarm.ogg\`, \`click.ogg\`).
 
-## Intended real-art sources (to swap in later)
-
-- **Kenney** (tiles, objects, UI, audio) — CC0. https://kenney.nl — no attribution
-  legally required, but credit is nice: "Assets by Kenney (kenney.nl), CC0."
-- **LPC (Liberated Pixel Cup)** base/hair/clothes character sprites — CC-BY-SA 3.0
-  and/or GPL 3.0 depending on the specific contributor's assets on OpenGameArt.
-  When swapped in, list here the exact asset pack(s) used and their authors per
-  the license's attribution requirements (e.g. "LPC character base by
-  <author>, opengameart.org, CC-BY-SA 3.0").
-
-Until swapped, no external attribution is owed — everything here was generated
-by our own script.
+Ver \`audio/README.md\` — 4 archivos a soltar más adelante (\`music.ogg\`,
+\`door.ogg\`, \`alarm.ogg\`, \`click.ogg\`).
 `;
   writeFileSync(full, content);
   console.log('wrote ATTRIBUTION.md');
@@ -410,7 +659,7 @@ by our own script.
 // ---------- run ----------
 
 genTiles();
+genGlow();
 genObjects();
 genCharacters();
-genAudioReadme();
 genAttribution();
