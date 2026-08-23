@@ -108,17 +108,28 @@ const toAvatarConfig = (raw: unknown, i: number): AvatarConfig =>
 
 // --- Endpoints -------------------------------------------------------------
 
+// Última /oficina exitosa: si la API se cae justo cuando OfficeScene.restore()
+// (scene.restart()) vuelve a pedirla, sin esto la oficina se queda vacía en
+// vez de restaurar los 9 personajes (ver integ-report.md check f).
+let lastOficina: Oficina | null = null;
+
 export async function getOficina(): Promise<Oficina> {
   if (IS_MOCK) return structuredClone(oficinaMock as Oficina);
-  const raw = await req<RawOficina>('/oficina');
-  const people: Person[] = raw.miembros.map((m, i) => ({
-    id: m.email,
-    nombre: m.nombre,
-    rol: m.rol,
-    desk: i,
-    avatar_config: toAvatarConfig(m.avatar_config, i),
-  }));
-  return { office: raw.oficina, people, resiliencia: raw.resiliencia_equipo };
+  try {
+    const raw = await req<RawOficina>('/oficina');
+    const people: Person[] = raw.miembros.map((m, i) => ({
+      id: m.email,
+      nombre: m.nombre,
+      rol: m.rol,
+      desk: i,
+      avatar_config: toAvatarConfig(m.avatar_config, i),
+    }));
+    lastOficina = { office: raw.oficina, people, resiliencia: raw.resiliencia_equipo };
+    return structuredClone(lastOficina);
+  } catch (err) {
+    if (lastOficina) return structuredClone(lastOficina);
+    throw err;
+  }
 }
 
 export async function getRiesgo(): Promise<Riesgo> {

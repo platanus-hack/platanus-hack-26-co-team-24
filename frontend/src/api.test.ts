@@ -191,6 +191,17 @@ describe('api (modo real, con VITE_API_URL)', () => {
     expect(oficina.people[0].avatar_config).toEqual(nuestro);
   });
 
+  it('getOficina cae al último resultado exitoso si la API falla (restore offline)', async () => {
+    const { api, fetchMock } = await importRealApi(RAW_OFICINA);
+    await api.getOficina(); // primera llamada exitosa: cachea
+
+    fetchMock.mockImplementationOnce(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    const oficina = await api.getOficina();
+    expect(oficina.people).toHaveLength(9);
+  });
+
   it('getRiesgo mapea persona_id -> person_id y expone el detalle como primer item', async () => {
     const { api } = await importRealApi(RAW_RIESGO);
     const riesgo = await api.getRiesgo();
