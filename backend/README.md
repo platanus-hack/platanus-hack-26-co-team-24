@@ -21,7 +21,7 @@ Sin `ANTHROPIC_API_KEY` funciona igual: el cerebro cae a datos escritos a mano.
 
 ```bash
 curl -X POST localhost:8000/admin/procesar   # llena el estado con datos reales
-python test_backend.py                       # 35 checks, sin red
+python test_backend.py                       # 39 checks, sin red
 ```
 
 ## El flag que salva el demo
@@ -190,6 +190,7 @@ curl -X POST https://bus-factor-hq.onrender.com/admin/sembrar
 | GET | `/conexiones/slack/iniciar` | Bearer | `{url}` a la que mandar el navegador |
 | GET | `/conexiones/slack/callback` | no (Slack) | canjea el código y redirige al front |
 | POST | `/conexiones/slack/sincronizar` | Bearer | baja los mensajes del usuario |
+| POST | `/conexiones/drive/transcripciones` | Bearer | sube transcripciones de Meet como texto |
 
 `PUT /avatar` acepta el body de P4 tal cual: `{cuerpo, peinado, ropa, paleta}`.
 
@@ -242,7 +243,7 @@ El `client secret` hace doble trabajo: además de canjear el código, firma el
 curl -H "Authorization: Bearer $TOKEN" localhost:8000/conexiones/slack/iniciar
 
 # 2. aprobar en Slack. El callback guarda el token y redirige a
-#    $FRONTEND_URL/conexiones?slack=conectado
+#    $FRONTEND_URL/conexiones?slack=ok  (o ?slack=error&motivo=...)
 
 # 3. bajar los mensajes (segundos a minutos según el workspace)
 curl -X POST -H "Authorization: Bearer $TOKEN" localhost:8000/conexiones/slack/sincronizar
@@ -259,6 +260,22 @@ trata cualquier `data/raw/*.json` que no sea `fixture_p2.json` ni
 `mock_events.json` como datos vivos, y no los mezcla a propósito: atribuir
 conocimiento inventado a personas reales sería peor que no tener datos. Para
 volver al demo de siempre, borrar `data/raw/ingesta-*.json` y reprocesar.
+
+## Transcripciones de Meet
+
+Sin OAuth de Google a propósito: verificar el scope de Drive tarda días y no cabe
+en un hackathon. El `.txt` que Meet deja en Drive se sube ya como texto.
+
+```bash
+curl -X POST localhost:8000/conexiones/drive/transcripciones \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"archivos": [{"nombre": "reunion.txt", "contenido": "Ana explica el rollback…"}]}'
+```
+
+Usa el mismo `normalize_transcript` de P1, así que produce los mismos `RawEvent`
+que produciría el conector de Drive: se parte en trozos de ~1500 caracteres sin
+cortar frases. El id sale del contenido, así que resubir el mismo archivo no
+duplica y editarlo sí crea eventos nuevos. El autor es el usuario del Bearer.
 
 ## Meter eventos sin desplegar
 

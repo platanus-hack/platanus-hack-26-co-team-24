@@ -70,10 +70,16 @@ def supabase_falso(conexiones=None):
         if tabla == "users":
             return [{"id": "u-1", "office_id": "of-demo"}]
         if tabla == "connections":
-            if metodo == "GET":
+            if metodo != "GET":
+                filas.append(json if isinstance(json, dict) else json[0])
                 return filas
-            filas.append(json if isinstance(json, dict) else json[0])
-            return filas
+            # PostgREST devuelve solo las columnas del `select`. El doble lo
+            # respeta a propósito: si no, un `select` que pidiera el token
+            # pasaría desapercibido y el test de "el token nunca sale" mentiría.
+            columnas = (params or {}).get("select", "*").split(",")
+            if columnas == ["*"]:
+                return filas
+            return [{c: f[c] for c in columnas if c in f} for f in filas]
         return []
 
     with patch.object(bd, "hay_bd", return_value=True), \
@@ -361,7 +367,9 @@ def test_el_callback_guarda_el_token_y_no_lo_devuelve():
             follow_redirects=False,
         )
 
-    assert r.status_code == 302 and "slack=conectado" in r.headers["location"], r.headers["location"]
+    # `ok` y no `conectado`: el parser del frontend lee ok|true|1 como éxito y
+    # cualquier otro valor como el motivo de un fallo.
+    assert r.status_code == 302 and "slack=ok" in r.headers["location"], r.headers["location"]
     assert TOKEN_FALSO not in r.text and TOKEN_FALSO not in r.headers["location"]
     assert len(conexiones) == 1, conexiones
     guardada = conexiones[0]
@@ -417,6 +425,68 @@ def test_sincronizar_sin_conexion_es_409_no_500():
 
 def test_sincronizar_exige_bearer():
     assert cliente.post("/conexiones/slack/sincronizar").status_code == 401
+
+
+def test_conexiones_lista_todas_las_fuentes():
+    """Drive se marca con POST /conexiones. Si GET no lo devolviera, recargar la
+    pantalla diría "sin conectar" con las transcripciones ya dentro."""
+    filas = [
+        {"tipo": "slack", "estado": "activa", "team_nombre": "Equipo Demo", "access_token": TOKEN_FALSO},
+        {"tipo": "drive", "estado": "activa"},
+    ]
+    with con_slack(), supabase_falso(filas), como() as cab:
+        r = cliente.get("/conexiones", headers=cab)
+    assert {c["tipo"] for c in r.json()["conexiones"]} == {"slack", "drive"}, r.json()
+    assert TOKEN_FALSO not in r.text and "access_token" not in r.text, r.text
+
+
+# --- Transcripciones de Meet -----------------------------------------------------
+
+
+def test_las_transcripciones_entran_como_eventos_de_meet():
+    """El camino realista para Meet: el .txt exportado a mano, sin OAuth de Google."""
+    archivo = st.archivo_de_eventos("of-demo")
+    assert not archivo.exists(), "el test necesita el directorio limpio"
+    try:
+        with con_slack(), supabase_falso(), como() as cab:
+            r = cliente.post(
+                "/conexiones/drive/transcripciones",
+                headers=cab,
+                json={"archivos": [{"nombre": "reunion.txt", "contenido": "Ana explica el rollback. " * 20}]},
+            )
+        assert r.status_code == 200, r.text
+        datos = r.json()
+        assert datos["ok"] is True and datos["eventos"] >= 1, datos
+
+        guardados = json.loads(archivo.read_text(encoding="utf-8"))
+        assert {e["fuente"] for e in guardados} == {"meet"}, guardados
+        assert all(e["autor_email"] == "ana@empresa.com" for e in guardados), guardados
+    finally:
+        archivo.unlink(missing_ok=True)
+        st._eventos = None
+
+
+def test_resubir_la_misma_transcripcion_no_duplica():
+    """El id sale del contenido: el doble clic del ensayo no infla el mapa."""
+    archivo = st.archivo_de_eventos("of-demo")
+    cuerpo = {"archivos": [{"nombre": "reunion.txt", "contenido": "David tiene la llave del servidor."}]}
+    try:
+        with con_slack(), supabase_falso(), como() as cab:
+            primera = cliente.post("/conexiones/drive/transcripciones", headers=cab, json=cuerpo).json()
+            segunda = cliente.post("/conexiones/drive/transcripciones", headers=cab, json=cuerpo).json()
+        assert segunda["total"] == primera["total"], (primera, segunda)
+        assert segunda["nuevos"] == 0, segunda
+    finally:
+        archivo.unlink(missing_ok=True)
+        st._eventos = None
+
+
+def test_transcripciones_vacias_son_422_y_exigen_bearer():
+    with con_slack(), supabase_falso(), como() as cab:
+        assert cliente.post("/conexiones/drive/transcripciones", headers=cab, json={"archivos": []}).status_code == 422
+        vacio = {"archivos": [{"nombre": "x.txt", "contenido": "   "}]}
+        assert cliente.post("/conexiones/drive/transcripciones", headers=cab, json=vacio).status_code == 422
+    assert cliente.post("/conexiones/drive/transcripciones", json={"archivos": []}).status_code == 401
 
 
 # --- Eventos por HTTP ------------------------------------------------------------

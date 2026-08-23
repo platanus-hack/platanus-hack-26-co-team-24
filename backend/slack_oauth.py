@@ -185,35 +185,30 @@ def _token_de(email: str) -> str:
     return token
 
 
-def estado_de(email: str) -> dict | None:
-    """Lo que sí se puede consultar: si hay conexión y contra qué workspace.
+def conexiones_de(email: str) -> list[dict]:
+    """Lo que sí se puede consultar: qué fuentes conectó y contra qué workspace.
 
-    `None` cuando no hay ninguna. Devolver una fila con `estado: "sin conexión"`
-    sería peor que no devolver nada: el frontend lista lo que le llega como
-    fuente conectada, y diría que Slack está listo cuando no lo está.
+    Todas las de la tabla, no solo Slack: `POST /conexiones` marca Drive por ahí
+    y si no se listara, la pantalla diría "sin conectar" tras recargar.
+
+    Nunca se pide `access_token` en el `select`: lo que no se trae no se puede
+    filtrar mal más adelante.
     """
     if not bd.hay_bd() or not email:
-        return None
+        return []
     try:
         fila = _fila_usuario(email)
     except HTTPException:
-        return None
+        return []
     filas = bd.rest(
         "GET",
         "connections",
-        params={"user_id": f"eq.{fila['id']}", "tipo": "eq.slack", "select": "estado,team_id,team_nombre,scopes,actualizado_en"},
+        params={
+            "user_id": f"eq.{fila['id']}",
+            "select": "tipo,estado,team_id,team_nombre,scopes,actualizado_en",
+        },
     )
-    if not filas:
-        return None
-    conexion = filas[0]
-    return {
-        "tipo": "slack",
-        "estado": conexion.get("estado") or "activa",
-        "team_id": conexion.get("team_id"),
-        "team_nombre": conexion.get("team_nombre"),
-        "scopes": conexion.get("scopes"),
-        "actualizado_en": conexion.get("actualizado_en"),
-    }
+    return [{**c, "estado": c.get("estado") or "activa"} for c in filas]
 
 
 # --- sincronización --------------------------------------------------------------

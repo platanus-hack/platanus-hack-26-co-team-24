@@ -17,6 +17,8 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from hashlib import sha256
 from urllib.parse import quote
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query, Request
@@ -41,6 +43,7 @@ from .esquemas import (
     PeticionConexion,
     PeticionQuest,
     PeticionSimular,
+    PeticionTranscripciones,
     RespuestaDigest,
     RespuestaOficina,
     RespuestaProcesar,
@@ -321,8 +324,7 @@ def get_conexiones(actual: dict = Depends(auth.usuario_del_token)) -> dict:
     Solo se listan las que existen: el frontend trata cada fuente que le llega
     como conectada, así que anunciar una conexión que no está sería mentirle.
     """
-    slack = slack_oauth.estado_de(actual["email"])
-    return {"email": actual["email"], "conexiones": [c for c in (slack,) if c]}
+    return {"email": actual["email"], "conexiones": slack_oauth.conexiones_de(actual["email"])}
 
 
 @app.get("/conexiones/slack/iniciar", tags=["conexiones"])
@@ -354,7 +356,7 @@ def slack_callback(
     except HTTPException as e:
         log.warning("callback de slack falló: %s", e.detail)
         return RedirectResponse(f"{destino}?slack=error&motivo={quote(str(e.detail))}", status_code=302)
-    return RedirectResponse(f"{destino}?slack=conectado", status_code=302)
+    return RedirectResponse(f"{destino}?slack=ok", status_code=302)
 
 
 @app.post("/conexiones/slack/sincronizar", tags=["conexiones"])
@@ -379,6 +381,51 @@ def slack_sincronizar(
         "canales": len(canales),
         "siguiente": "POST /admin/procesar para recalcular el mapa",
     }
+
+
+@app.post("/conexiones/drive/transcripciones", tags=["conexiones"])
+def drive_transcripciones(
+    cuerpo: PeticionTranscripciones,
+    actual: dict = Depends(auth.usuario_del_token),
+) -> dict:
+    """Transcripciones de Meet subidas a mano, ya como texto.
+
+    Sin OAuth de Google a propósito: verificar el scope de Drive tarda días. El
+    `.txt` que Meet deja en Drive llega igual, y `normalize_transcript` lo parte
+    en los mismos `RawEvent` que produciría el conector.
+    """
+    if not cuerpo.archivos:
+        raise HTTPException(422, "Manda al menos una transcripción.")
+
+    from ingestion.meet import normalize_transcript
+
+    email = actual["email"]
+    ahora = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    crudos = []
+    for archivo in cuerpo.archivos:
+        if not archivo.contenido.strip():
+            continue
+        # El id sale del contenido: resubir el mismo archivo no duplica eventos,
+        # y editarlo sí crea unos nuevos. Es lo que hace la CLI con la ruta.
+        huella = sha256(f"{archivo.nombre}|{archivo.contenido}".encode()).hexdigest()[:16]
+        crudos += [
+            e.to_dict()
+            for e in normalize_transcript(
+                meeting_id=huella,
+                title=archivo.nombre,
+                text=archivo.contenido,
+                author_email=email,
+                participants=[],
+                timestamp=ahora,
+                metadata={"archivo": archivo.nombre},
+            )
+        ]
+    if not crudos:
+        raise HTTPException(422, "Las transcripciones venían vacías.")
+
+    eventos = [RawEvent.model_validate(e) for e in crudos]
+    resultado = st.guardar_eventos(eventos, slack_oauth.oficina_de(email))
+    return {"ok": True, "eventos": len(eventos), **resultado}
 
 
 # --- Admin ----------------------------------------------------------------------
