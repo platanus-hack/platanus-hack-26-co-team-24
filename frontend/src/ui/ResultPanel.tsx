@@ -11,6 +11,16 @@ interface ResultPayload {
   ms: number;
 }
 
+// Color fijo por métrica (guía, sección 07 "SIN ANA · OPS"): tareas
+// huérfanas en ROJO, días de empalme en ORO, impacto en TURQUESA. Es por
+// significado, no por posición, para que el color no cambie si algún tile
+// se oculta por falta de valor.
+const STAT_COLOR: Record<string, string> = {
+  tareas: 'result-stat__value--rojo',
+  dias_recuperacion: 'result-stat__value--oro',
+  score: 'result-stat__value--turquesa',
+};
+
 /** Modal con el resultado de la simulación: impacto, items huérfanos y el
  * playbook. También muestra el error si la API falla. */
 export function ResultPanel() {
@@ -112,6 +122,7 @@ export function ResultPanel() {
 
   return (
     <div className="result-panel">
+      {/* Cabecera fija: título + chips. No scrollea. */}
       <div className="result-panel__header">
         <div className="result-panel__title-group">
           <p className="result-panel__title">{titulo}</p>
@@ -126,76 +137,89 @@ export function ResultPanel() {
         </span>
       </div>
 
-      {/* La API real sólo manda una frase de impacto; el mock trae además las
-          métricas numéricas. Pintamos sólo los tiles que tengan valor. */}
-      <div className="result-stats">
-        {(
-          [
-            [r.impacto.tareas, 'tareas huérfanas'],
-            [r.impacto.dias_recuperacion, 'días de empalme estimados'],
-            [r.impacto.score, 'impacto sobre la operación'],
-          ] as [number | undefined, string][]
-        )
-          .filter(([value]) => value !== undefined)
-          .map(([value, label]) => (
-            <div className="result-stat" key={label}>
-              <span className="result-stat__value">{value}</span>
-              <span className="result-stat__label">{label}</span>
+      {/* Región central: única que scrollea (tiles + impacto + 2 columnas),
+          para que la cabecera y los botones nunca se corten a 1366x768. */}
+      <div className="result-panel__scroll">
+        {/* La API real sólo manda una frase de impacto; el mock trae además
+            las métricas numéricas. Pintamos sólo los tiles que tengan valor. */}
+        <div className="result-stats">
+          {(
+            [
+              ['tareas', r.impacto.tareas, 'tareas huérfanas'],
+              [
+                'dias_recuperacion',
+                r.impacto.dias_recuperacion,
+                'días de empalme estimados',
+              ],
+              ['score', r.impacto.score, 'impacto sobre la operación'],
+            ] as [string, number | undefined, string][]
+          )
+            .filter(([, value]) => value !== undefined)
+            .map(([key, value, label]) => (
+              <div className="result-stat" key={key}>
+                <span className={`result-stat__value ${STAT_COLOR[key]}`}>
+                  {value}
+                </span>
+                <span className="result-stat__label">{label}</span>
+              </div>
+            ))}
+        </div>
+
+        {r.impacto.texto && (
+          <p className="result-panel__impacto">{r.impacto.texto}</p>
+        )}
+
+        <div className="result-panel__body">
+          <div className="result-section result-section--items">
+            <span className="result-section__title">QUÉ QUEDA SIN DUEÑO</span>
+            <ul className="result-items">
+              {r.items_huerfanos.map((item) => (
+                <li key={item.id} className="result-item">
+                  <span
+                    className="result-item__chip"
+                    style={tipoChipColor(item.tipo)}
+                  >
+                    {tipoChip(item.tipo)}
+                  </span>
+                  <span className="result-item__desc">
+                    {item.descripcion}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="result-section result-section--playbook">
+            <div className="result-playbook__header">
+              <span className="result-section__title result-section__title--lima">
+                PLAYBOOK GENERADO
+              </span>
+              <span className="result-chip result-chip--markdown">
+                MARKDOWN
+              </span>
             </div>
-          ))}
+            {/* ponytail: sin renderer markdown, el playbook se muestra tal cual. */}
+            <pre className="result-playbook">{r.playbook_md}</pre>
+          </div>
+        </div>
       </div>
 
-      {r.impacto.texto && (
-        <p className="result-panel__impacto">{r.impacto.texto}</p>
-      )}
-
-      <div className="result-panel__body">
-        <div className="result-section result-section--items">
-          <span className="result-section__title">QUÉ QUEDA SIN DUEÑO</span>
-          <ul className="result-items">
-            {r.items_huerfanos.map((item) => (
-              <li key={item.id} className="result-item">
-                <span
-                  className="result-item__chip"
-                  style={tipoChipColor(item.tipo)}
-                >
-                  {tipoChip(item.tipo)}
-                </span>
-                <span className="result-item__desc">{item.descripcion}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="result-section result-section--playbook">
-          <div className="result-playbook__header">
-            <span className="result-section__title result-section__title--lima">
-              PLAYBOOK GENERADO
-            </span>
-            <span className="result-chip result-chip--markdown">
-              MARKDOWN
-            </span>
-          </div>
-          {/* ponytail: sin renderer markdown, el playbook se muestra tal cual. */}
-          <pre className="result-playbook">{r.playbook_md}</pre>
-
-          <div className="result-panel__actions">
-            <button
-              type="button"
-              className="result-btn result-btn--primary"
-              onClick={closeResult}
-            >
-              RESTAURAR OFICINA
-            </button>
-            <button
-              type="button"
-              className="result-btn result-btn--secondary"
-              onClick={downloadMd}
-            >
-              DESCARGAR .MD
-            </button>
-          </div>
-        </div>
+      {/* Pie fijo: botones a lo ancho, siempre visibles (nunca scrollean). */}
+      <div className="result-panel__footer">
+        <button
+          type="button"
+          className="result-btn result-btn--primary"
+          onClick={closeResult}
+        >
+          RESTAURAR OFICINA
+        </button>
+        <button
+          type="button"
+          className="result-btn result-btn--secondary"
+          onClick={downloadMd}
+        >
+          DESCARGAR .MD
+        </button>
       </div>
     </div>
   );
