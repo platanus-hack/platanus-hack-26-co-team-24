@@ -102,3 +102,15 @@ class PeticionAvatar(BaseModel):
 class PeticionConexion(BaseModel):
     tipo: str
     email: str | None = None
+
+
+class Transcripcion(BaseModel):
+    """Un .txt exportado a mano desde Drive. El OAuth de Google pide
+    verificación del scope de Drive y eso no cabe en un hackathon."""
+
+    nombre: str
+    contenido: str
+
+
+class PeticionTranscripciones(BaseModel):
+    archivos: list[Transcripcion]

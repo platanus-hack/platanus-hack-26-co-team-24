@@ -19,6 +19,24 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      # OAuth de Slack. Sin estas tres, /conexiones/slack responde 503 con el
+      # nombre de la que falta. La redirect URI tiene que estar registrada
+      # igual en api.slack.com. Ver backend/README.md → "Conectar Slack".
+      - key: SLACK_CLIENT_ID
+        sync: false
+      - key: SLACK_CLIENT_SECRET
+        sync: false
+      - key: SLACK_REDIRECT_URI
+        sync: false
+      # Opcional: si se llena, POST /admin/eventos exige X-Admin-Token.
+      - key: ADMIN_TOKEN
+        sync: false
+      # A dónde vuelve el navegador tras aprobar la app de Slack.
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: bus-factor-web
+          property: host
 
   # El estático de P4. Con esto un solo blueprint levanta la API y el juego, y
   # VITE_API_URL se cablea sola: no hay que copiar la URL a mano después del

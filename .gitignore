@@ -25,3 +25,6 @@ data/estado.json
 /data/raw/slack_events.json
 /data/raw/github_events.json
 /data/raw/meet_events.json
+# Lo que entra por POST /admin/eventos y por el sync de Slack: son datos
+# reales de un workspace ajeno, no van al repo.
+/data/raw/ingesta-*.json

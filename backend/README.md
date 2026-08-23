@@ -21,7 +21,7 @@ Sin `ANTHROPIC_API_KEY` funciona igual: el cerebro cae a datos escritos a mano.
 
 ```bash
 curl -X POST localhost:8000/admin/procesar   # llena el estado con datos reales
-python test_backend.py                       # 15 checks, sin red
+python test_backend.py                       # 39 checks, sin red
 ```
 
 ## El flag que salva el demo
@@ -48,6 +48,7 @@ solos. Una oficina sin personajes parece un bug, no un estado vacío.
 | GET | `/digest` | **P5** | quests de la semana + puntaje |
 | PUT | `/quests/{id}` | **P5** | completa una quest y devuelve el puntaje nuevo |
 | POST | `/admin/procesar` | P3 | corre la cadena de P2 y persiste |
+| POST | `/admin/eventos` | P1, P3 | mete `RawEvent[]` por HTTP, sin desplegar |
 | POST | `/admin/reset` | P5 | vuelve al estado demo perfecto entre ensayos |
 
 Los modelos `KnowledgeItem`, `RiskScore`, `SimulationResult`, `Quest` y `Escenario`
@@ -141,6 +142,9 @@ item, recalcula el riesgo y devuelve el puntaje nuevo con su delta. Es idempoten
   nunca corre dentro de un request de lectura. En el demo solo `/simular` va en vivo.
 - El resultado se guarda en `data/estado.json`, así que reiniciar el proceso no
   vacía la oficina.
+- `backend/schema.sql` es idempotente: se pega entero en el SQL Editor de
+  Supabase cada vez que cambia. La última migración añadió el token de las
+  conexiones y la tabla `raw_events`.
 
 ## Deploy
 
@@ -181,7 +185,120 @@ curl -X POST https://bus-factor-hq.onrender.com/admin/sembrar
 | GET | `/usuarios/me` | Bearer | User |
 | PUT | `/usuarios/me/avatar` | Bearer | `{ok, email, avatar_config}` |
 | PUT | `/avatar` | no (P4) | igual. `?email=` o body; default Ana |
-| POST | `/conexiones` | opcional | `{tipo, estado: "activa"}` simulado |
+| GET | `/conexiones` | Bearer | las conexiones **que existen**, sin token |
+| POST | `/conexiones` | opcional | marca de estado, sin token. Para Drive |
+| GET | `/conexiones/slack/iniciar` | Bearer | `{url}` a la que mandar el navegador |
+| GET | `/conexiones/slack/callback` | no (Slack) | canjea el código y redirige al front |
+| POST | `/conexiones/slack/sincronizar` | Bearer | baja los mensajes del usuario |
+| POST | `/conexiones/drive/transcripciones` | Bearer | sube transcripciones de Meet como texto |
 
 `PUT /avatar` acepta el body de P4 tal cual: `{cuerpo, peinado, ropa, paleta}`.
 
+## Conectar Slack
+
+Cada usuario trae su propio workspace. El token que devuelve Slack se guarda en
+`connections.access_token` y **no sale nunca por la API**: se puede consultar el
+estado de la conexión, no la credencial.
+
+### 1. Crear la app en Slack (una vez por equipo)
+
+1. <https://api.slack.com/apps> → **Create New App** → *From scratch*. Nombre:
+   `Bus Factor HQ`. Workspace: el de desarrollo.
+2. **OAuth & Permissions** → *Redirect URLs* → **Add New Redirect URL**:
+   - local: `http://localhost:8000/conexiones/slack/callback`
+   - Render: `https://bus-factor-api.onrender.com/conexiones/slack/callback`
+
+   Tiene que coincidir **carácter por carácter** con `SLACK_REDIRECT_URI`; si no,
+   Slack responde `bad_redirect_uri` en el canje.
+3. En la misma pantalla, **Scopes → Bot Token Scopes**, exactamente estos cuatro:
+   `channels:history`, `channels:read`, `users:read`, `users:read.email`.
+   Son los que usa el conector; pedir más es hacer que la gente apruebe permisos
+   muertos.
+4. **Basic Information → App Credentials**: de ahí salen el *Client ID* y el
+   *Client Secret*.
+5. El bot solo lee los canales públicos **de los que es miembro**
+   (`conversations.list` filtra por `is_member`). En cada canal que deba entrar
+   al mapa: `/invite @Bus Factor HQ`.
+
+### 2. Variables de entorno
+
+| Variable | De dónde sale | Ejemplo |
+|---|---|---|
+| `SLACK_CLIENT_ID` | Basic Information → Client ID | `1234567890.9876543210` |
+| `SLACK_CLIENT_SECRET` | Basic Information → Client Secret | `a1b2c3…` |
+| `SLACK_REDIRECT_URI` | la URL registrada en el paso 2 | `https://bus-factor-api.onrender.com/conexiones/slack/callback` |
+| `FRONTEND_URL` | a dónde volver tras aprobar | `https://bus-factor-web.onrender.com` |
+
+En local van al `.env`; en Render, en el dashboard del servicio (ya están
+declaradas con `sync: false` en `render.yaml`). Si falta alguna, los endpoints
+responden **503 diciendo cuál falta** — nunca un 500 opaco.
+
+El `client secret` hace doble trabajo: además de canjear el código, firma el
+`state` del flujo. Rotarlo invalida los flujos a medias, que es lo deseable.
+
+### 3. El flujo
+
+```bash
+# 1. con el Bearer del usuario, pedir la URL y abrirla en el navegador
+curl -H "Authorization: Bearer $TOKEN" localhost:8000/conexiones/slack/iniciar
+
+# 2. aprobar en Slack. El callback guarda el token y redirige a
+#    $FRONTEND_URL/conexiones?slack=ok  (o ?slack=error&motivo=...)
+
+# 3. bajar los mensajes (segundos a minutos según el workspace)
+curl -X POST -H "Authorization: Bearer $TOKEN" localhost:8000/conexiones/slack/sincronizar
+
+# 4. recalcular el mapa
+curl -X POST localhost:8000/admin/procesar
+```
+
+`sincronizar` no procesa: `extraer()` cuesta tokens y segundos, y mezclarlo
+haría que un timeout de Claude pareciera un fallo de Slack.
+
+**En cuanto alguien sincroniza, el fixture deja de contar.** `cargar_eventos()`
+trata cualquier `data/raw/*.json` que no sea `fixture_p2.json` ni
+`mock_events.json` como datos vivos, y no los mezcla a propósito: atribuir
+conocimiento inventado a personas reales sería peor que no tener datos. Para
+volver al demo de siempre, borrar `data/raw/ingesta-*.json` y reprocesar.
+
+## Transcripciones de Meet
+
+Sin OAuth de Google a propósito: verificar el scope de Drive tarda días y no cabe
+en un hackathon. El `.txt` que Meet deja en Drive se sube ya como texto.
+
+```bash
+curl -X POST localhost:8000/conexiones/drive/transcripciones \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"archivos": [{"nombre": "reunion.txt", "contenido": "Ana explica el rollback…"}]}'
+```
+
+Usa el mismo `normalize_transcript` de P1, así que produce los mismos `RawEvent`
+que produciría el conector de Drive: se parte en trozos de ~1500 caracteres sin
+cortar frases. El id sale del contenido, así que resubir el mismo archivo no
+duplica y editarlo sí crea eventos nuevos. El autor es el usuario del Bearer.
+
+## Meter eventos sin desplegar
+
+En Render `data/raw/` viene horneado en la imagen: sin esto, cada dato nuevo
+exige un deploy.
+
+```bash
+curl -X POST https://bus-factor-api.onrender.com/admin/eventos \
+  -H 'Content-Type: application/json' \
+  -d '[{"id":"slack-C1-1.0","fuente":"slack","tipo":"mensaje",
+        "autor_email":"ana@empresa.com","timestamp":"2026-08-20T10:00:00Z",
+        "contenido":"Yo tengo el acceso al CRM.","metadata":{"canal":"#general"}}]'
+curl -X POST https://bus-factor-api.onrender.com/admin/procesar
+```
+
+`ADMIN_TOKEN` lo cierra: si está puesta en el entorno, el endpoint exige
+`X-Admin-Token`. Sin ella queda abierto como el resto de `/admin/*`. Es el único
+`/admin` con candado porque es el único que **inyecta** conocimiento que después
+se atribuye a personas reales.
+
+Deduplica por `id`, así que reenviar el mismo lote es inofensivo. Escribe a
+`data/raw/ingesta-{oficina}.json` **y** espeja en la tabla `raw_events` de
+Supabase: el disco de Render es efímero, y sin el espejo lo que un usuario
+sincronizó desaparecería en el siguiente deploy y `/admin/procesar` volvería a
+correr sobre el fixture borrando sus datos en silencio. Al arrancar, el backend
+rehidrata el disco desde `raw_events` si está vacío.
