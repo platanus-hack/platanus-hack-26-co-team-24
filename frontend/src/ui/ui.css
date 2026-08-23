@@ -19,21 +19,83 @@
   --texto2: #a98cd6;
 }
 
+/* Ninguna barra de scroll gris del sistema dentro de los paneles: se tiñen
+   con la paleta (LINE sobre SURFACE). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) var(--surface);
+}
+
+/* --- Lienzo del juego --- */
+
+/* El canvas cubre TODA la ventana (Scale.RESIZE) y la cámara centra la sala
+   dentro. Nada de anchos máximos ni centrados de CSS aquí. */
+.game-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.game-canvas-host {
+  width: 100%;
+  height: 100%;
+}
+
+/* Caja transparente del tamaño exacto de la sala: el HUD se posiciona contra
+   SUS bordes. `pointer-events: none` para no robarle los clics al canvas (los
+   personajes se clickean a través de ella); cada hijo los reactiva. */
+.room-overlay {
+  position: absolute;
+  pointer-events: none;
+}
+
+.room-overlay > * {
+  pointer-events: auto;
+}
+
 /* --- Tooltip de riesgo (clic en un personaje) --- */
 
 .risk-tooltip {
-  position: absolute;
-  top: 96px; /* debajo de .hud-resiliencia: nunca se tapan */
+  /* fixed: el tooltip es un panel de pantalla, va contra el viewport (no
+     contra la sala, que puede ser mucho más chica que la ventana). */
+  position: fixed;
+  /* La tarjeta RESILIENCIA ya no vive arriba-derecha (bajó al hueco entre la
+     sala Meet y el rack, como en el mockup): el tooltip puede ocupar toda la
+     columna derecha y la tapa con su z-index mayor. */
+  top: 12px;
   right: 12px;
   z-index: 10;
   width: 360px;
-  padding: 20px;
+  /* Con 9 items la lista se sale de pantalla: el panel se topa con el alto
+     del viewport (dejando libre el botón CONSOLA de abajo-derecha) y el
+     cuerpo scrollea. */
+  max-height: calc(100vh - 116px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
   background: var(--surface);
-  border: 3px solid var(--turquesa);
+  /* Guía sección 07: borde 4px TURQUESA + glow puntual turquesa. */
+  border: 4px solid var(--turquesa);
+  box-shadow: 0 0 40px rgba(43, 217, 208, 0.2);
   color: var(--texto);
+}
+
+/* La guía parte el panel en dos: cabecera (nombre, rol, cifra) sobre una
+   línea LINE de 3px, y cuerpo (items). */
+.risk-tooltip__top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-bottom: 3px solid var(--line);
+}
+
+.risk-tooltip__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .risk-tooltip__header {
@@ -48,16 +110,19 @@
   font-family: 'Workbench', monospace;
   font-size: 32px;
   line-height: 1;
+  text-transform: uppercase;
   color: var(--texto);
 }
 
 .risk-tooltip__rol {
-  margin: 8px 0 0;
+  /* Guía sección 07: VT323 20px TURQUESA (el título de sección es el que va
+     en texto2, no esta línea). */
+  margin: 6px 0 0;
   font-family: 'VT323', monospace;
-  font-size: 17px;
-  letter-spacing: 2px;
+  font-size: 20px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--texto2);
+  color: var(--turquesa);
 }
 
 .risk-tooltip__close {
@@ -84,9 +149,10 @@
 }
 
 .risk-tooltip__score {
+  /* Guía sección 07: Workbench 40px con glow del propio color de riesgo. */
   margin: 0;
-  font-family: 'VT323', monospace;
-  font-size: 56px;
+  font-family: 'Workbench', monospace;
+  font-size: 40px;
   line-height: 1;
 }
 
@@ -99,9 +165,9 @@
 .risk-tooltip__section-title {
   margin: 0;
   font-family: 'VT323', monospace;
-  font-size: 17px;
+  font-size: 19px;
   letter-spacing: 2px;
-  color: var(--turquesa);
+  color: var(--texto2);
 }
 
 .risk-tooltip__items {
@@ -133,8 +199,8 @@
 
 .risk-tooltip__desc {
   font-family: 'Jersey 15', monospace;
-  font-size: 22px;
-  line-height: 1.2;
+  font-size: 24px;
+  line-height: 1.1;
   color: var(--texto);
 }
 
@@ -323,13 +389,15 @@
 /* --- HUD (Hud.tsx: mute + tarjeta oficina + tarjeta resiliencia) --- */
 
 .hud-topleft {
+  /* `top`/`gap` ajustados para que la columna termine ANTES de la barra rosa
+     de la cafetera (tile (1,2)): con 12/12 la tapaba entera. */
   position: absolute;
-  top: 12px;
+  top: 6px;
   left: 12px;
   z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .mute-btn {
@@ -387,14 +455,19 @@
 }
 
 .hud-resiliencia {
+  /* Posición del mockup (oficina-mockup.html): columna derecha, en el hueco
+     entre la sala Meet y el rack de GitHub, no arriba-derecha (ahí tapaba la
+     pantalla de la sala Meet). El canvas es 16:9 y va limitado por la altura
+     (Scale.FIT), así que el borde inferior de la sala Meet cae siempre en el
+     38,5 % de la altura del viewport y el 39 % es un `top` estable. */
   position: absolute;
-  top: 12px;
+  top: 38.5%;
   right: 12px;
   z-index: 5;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background: var(--surface);
   border: 3px solid var(--oro);
 }
@@ -408,10 +481,10 @@
 
 .hud-resiliencia__value {
   /* Fidelidad literal al mockup (oficina-mockup.html): el "64" usa
-     Workbench, no VT323. Tamaño 38px por ruling explícito del controlador
-     (el mockup en sí usa 30px). */
+     Workbench 30px. Los 38px que se usaron mientras la tarjeta vivía
+     arriba-derecha ya no caben en el hueco Meet/rack del mockup. */
   font-family: 'Workbench', monospace;
-  font-size: 38px;
+  font-size: 30px;
   line-height: 1;
   color: var(--oro);
 }
@@ -478,12 +551,15 @@
 }
 
 .arcade-panel {
+  /* Guía sección 07: los SIETE escenarios quedan visibles sin hacer clic, en
+     rejilla de 2 columnas. Por eso el panel es ancho y va del borde de
+     arriba hasta justo encima del botón CONSOLA. */
   position: fixed;
   right: 24px;
   bottom: 100px;
+  top: 12px;
   z-index: 15;
-  width: 420px;
-  max-height: 70vh;
+  width: 700px;
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -493,18 +569,30 @@
 }
 
 .arcade-panel__header {
+  flex: none;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 20px;
+  padding: 16px 20px;
   border-bottom: 3px solid var(--line);
 }
 
 .arcade-panel__title-group {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
+}
+
+.arcade-panel__icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.arcade-panel__header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .arcade-panel__title {
@@ -516,9 +604,10 @@
 }
 
 .arcade-panel__count {
+  white-space: nowrap;
   font-family: 'VT323', monospace;
-  font-size: 17px;
-  letter-spacing: 3px;
+  font-size: 18px;
+  letter-spacing: 1px;
   color: var(--texto2);
 }
 
@@ -542,47 +631,65 @@
 .arcade-list {
   list-style: none;
   margin: 0;
-  padding: 16px 20px;
+  padding: 16px 20px 12px;
   flex: 1;
-  /* Sólo la lista scrollea: el select de persona y "Simular" quedan siempre
-     visibles al fondo del panel. */
+  /* Sólo la lista scrollea (y con la rejilla de 2 columnas ya casi nunca
+     hace falta): el select de persona y "Simular" quedan siempre visibles
+     al fondo del panel. */
   overflow: auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
   gap: 10px;
 }
 
 .arcade-item {
+  /* Guía: sólo canto izquierdo de 6px (LINE), fondo BASE. El seleccionado
+     pasa el canto y el nombre a ROSA, con un glow rosa suave. */
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   width: 100%;
+  height: 100%;
   text-align: left;
-  padding: 12px 14px;
+  padding: 10px 13px;
   background: var(--base);
-  border: 3px solid var(--line);
+  border: none;
+  border-left: 6px solid var(--line);
   color: var(--texto);
   cursor: pointer;
 }
 
 .arcade-item--active {
-  background: #2a1747;
-  border-color: var(--turquesa);
+  border-left-color: var(--rosa);
+  box-shadow: 0 0 22px rgba(255, 77, 157, 0.18);
+}
+
+.arcade-item--active .arcade-item__name {
+  color: var(--rosa);
 }
 
 .arcade-item__name {
   font-family: 'VT323', monospace;
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: #f3e8ff;
 }
 
 .arcade-item__desc {
+  /* La guía pide que los SIETE escenarios se vean sin scroll; las
+     descripciones que manda la API son bastante más largas que las del
+     mockup, así que se recortan a 2 líneas. El nombre ya dice qué es. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-family: 'Jersey 15', monospace;
   font-size: 22px;
-  line-height: 1.2;
+  line-height: 1.05;
   color: var(--texto2);
 }
 
@@ -595,7 +702,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 16px 20px 0;
+  padding: 14px 20px 0;
   border-top: 3px solid var(--line);
   font-family: 'VT323', monospace;
   font-size: 17px;
@@ -615,8 +722,8 @@
 .arcade-run {
   /* flex: none -> igual que .arcade-field, nunca se encoge. */
   flex: none;
-  margin: 16px 20px 20px;
-  padding: 12px 20px;
+  margin: 12px 20px 16px;
+  padding: 10px 20px;
   background: var(--rosa);
   border: 3px solid #f3e8ff;
   box-shadow: 4px 4px 0 var(--void);

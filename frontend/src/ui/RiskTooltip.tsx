@@ -61,8 +61,7 @@ export function RiskTooltip() {
       if (e.key === 'Escape') setPayload(null);
     };
     const onPointerDown = (e: PointerEvent) => {
-      if (!(e.target as HTMLElement).closest('.risk-tooltip'))
-        setPayload(null);
+      if (!(e.target as HTMLElement).closest('.risk-tooltip')) setPayload(null);
     };
     window.addEventListener('keydown', onKey);
     window.addEventListener('pointerdown', onPointerDown);
@@ -78,53 +77,61 @@ export function RiskTooltip() {
 
   return (
     <div className="risk-tooltip">
-      <div className="risk-tooltip__header">
-        <div>
-          <p className="risk-tooltip__name">{payload.nombre}</p>
-          <p className="risk-tooltip__rol">
-            {payload.rol} · OFICINA {officeName.toUpperCase()}
-          </p>
+      <div className="risk-tooltip__top">
+        <div className="risk-tooltip__header">
+          <div>
+            <p className="risk-tooltip__name">{payload.nombre}</p>
+            <p className="risk-tooltip__rol">
+              {payload.rol} · OFICINA {officeName.toUpperCase()}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="risk-tooltip__close"
+            aria-label="Cerrar"
+            onClick={() => setPayload(null)}
+          >
+            ×
+          </button>
         </div>
-        <button
-          type="button"
-          className="risk-tooltip__close"
-          aria-label="Cerrar"
-          onClick={() => setPayload(null)}
-        >
-          ×
-        </button>
+
+        <div className="risk-tooltip__score-row">
+          <p
+            className="risk-tooltip__score"
+            // Guía sección 07: glow puntual del propio color de riesgo al 60 %.
+            style={{
+              color: SCORE_COLOR[level],
+              textShadow: `0 0 12px ${SCORE_COLOR[level]}66`,
+            }}
+          >
+            {payload.score}
+          </p>
+          <span className="risk-tooltip__score-label">riesgo</span>
+        </div>
       </div>
 
-      <div className="risk-tooltip__score-row">
-        <p
-          className="risk-tooltip__score"
-          style={{ color: SCORE_COLOR[level] }}
-        >
-          {payload.score}
+      <div className="risk-tooltip__body">
+        <p className="risk-tooltip__section-title">
+          SOLO {posesivo(payload.nombre)} SABE HACER ESTO
         </p>
-        <span className="risk-tooltip__score-label">riesgo</span>
+        {payload.items.length === 0 ? (
+          <p className="risk-tooltip__empty">Sin items críticos</p>
+        ) : (
+          <ul className="risk-tooltip__items">
+            {payload.items.map((item) => (
+              <li key={item.id} className="risk-tooltip__item">
+                <span
+                  className="risk-tooltip__chip"
+                  style={tipoChipStyle(item.tipo)}
+                >
+                  {tipoChip(item.tipo)}
+                </span>
+                <span className="risk-tooltip__desc">{item.descripcion}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-
-      <p className="risk-tooltip__section-title">
-        SOLO {posesivo(payload.nombre)} SABE HACER ESTO
-      </p>
-      {payload.items.length === 0 ? (
-        <p className="risk-tooltip__empty">Sin items críticos</p>
-      ) : (
-        <ul className="risk-tooltip__items">
-          {payload.items.map((item) => (
-            <li key={item.id} className="risk-tooltip__item">
-              <span
-                className="risk-tooltip__chip"
-                style={tipoChipStyle(item.tipo)}
-              >
-                {tipoChip(item.tipo)}
-              </span>
-              <span className="risk-tooltip__desc">{item.descripcion}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

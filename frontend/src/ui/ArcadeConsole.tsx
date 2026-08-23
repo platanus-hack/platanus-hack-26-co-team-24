@@ -80,22 +80,27 @@ export function ArcadeConsole() {
         <div className="arcade-panel">
           <div className="arcade-panel__header">
             <div className="arcade-panel__title-group">
+              <span className="arcade-panel__icon" aria-hidden="true">
+                🕹️
+              </span>
               <p className="arcade-panel__title">CONSOLA DE EMERGENCIAS</p>
+            </div>
+            <div className="arcade-panel__header-right">
               <span className="arcade-panel__count">
                 {scenarios.length} ESCENARIOS
               </span>
+              <button
+                type="button"
+                className="arcade-close"
+                aria-label="Cerrar"
+                onClick={() => {
+                  sfx('click');
+                  setOpen(false);
+                }}
+              >
+                ×
+              </button>
             </div>
-            <button
-              type="button"
-              className="arcade-close"
-              aria-label="Cerrar"
-              onClick={() => {
-                sfx('click');
-                setOpen(false);
-              }}
-            >
-              ×
-            </button>
           </div>
 
           <ul className="arcade-list">

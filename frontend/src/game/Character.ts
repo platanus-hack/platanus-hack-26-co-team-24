@@ -32,7 +32,8 @@ const TYPE_INTERVAL_MS = 250; // 4 fps: el cuerpo late 1 px (manos tecleando)
 const AMBIENT_DELAY_MIN_MS = 2000;
 const AMBIENT_DELAY_MAX_MS = 4000;
 const ambientDelay = (): number =>
-  AMBIENT_DELAY_MIN_MS + Math.random() * (AMBIENT_DELAY_MAX_MS - AMBIENT_DELAY_MIN_MS);
+  AMBIENT_DELAY_MIN_MS +
+  Math.random() * (AMBIENT_DELAY_MAX_MS - AMBIENT_DELAY_MIN_MS);
 
 // Aura de riesgo: óvalo aplastado a los pies (la guía la dibuja así, no como
 // un círculo alrededor). Se pinta con la textura `glow` (halo blanco de caída
@@ -98,7 +99,10 @@ function ensureAnims(scene: Phaser.Scene, textureKey: string): void {
   for (const key of [idleKey, `${textureKey}_stand`]) {
     scene.anims.create({
       key,
-      frames: scene.anims.generateFrameNumbers(textureKey, { start: 1, end: 1 }),
+      frames: scene.anims.generateFrameNumbers(textureKey, {
+        start: 1,
+        end: 1,
+      }),
       frameRate: 1,
       repeat: -1,
     });
@@ -116,7 +120,11 @@ function directionBetween(
   return null;
 }
 
-function isBlocked(map: Phaser.Tilemaps.Tilemap, x: number, y: number): boolean {
+function isBlocked(
+  map: Phaser.Tilemaps.Tilemap,
+  x: number,
+  y: number,
+): boolean {
   const tile = map.getTileAt(x, y, false, 'collision');
   return !!tile && tile.index > 0;
 }
@@ -143,6 +151,7 @@ export class Character extends Phaser.GameObjects.Container {
   private walkGeneration = 0;
   private pulseTween?: Phaser.Tweens.Tween;
   private label?: Phaser.GameObjects.Text;
+  private labelBorder?: Phaser.GameObjects.Rectangle;
   private labelTween?: Phaser.Tweens.Tween;
   private typeTimer?: Phaser.Time.TimerEvent;
   /** Desplazamiento vertical actual de las capas (0 de pie, ~14 sentado). */
@@ -233,6 +242,8 @@ export class Character extends Phaser.GameObjects.Container {
     this.labelTween = undefined;
     this.label?.destroy();
     this.label = undefined;
+    this.labelBorder?.destroy();
+    this.labelBorder = undefined;
 
     const level = riskLevel(score);
     this.auraLevel = level;
@@ -265,20 +276,39 @@ export class Character extends Phaser.GameObjects.Container {
           ease: 'Sine.easeInOut',
         });
 
+        // El mockup pinta la etiqueta como un CHIP: fondo BASE, borde ROJO y
+        // texto VT323 ROJO (no texto suelto con contorno). `Phaser.Text` sabe
+        // hacer el fondo pero no el borde, así que el borde va en un
+        // rectángulo detrás; los dos se mueven juntos con el mismo tween.
         const label = this.scene.add
-          .text(0, LABEL_Y + this.seatDy, `${this.person.nombre.toUpperCase()} ${score}`, {
-            fontFamily: 'VT323, monospace',
-            fontSize: '17px',
-            color: THEME.rojo,
-            stroke: THEME.void,
-            strokeThickness: 3,
-          })
+          .text(
+            0,
+            LABEL_Y + this.seatDy,
+            `${this.person.nombre.toUpperCase()} ${score}`,
+            {
+              fontFamily: 'VT323, monospace',
+              fontSize: '17px',
+              color: THEME.rojo,
+              backgroundColor: THEME.base,
+              padding: { x: 4, y: 1 },
+            },
+          )
           .setOrigin(0.5);
         label.setResolution(2);
-        this.add(label);
+        const border = this.scene.add
+          .rectangle(
+            0,
+            LABEL_Y + this.seatDy,
+            label.width + 2,
+            label.height + 2,
+          )
+          .setOrigin(0.5)
+          .setStrokeStyle(1, RISK_LEVEL_COLOR.alto);
+        this.add([label, border]);
         this.label = label;
+        this.labelBorder = border;
         this.labelTween = this.scene.tweens.add({
-          targets: label,
+          targets: [label, border],
           y: '-=3',
           duration: 1400,
           yoyo: true,
@@ -300,7 +330,9 @@ export class Character extends Phaser.GameObjects.Container {
     const w = high ? AURA_HIGH_W : AURA_W;
     const h = high ? AURA_HIGH_H : AURA_H;
     if (this.seatDy > 0) {
-      this.aura.setPosition(0, AURA_SEAT_Y).setDisplaySize(w * AURA_SEAT_SCALE, h);
+      this.aura
+        .setPosition(0, AURA_SEAT_Y)
+        .setDisplaySize(w * AURA_SEAT_SCALE, h);
     } else {
       this.aura.setPosition(0, AURA_Y).setDisplaySize(w, h);
     }
@@ -329,6 +361,7 @@ export class Character extends Phaser.GameObjects.Container {
       this.seatDy = dy;
       for (const sprite of layers) sprite.setY(dy);
       this.label?.setY(LABEL_Y + dy);
+      this.labelBorder?.setY(LABEL_Y + dy);
       this.applyAuraGeometry();
     };
 
@@ -353,7 +386,10 @@ export class Character extends Phaser.GameObjects.Container {
   /** Resuelve el tile destino para un nombre de punto (`scene.points`). La
    * regla vive en `targets.ts` (pura) para que `map.test.ts` pueda verificar
    * la alcanzabilidad del mapa real con exactamente esta misma lógica. */
-  private resolveTargetTile(point: string, scene: OfficeScene): { x: number; y: number } {
+  private resolveTargetTile(
+    point: string,
+    scene: OfficeScene,
+  ): { x: number; y: number } {
     return resolveTargetTile(point, scene.points[point], (x, y) =>
       isBlocked(scene.map, x, y),
     );
@@ -399,7 +435,8 @@ export class Character extends Phaser.GameObjects.Container {
   async walkTo(point: string): Promise<void> {
     this.cancelWalk(); // un walkTo nuevo siempre reemplaza uno en curso
     const myGen = this.walkGeneration;
-    const isStale = () => myGen !== this.walkGeneration || !this.scene?.sys?.isActive();
+    const isStale = () =>
+      myGen !== this.walkGeneration || !this.scene?.sys?.isActive();
 
     const scene = this.scene as OfficeScene;
     const target = this.resolveTargetTile(point, scene);
@@ -417,7 +454,8 @@ export class Character extends Phaser.GameObjects.Container {
       return;
     }
 
-    const steps = path[0].x === from.x && path[0].y === from.y ? path.slice(1) : path;
+    const steps =
+      path[0].x === from.x && path[0].y === from.y ? path.slice(1) : path;
     // ponytail: sin evitación dinámica de colisiones entre personajes; si dos
     // apuntan a la misma celda se separan con un offset fijo (ver abajo).
     const offsetX = (this.person.desk % 3) * 3;
@@ -512,7 +550,10 @@ export class Character extends Phaser.GameObjects.Container {
   }
 }
 
-function chairPixelFor(scene: OfficeScene, deskIndex: number): { x: number; y: number } {
+function chairPixelFor(
+  scene: OfficeScene,
+  deskIndex: number,
+): { x: number; y: number } {
   const desk = scene.points[`desk_${deskIndex}`];
   const tx = desk.x / TILE + 1; // silla = tile arriba-derecha del escritorio
   const ty = desk.y / TILE - 1;
