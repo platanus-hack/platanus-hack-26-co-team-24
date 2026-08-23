@@ -46,4 +46,25 @@ describe('assignPairs', () => {
     expect(pairs['p_samuel']).toEqual(['gray', 'blue']);
     expect(pairs['p_andres']).toEqual(['yellow', 'purple']);
   });
+
+  it('con la API real (ids = email) los cuatro pares nombrados se mantienen', () => {
+    const reales = assignPairs(
+      [
+        'ana',
+        'david',
+        'valentina',
+        'jorge',
+        'brayan',
+        'andres',
+        'laura',
+        'camilo',
+        'samuel',
+      ].map((n) => ({ id: `${n}@empresa.com` })),
+    );
+    expect(reales['ana@empresa.com']).toEqual(['blue', 'red']);
+    expect(reales['david@empresa.com']).toEqual(['orange', 'green']);
+    expect(reales['samuel@empresa.com']).toEqual(['gray', 'blue']);
+    expect(reales['andres@empresa.com']).toEqual(['yellow', 'purple']);
+    expect(new Set(Object.values(reales).map((p) => p.join('+'))).size).toBe(9);
+  });
 });

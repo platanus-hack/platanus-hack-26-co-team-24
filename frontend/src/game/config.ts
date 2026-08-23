@@ -13,8 +13,9 @@ export const config: Phaser.Types.Core.GameConfig = {
   backgroundColor: THEME.void,
   scale: {
     // RESIZE (no FIT): el canvas ocupa siempre toda la ventana, sin barras
-    // negras del elemento ni centrado por CSS. La sala se escala con zoom
-    // ENTERO (píxeles nítidos) y se centra desde la cámara en OfficeScene.
+    // negras del elemento ni centrado por CSS. La sala se escala con el mayor
+    // zoom que quepa (fraccionario, para llenarla) y se centra desde la
+    // cámara en OfficeScene.
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.NO_CENTER,
   },

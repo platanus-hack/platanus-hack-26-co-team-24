@@ -457,8 +457,9 @@
 .hud-resiliencia {
   /* Posición del mockup (oficina-mockup.html): columna derecha, en el hueco
      entre la sala Meet y el rack de GitHub, no arriba-derecha (ahí tapaba la
-     pantalla de la sala Meet). El canvas es 16:9 y va limitado por la altura
-     (Scale.FIT), así que el borde inferior de la sala Meet cae siempre en el
+     pantalla de la sala Meet). El canvas es 16:9 y la sala se escala con el
+     mayor zoom que quepa (Scale.RESIZE, fraccionario), limitada por la
+     altura, así que el borde inferior de la sala Meet cae siempre en el
      38,5 % de la altura del viewport y el 39 % es un `top` estable. */
   position: absolute;
   top: 38.5%;

@@ -10,7 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TILE } from './palette';
+import { TILE, MAP_COLS, MAP_ROWS, MAP_W, MAP_H } from './palette';
 import { resolveTargetTile, type Tile } from './targets';
 
 interface TileLayer {
@@ -86,23 +86,18 @@ function flood(start: Tile): Set<string> {
 }
 
 describe('office.json', () => {
-  it('es la grilla que declara palette.ts: 23x13 celdas de 32 px (16:9, Task H)', () => {
-    expect([map.width, map.height]).toEqual([23, 13]);
+  it('es la grilla que declara palette.ts (16:9, Task H)', () => {
+    expect([map.width, map.height]).toEqual([MAP_COLS, MAP_ROWS]);
     expect([map.tilewidth, map.tileheight]).toEqual([TILE, TILE]);
   });
 
-  // `game/config.ts` fija `width`/`height` a mano (importarlo aquí traería
-  // Phaser al entorno de test de Node, que no tiene `window`/`document`), así
-  // que la igualdad con el canvas se comprueba contra el tamaño derivado del
-  // propio mapa: si alguien cambia W/H en gen-map.mjs sin tocar config.ts (o
-  // viceversa), este test lo detecta.
-  it('el canvas del juego (config.ts) mide map.width*TILE x map.height*TILE', () => {
-    const GAME_WIDTH = 736;
-    const GAME_HEIGHT = 416;
-    expect([GAME_WIDTH, GAME_HEIGHT]).toEqual([
-      map.width * TILE,
-      map.height * TILE,
-    ]);
+  // `game/config.ts` deriva su tamaño de `MAP_W`/`MAP_H` (importarlo aquí
+  // traería Phaser al entorno de test de Node, que no tiene
+  // `window`/`document`), así que se comprueban esas constantes contra el
+  // tamaño del mapa real: si alguien cambia W/H en gen-map.mjs sin tocar
+  // palette.ts (o viceversa), este test lo detecta.
+  it('el canvas del juego (MAP_W x MAP_H) mide lo que mide el mapa', () => {
+    expect([MAP_W, MAP_H]).toEqual([map.width * TILE, map.height * TILE]);
   });
 
   it('declara los 14 puntos que consumen la escena y el comportamiento', () => {

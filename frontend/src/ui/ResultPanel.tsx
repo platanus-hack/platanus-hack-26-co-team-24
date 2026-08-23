@@ -128,7 +128,9 @@ export function ResultPanel() {
     const safeId = (r.person_id ?? r.scenario_id).replace(/[^a-z0-9_-]/gi, '_');
     a.download = `empalme-${safeId}.md`;
     a.click();
-    URL.revokeObjectURL(url);
+    // Revocar en el mismo tick puede cancelar la descarga en algunos
+    // navegadores: se libera en cuanto el click ya se procesó.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
   return (

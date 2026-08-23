@@ -108,11 +108,18 @@ export const MAP_H = MAP_ROWS * TILE;
 // Las cuatro personas que la guía nombra en la sección 04 llevan un par de
 // colores concreto ("Ana · OPS: pelo turquesa + ropa rosa"). Se fijan por id
 // para que la demo se vea como la guía; el resto reparte los slots libres.
+// Contra la API real el id es el EMAIL (ver `api.ts` y `backend/personas.py`),
+// así que las mismas cuatro personas van listadas en sus dos formas: si no,
+// los pares nombrados por la guía sólo valían en modo mock.
 const GUIDE_SLOT: Record<string, number> = {
   p_ana: 0, // turquesa + rosa
+  'ana@empresa.com': 0,
   p_david: 1, // naranja + lima
+  'david@empresa.com': 1,
   p_samuel: 2, // lila + turquesa
+  'samuel@empresa.com': 2,
   p_andres: 3, // oro + morado
+  'andres@empresa.com': 3,
 };
 
 /** Reparte los 9 pares [pelo, ropa] entre la gente de la oficina sin repetir

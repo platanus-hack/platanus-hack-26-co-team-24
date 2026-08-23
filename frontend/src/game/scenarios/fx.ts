@@ -7,8 +7,7 @@ const GLOW_KEY = 'glow'; // halo aditivo anónimo de OfficeScene.glow()
 /** Color hex (`#RRGGBB`) -> entero para las APIs de Phaser (tint, fillStyle,
  * lineStyle...). Cada runner de escenario lo necesita para pasar de
  * `THEME.xxx` (string) a lo que Phaser espera; un solo sitio en vez de la
- * copia local que traía cada archivo (`OfficeScene.ts` tiene la suya propia,
- * fuera del alcance de esta tarea tocarla). */
+ * copia local que traía cada archivo (`OfficeScene.ts` incluida). */
 export const hex = (s: string): number => parseInt(s.slice(1), 16);
 
 /** Espera `ms` respetando el reloj de la escena (para que `scene.time`

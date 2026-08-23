@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { getOficina, getRiesgo, simular, DEMO_USER_ID } from '../api';
 import type { Riesgo } from '../types';
 import { Character } from './Character';
+import { hex } from './scenarios/fx';
 import { createPathfinder, type Pathfinder } from './pathfinding';
 import { loadAvatar } from '../avatarStorage';
 import { bus } from '../bus';
@@ -97,9 +98,6 @@ const MEET_ROOM = { x: 18, y: 1, w: 4, h: 4 };
 // (el mockup lo dibuja montado sobre el tablero).
 const PC_OFFSET_Y = -12;
 
-// Color hex (`#RRGGBB`) -> entero para las APIs de Phaser.
-const hex = (s: string): number => parseInt(s.slice(1), 16);
-
 export class OfficeScene extends Phaser.Scene {
   map!: Phaser.Tilemaps.Tilemap;
   points: Record<string, { x: number; y: number }> = {};
@@ -113,9 +111,10 @@ export class OfficeScene extends Phaser.Scene {
   scenarioRunning = false;
   /** "La sala respira" (guía, sección 05): cuántos personajes están
    * caminando ambientalmente ahora mismo. `Character.tick()` lo incrementa
-   * antes de un `walkTo` ambiental y lo decrementa al terminar/cancelar;
-   * nunca sube de `MAX_MOVING` (ver `behavior.ts`). Los `walkTo` que llaman
-   * los runners de escenario no pasan por este contador. */
+   * antes de un `walkTo` ambiental y lo decrementa al terminar/cancelar
+   * (vía `decMoving`, que le pone piso en 0 por si `restart()` lo reseteó a
+   * mitad de camino); nunca sube de `MAX_MOVING` (ver `behavior.ts`). Los
+   * `walkTo` que llaman los runners de escenario no pasan por este contador. */
   moving = 0;
 
   constructor() {
@@ -506,9 +505,10 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   /** El canvas cubre toda la ventana (`Scale.RESIZE`): aquí se escala la sala
-   * con zoom ENTERO -- el mayor que quepa, mínimo 1 -- y se centra. Zoom
-   * entero = píxeles nítidos (nada de medias filas de píxel). Fuera de la
-   * sala queda el VOID del `backgroundColor`.
+   * con el mayor zoom que quepa -- FRACCIONARIO, no entero -- y se centra.
+   * Ruling del rediseño: la sala llena la ventana (con zoom entero quedaban
+   * franjas enormes de VOID a 1366x768). Fuera de la sala queda el VOID del
+   * `backgroundColor`.
    *
    * Además publica el rectángulo que ocupa la sala en pantalla (`room:rect`)
    * para que el HUD de React se pegue a SUS esquinas y no a las del viewport:

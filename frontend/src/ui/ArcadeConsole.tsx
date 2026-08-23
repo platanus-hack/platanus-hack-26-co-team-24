@@ -46,6 +46,17 @@ export function ArcadeConsole() {
     };
   }, []);
 
+  // Escape cierra el panel, igual que el tooltip de riesgo y el panel de
+  // resultado (ver RiskTooltip.tsx / ResultPanel.tsx).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const selected = scenarios.find((s) => s.id === selectedId) ?? null;
 
   const simulate = () => {

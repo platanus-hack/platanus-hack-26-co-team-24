@@ -9,19 +9,9 @@ const RISK_LOW = hexToNum(THEME.riskLow);
 const RISK_MID = hexToNum(THEME.riskMid);
 const RISK_HIGH = hexToNum(THEME.riskHigh);
 
-export const scoreToColor = (s: number): number => {
-  if (s <= 40) return RISK_LOW;
-  if (s <= 70) return RISK_MID;
-  return RISK_HIGH;
-};
-
-export const isCritical = (s: number): boolean => s > 70;
-
 // Niveles de riesgo tal como los define la guía (sección 04 · AURAS DE
-// RIESGO): 0-39 bajo, 40-69 medio, 70-100 alto. Nota: los cortes NO
-// coinciden con `scoreToColor` (40 -> lima ahí, 40 -> "medio"/oro aquí):
-// son dos escalas distintas con dueños distintos. `Character.setRisk` usa
-// `riskLevel` (no `scoreToColor`) para decidir el aura.
+// RIESGO): 0-39 bajo, 40-69 medio, 70-100 alto. Única escala del proyecto:
+// `Character.setRisk` la usa para el aura y `RiskTooltip` para el chip.
 export type RiskLevel = 'bajo' | 'medio' | 'alto';
 
 export const riskLevel = (s: number): RiskLevel => {
