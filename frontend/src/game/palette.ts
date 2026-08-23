@@ -98,6 +98,12 @@ export const THEME = {
 export const TILE = 32;
 export const SPRITE_W = 32;
 export const SPRITE_H = 52;
+/** Sala completa en píxeles de mundo: 23x13 tiles. El canvas cubre toda la
+ * ventana (Scale.RESIZE) y la cámara escala/centra este rectángulo. */
+export const MAP_COLS = 23;
+export const MAP_ROWS = 13;
+export const MAP_W = MAP_COLS * TILE;
+export const MAP_H = MAP_ROWS * TILE;
 
 // Las cuatro personas que la guía nombra en la sección 04 llevan un par de
 // colores concreto ("Ana · OPS: pelo turquesa + ropa rosa"). Se fijan por id

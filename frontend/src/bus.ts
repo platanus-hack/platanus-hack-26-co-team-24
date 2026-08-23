@@ -8,6 +8,7 @@ import Phaser from 'phaser';
 //  - 'scenario:restore'()                                       — deshacer el escenario y restaurar la oficina.
 //  - 'person:click'    ({ id, nombre, rol, score, items })       — el usuario clickeó un personaje en el mapa.
 //  - 'console:open'    ()                                        — se clickeó la consola arcade en el mapa.
+//  - 'room:rect'       ({ x, y, w, h, zoom })                    — la sala cambió de sitio/tamaño dentro del canvas (resize).
 // Los handlers se conectan en tareas posteriores (Fase 3+); este archivo solo
 // crea el emisor compartido.
 export const bus = new Phaser.Events.EventEmitter();

@@ -6,7 +6,15 @@ import { createPathfinder, type Pathfinder } from './pathfinding';
 import { loadAvatar } from '../avatarStorage';
 import { bus } from '../bus';
 import { getRunner } from './scenarios';
-import { assignPairs, THEME, TILE, SPRITE_W, SPRITE_H } from './palette';
+import {
+  assignPairs,
+  THEME,
+  TILE,
+  SPRITE_W,
+  SPRITE_H,
+  MAP_W,
+  MAP_H,
+} from './palette';
 
 const OBJECTS_KEY = 'objects';
 
@@ -313,16 +321,29 @@ export class OfficeScene extends Phaser.Scene {
 
     // Recuadro de la sala Meet (x 15..18, y 2..4 en tiles, ver gen-map.mjs).
     this.add
-      .rectangle(MEET_ROOM.x * TILE, MEET_ROOM.y * TILE, MEET_ROOM.w * TILE, MEET_ROOM.h * TILE)
+      .rectangle(
+        MEET_ROOM.x * TILE,
+        MEET_ROOM.y * TILE,
+        MEET_ROOM.w * TILE,
+        MEET_ROOM.h * TILE,
+      )
       .setOrigin(0)
       .setFillStyle(hex(THEME.morado), 0.12)
       .setStrokeStyle(2, hex(THEME.morado), 0.9);
 
     // Dentro del marco y por debajo de la lámpara del techo, para no chocar.
     // Bajo el muro, dentro de la sala: arriba chocaría con la pantalla.
-    this.roomLabel(MEET_ROOM.x * TILE + 4, (MEET_ROOM.y + 1) * TILE + 3, 'SALA MEET', THEME.lila);
+    this.roomLabel(
+      MEET_ROOM.x * TILE + 4,
+      (MEET_ROOM.y + 1) * TILE + 3,
+      'SALA MEET',
+      THEME.lila,
+    );
     const server = this.points['server'];
-    if (server) this.roomLabel(server.x - 36, server.y - TILE * 2 - 18, 'GITHUB', THEME.lima);
+    // Debajo del rack y no encima como en el mockup: arriba vive ahora la
+    // tarjeta RESILIENCIA del HUD (que en el mockup se le monta encima).
+    if (server)
+      this.roomLabel(server.x - 36, server.y + TILE + 6, 'GITHUB', THEME.lima);
   }
 
   private roomLabel(x: number, y: number, text: string, color: string): void {
@@ -404,14 +425,7 @@ export class OfficeScene extends Phaser.Scene {
     }
     const meet = this.points['meet_screen'];
     if (meet) {
-      this.glow(
-        meet.x + TILE,
-        meet.y + TILE / 2,
-        118,
-        64,
-        THEME.turquesa,
-        0.5,
-      );
+      this.glow(meet.x + TILE, meet.y + TILE / 2, 118, 64, THEME.turquesa, 0.5);
     }
     for (const col of LAMP_COLUMNS) {
       this.glow(
@@ -431,7 +445,10 @@ export class OfficeScene extends Phaser.Scene {
     // de LEDs: 4 filas en total, como el mockup.
     for (const seg of RACK_SEGMENTS) {
       const sprite = this.spriteAt(this.points['server'], seg.dy * TILE);
-      sprite.setFrame(seg.frame).setFlipY(seg.flip).setData('offFrame', seg.off);
+      sprite
+        .setFrame(seg.frame)
+        .setFlipY(seg.flip)
+        .setData('offFrame', seg.off);
       this.objects[seg.key] = sprite;
     }
 
@@ -488,11 +505,39 @@ export class OfficeScene extends Phaser.Scene {
     });
   }
 
-  private setupCamera(): void {
+  /** El canvas cubre toda la ventana (`Scale.RESIZE`): aquí se escala la sala
+   * con zoom ENTERO -- el mayor que quepa, mínimo 1 -- y se centra. Zoom
+   * entero = píxeles nítidos (nada de medias filas de píxel). Fuera de la
+   * sala queda el VOID del `backgroundColor`.
+   *
+   * Además publica el rectángulo que ocupa la sala en pantalla (`room:rect`)
+   * para que el HUD de React se pegue a SUS esquinas y no a las del viewport:
+   * así la tarjeta RESILIENCIA sigue cayendo entre la sala Meet y el rack,
+   * como en el mockup, en cualquier resolución. */
+  private applyViewport = (): void => {
+    const { width, height } = this.scale.gameSize;
+    const zoom = Math.min(width / MAP_W, height / MAP_H);
     const cam = this.cameras.main;
-    // No zoom/pan: the map is exactly the size of the game canvas (736x416),
-    // so the whole office fits on screen at zoom 1. Config-level `zoom: 2`
-    // (see game/config.ts) scales the canvas up for pixel-art crispness.
-    cam.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+    cam.setZoom(zoom);
+    cam.centerOn(MAP_W / 2, MAP_H / 2);
+    const w = Math.round(MAP_W * zoom);
+    const h = Math.round(MAP_H * zoom);
+    bus.emit('room:rect', {
+      x: Math.round((width - w) / 2),
+      y: Math.round((height - h) / 2),
+      w,
+      h,
+      zoom,
+    });
+  };
+
+  private setupCamera(): void {
+    // Sin `setBounds`: con el canvas más grande que la sala, los límites
+    // pelearían con el centrado. `applyViewport` fija zoom y scroll.
+    this.applyViewport();
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.applyViewport);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.applyViewport);
+    });
   }
 }
