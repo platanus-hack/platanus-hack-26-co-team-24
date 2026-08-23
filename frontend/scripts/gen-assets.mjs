@@ -178,11 +178,16 @@ function fillCircle(cv, cx, cy, r, color) {
   }
 }
 
-// ---------- tiles/office.png : 12 tiles de 32x32 en fila (384x32) ----------
+// ---------- tiles/office.png : 9 tiles de 32x32 en fila ----------
 //
 // Orden fijo (lo consume scripts/gen-map.mjs vía GID = índice + 1):
-//   0 piso · 1 muro · 2 escritorio · 3 silla · 4 monitor_on · 5 monitor_off
-//   6 rack · 7 cafetera · 8 puerta · 9 lámpara · 10 pantalla_meet · 11 planta
+//   0 piso · 1 muro · 2 escritorio · 3 silla · 4 cafetera · 5 puerta
+//   6 lámpara · 7 pantalla_meet · 8 planta
+//
+// Los 9 están vivos: `src/game/map.test.ts` falla si alguno deja de usarse en
+// el mapa. Monitor y rack ya no son tiles -- se dibujan como sprites de
+// `objects.png` para poder animarlos, tintarlos por puesto y ordenarlos por
+// profundidad; sus recetas viven ahí y no se duplican aquí.
 //
 // Los tiles de mobiliario tienen FONDO TRANSPARENTE a propósito: se pintan en
 // la capa `furniture`, encima de la capa `floor`, igual que en el mockup de
@@ -221,13 +226,6 @@ function drawRackSegment(cv, x0, { live, cap, rows }) {
   });
 }
 
-/** Rack de una sola celda: el tile 6 del tileset (el mapa usa los sprites
- * apilados de objects.png, pero el tile sigue en la tira por contrato). */
-function drawRack(cv, x0, live) {
-  drawRackSegment(cv, x0, { live, cap: true, rows: [6, 20] });
-  fillRect(cv, x0, 30, 32, 2, live ? col('lima') : col('rojo'));
-}
-
 const TILE_DRAW = [
   // 0 · PISO: damero 16x16. `repeating-conic-gradient(#2A1747 0 25%, #331D53
   // 0 50%)` arranca a las 12 y gira en horario -> arriba-derecha y
@@ -259,23 +257,7 @@ const TILE_DRAW = [
     fillRect(cv, x0 + 9, 8, 14, 11, col('chairSeat'));
     fillRect(cv, x0 + 11, 19, 10, 6, col('chairBase'));
   },
-  // 4 · MONITOR ON: pantalla 22x15 en (5,7), borde 2 px TURQUESA, peana 8x4
-  // en (12,22). El glow NO va horneado: lo pone OfficeScene (aditivo).
-  (cv, x0) => {
-    fillRect(cv, x0 + 5, 7, 22, 15, col('screenOff'));
-    strokeRect(cv, x0 + 5, 7, 22, 15, 2, col('turquesa'));
-    fillRect(cv, x0 + 12, 22, 8, 4, col('line'));
-  },
-  // 5 · MONITOR OFF: misma geometría, SURFACE con borde LINE.
-  (cv, x0) => {
-    fillRect(cv, x0 + 5, 7, 22, 15, col('screenDead'));
-    strokeRect(cv, x0 + 5, 7, 22, 15, 2, col('line'));
-    fillRect(cv, x0 + 12, 22, 8, 4, col('line'));
-  },
-  // 6 · RACK GITHUB: caja #1F2B12, borde 2 px LIMA, dos filas de 3 LEDs 4x4
-  // separadas por una línea LINE (los apagados van al 30-40 % de opacidad).
-  (cv, x0) => drawRack(cv, x0, true),
-  // 7 · CAFETERA: SURFACE con borde 2 px #A98CD6, barra ROSA 18x5 en (7,5),
+  // 4 · CAFETERA: SURFACE con borde 2 px #A98CD6, barra ROSA 18x5 en (7,5),
   // taza ORO 12x9 en (10,16).
   (cv, x0) => {
     fillRect(cv, x0, 0, 32, 32, col('surface'));
@@ -283,7 +265,7 @@ const TILE_DRAW = [
     fillRect(cv, x0 + 7, 5, 18, 5, col('rosa'));
     fillRect(cv, x0 + 10, 16, 12, 9, col('oro'));
   },
-  // 8 · PUERTA: NARANJA con pomo ORO 4x4 y marco ORO de 2 px en el canto
+  // 5 · PUERTA: NARANJA con pomo ORO 4x4 y marco ORO de 2 px en el canto
   // derecho, el que da al interior (el mockup la pone en el muro izquierdo:
   // `left: 0; width: 30px; border-right: 5px solid #FFD166`). Dos tiles
   // apilados forman la hoja alta del mockup.
@@ -292,11 +274,11 @@ const TILE_DRAW = [
     fillRect(cv, x0 + 30, 0, 2, 32, col('oro'));
     fillRect(cv, x0 + 22, 14, 4, 4, col('oro'));
   },
-  // 9 · LÁMPARA: círculo ORO centrado en (16,15). El mockup la dibuja mucho
+  // 6 · LÁMPARA: círculo ORO centrado en (16,15). El mockup la dibuja mucho
   // más gorda que la muestra de la sección 03: r10 es el punto medio. Sin
   // glow horneado (lo pone OfficeScene).
   (cv, x0) => fillCircle(cv, x0 + 16, 15, 10, col('oro')),
-  // 10 · PANTALLA MEET: TURQUESA a todo el ancho (y=4, alto 17) + base MORADO
+  // 7 · PANTALLA MEET: TURQUESA a todo el ancho (y=4, alto 17) + base MORADO
   // (y=23, alto 4). La muestra de la guía la deja con 3 px de aire a los
   // lados, pero el mockup la dibuja de 208 px a 2x (= 1,6 celdas): a todo el
   // ancho, dos tiles contiguos forman el panel de 64 px sin costura.
@@ -304,7 +286,7 @@ const TILE_DRAW = [
     fillRect(cv, x0, 4, 32, 17, col('turquesa'));
     fillRect(cv, x0, 23, 32, 4, col('morado'));
   },
-  // 11 · PLANTA: follaje LIMA 18x13 en (7,9) sobre maceta NARANJA 10x7 en (11,22).
+  // 8 · PLANTA: follaje LIMA 18x13 en (7,9) sobre maceta NARANJA 10x7 en (11,22).
   (cv, x0) => {
     fillRect(cv, x0 + 7, 9, 18, 13, col('lima'));
     fillRect(cv, x0 + 11, 22, 10, 7, col('naranja'));
@@ -618,10 +600,14 @@ No se usa arte de terceros, así que no se debe atribución externa.
 
 ## Archivos y geometría de frames
 
-### \`tiles/office.png\` — 408x34, 12 tiles de 32x32 (margin 1, spacing 2)
+### \`tiles/office.png\` — 306x34, 9 tiles de 32x32 (margin 1, spacing 2)
 
-\`0 piso · 1 muro · 2 escritorio · 3 silla · 4 monitor_on · 5 monitor_off ·
-6 rack GitHub · 7 cafetera · 8 puerta · 9 lámpara · 10 pantalla Meet · 11 planta\`
+\`0 piso · 1 muro · 2 escritorio · 3 silla · 4 cafetera · 5 puerta ·
+6 lámpara · 7 pantalla Meet · 8 planta\`
+
+Los 9 se usan en el mapa (\`src/game/map.test.ts\` lo comprueba). El monitor y
+el rack no son tiles: viven en \`objects.png\` porque hay que animarlos,
+tintarlos por puesto y ordenarlos por profundidad.
 
 Los tiles de mobiliario tienen fondo transparente: se pintan en la capa
 \`furniture\` sobre la capa \`floor\`.

@@ -11,10 +11,14 @@ No se usa arte de terceros, así que no se debe atribución externa.
 
 ## Archivos y geometría de frames
 
-### `tiles/office.png` — 408x34, 12 tiles de 32x32 (margin 1, spacing 2)
+### `tiles/office.png` — 306x34, 9 tiles de 32x32 (margin 1, spacing 2)
 
-`0 piso · 1 muro · 2 escritorio · 3 silla · 4 monitor_on · 5 monitor_off ·
-6 rack GitHub · 7 cafetera · 8 puerta · 9 lámpara · 10 pantalla Meet · 11 planta`
+`0 piso · 1 muro · 2 escritorio · 3 silla · 4 cafetera · 5 puerta ·
+6 lámpara · 7 pantalla Meet · 8 planta`
+
+Los 9 se usan en el mapa (`src/game/map.test.ts` lo comprueba). El monitor y
+el rack no son tiles: viven en `objects.png` porque hay que animarlos,
+tintarlos por puesto y ordenarlos por profundidad.
 
 Los tiles de mobiliario tienen fondo transparente: se pintan en la capa
 `furniture` sobre la capa `floor`.

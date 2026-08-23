@@ -4,7 +4,9 @@
     "target": "es2023",
     "lib": ["ES2023", "DOM"],
     "module": "esnext",
-    "types": ["vite/client"],
+    // "node" es para los tests que viven en src/ y leen ficheros del repo
+    // (src/game/map.test.ts lee public/assets/maps/office.json con node:fs).
+    "types": ["vite/client", "node"],
     "allowArbitraryExtensions": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

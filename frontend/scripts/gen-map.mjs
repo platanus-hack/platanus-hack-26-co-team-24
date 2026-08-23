@@ -10,10 +10,13 @@
 // de GitHub en la pared derecha fuera de la sala, puerta abajo-centro, consola
 // abajo-derecha y dos plantas.
 //
-// Tileset `office` (public/assets/tiles/office.png, 12 tiles de 32 px, firstgid=1):
+// Tileset `office` (public/assets/tiles/office.png, 9 tiles de 32 px, firstgid=1):
 //   0 piso(gid1)  1 muro(gid2)  2 escritorio(gid3)  3 silla(gid4)
-//   4 monitor_on(gid5)  5 monitor_off(gid6)  6 rack(gid7)  7 cafetera(gid8)
-//   8 puerta(gid9)  9 lámpara(gid10)  10 pantalla_meet(gid11)  11 planta(gid12)
+//   4 cafetera(gid5)  5 puerta(gid6)  6 lámpara(gid7)  7 pantalla_meet(gid8)
+//   8 planta(gid9)
+// Los 9 se usan aquí: monitor y rack se dibujan como sprites de objects.png
+// (hay que animarlos, tintarlos y ordenarlos por profundidad), así que no
+// tienen tile. `src/game/map.test.ts` falla si algún tile queda sin usar.
 //
 // Capas: floor, walls, furniture, collision (tile layers) + points (objetos).
 // La capa `collision` marca celda bloqueada con el gid del muro; 0 = libre.
@@ -35,14 +38,11 @@ const GID = {
   wall: 2,
   desk: 3,
   chair: 4,
-  monitorOn: 5,
-  monitorOff: 6,
-  rack: 7,
-  coffee: 8,
-  door: 9,
-  lamp: 10,
-  meetScreen: 11,
-  plant: 12,
+  coffee: 5,
+  door: 6,
+  lamp: 7,
+  meetScreen: 8,
+  plant: 9,
 };
 
 function grid(fill) {
@@ -144,9 +144,15 @@ setProp(1, 11, GID.plant);
 // frames `rack_cap_*` / `server_*` de objects.png.
 const SERVER = { x: 18, y: 8 };
 for (const y of [6, 7, 8]) collision[y][SERVER.x] = GID.wall;
+if (collision[9][SERVER.x] !== 0) {
+  throw new Error('la celda bajo el rack tiene que quedar libre');
+}
 
 // ---------- consola arcade: abajo-derecha ----------
-const CONSOLE = { x: 17, y: 11 };
+// En la fila 10 y no en la 11: la 12 es muro, así que desde la 11 no habría
+// celda libre debajo y `resolveTargetTile('console')` daría un destino
+// bloqueado (ver src/game/map.test.ts).
+const CONSOLE = { x: 17, y: 10 };
 collision[CONSOLE.y][CONSOLE.x] = GID.wall; // sprite-only (objects.png frame 10)
 
 // ---------- lámparas del techo: sprite-only sobre el muro superior ----------
@@ -197,6 +203,7 @@ for (const name of [
   'meeting',
   'door',
   'server',
+  'console',
 ]) {
   const p = points.find((o) => o.name === name);
   const t = { x: p.x / TILE, y: p.y / TILE };
@@ -249,13 +256,13 @@ const map = {
       name: 'office',
       image: '../tiles/office.png',
       // El tileset va extruido 1 px por tile (ver gen-assets.mjs `extrude`):
-      // 12 celdas de 34 px con margen 1 y separación 2.
-      imagewidth: 408,
+      // 9 celdas de 34 px con margen 1 y separación 2.
+      imagewidth: 306,
       imageheight: 34,
       tilewidth: TILE,
       tileheight: TILE,
-      tilecount: 12,
-      columns: 12,
+      tilecount: 9,
+      columns: 9,
       margin: 1,
       spacing: 2,
     },

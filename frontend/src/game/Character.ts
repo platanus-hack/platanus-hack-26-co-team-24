@@ -12,6 +12,7 @@ import {
   type PairKey,
 } from './palette';
 import { nextState, durationMs, pointFor, canMove } from './behavior';
+import { resolveTargetTile } from './targets';
 import { riskLevel, RISK_LEVEL_COLOR } from './risk';
 import { DEMO_USER_ID } from '../api';
 import { bus } from '../bus';
@@ -349,18 +350,13 @@ export class Character extends Phaser.GameObjects.Container {
     });
   }
 
-  /** Resuelve el tile destino para un nombre de punto (`scene.points`). */
+  /** Resuelve el tile destino para un nombre de punto (`scene.points`). La
+   * regla vive en `targets.ts` (pura) para que `map.test.ts` pueda verificar
+   * la alcanzabilidad del mapa real con exactamente esta misma lógica. */
   private resolveTargetTile(point: string, scene: OfficeScene): { x: number; y: number } {
-    if (point.startsWith('desk_')) {
-      // El escritorio ocupa 2 tiles y la silla es la de ARRIBA-DERECHA: se
-      // trabaja detrás de la mesa y de cara al espectador (el monitor ocupa
-      // el tile de arriba-izquierda, ver scripts/gen-map.mjs).
-      const desk = scene.points[point];
-      return { x: desk.x / TILE + 1, y: desk.y / TILE - 1 };
-    }
-    const p = scene.points[point];
-    const tile = { x: p.x / TILE, y: p.y / TILE };
-    return isBlocked(scene.map, tile.x, tile.y) ? { x: tile.x, y: tile.y + 1 } : tile;
+    return resolveTargetTile(point, scene.points[point], (x, y) =>
+      isBlocked(scene.map, x, y),
+    );
   }
 
   private tweenTo(x: number, y: number): Promise<'done' | 'cancelled'> {
