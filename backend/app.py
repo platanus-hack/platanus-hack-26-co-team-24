@@ -14,14 +14,17 @@ base vacía, sin API key y sin red.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
+from urllib.parse import quote
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from cerebro import simular
-from cerebro.esquemas import ESCENARIOS, Escenario, KnowledgeItem
+from cerebro.esquemas import ESCENARIOS, Escenario, KnowledgeItem, RawEvent
 from cerebro.llm import hay_api_key
 
 from . import FORZAR_MOCK
@@ -29,6 +32,7 @@ from . import auth
 from . import bd
 from . import estado as st
 from . import seed
+from . import slack_oauth
 from .esquemas import (
     Miembro,
     Oficina,
@@ -52,6 +56,8 @@ log = logging.getLogger("api")
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI):
+    if (recuperados := st.rehidratar_eventos(OFICINA["id"])):
+        log.info("eventos recuperados de supabase: %d (el disco de Render arranca vacío)", recuperados)
     if st.cargar_desde_bd():
         log.info("estado cargado de supabase: %d items", len(st._real.items))
     elif st.cargar_snapshot():
@@ -288,6 +294,93 @@ def post_conexion(
     return auth.marcar_conexion(email, cuerpo.tipo)
 
 
+# --- Conexiones de Slack --------------------------------------------------------
+#
+# Tres pasos: el usuario pide la URL con su Bearer, aprueba en Slack, y Slack nos
+# devuelve al callback. El token queda en `connections` y no vuelve a salir: lo
+# consultable es el estado, no la credencial.
+
+
+def _pantalla_de_conexiones() -> str:
+    """A dónde devolver el navegador después de Slack.
+
+    Render inyecta `fromService: property: host` sin esquema, y una redirección
+    a `host/conexiones` sería relativa: el usuario aterrizaría en la API en vez
+    del frontend.
+    """
+    base = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+    if not base.startswith(("http://", "https://")):
+        base = f"https://{base}"
+    return f"{base}/conexiones"
+
+
+@app.get("/conexiones", tags=["conexiones"])
+def get_conexiones(actual: dict = Depends(auth.usuario_del_token)) -> dict:
+    """El estado de las conexiones del usuario. Sin token, nunca.
+
+    Solo se listan las que existen: el frontend trata cada fuente que le llega
+    como conectada, así que anunciar una conexión que no está sería mentirle.
+    """
+    slack = slack_oauth.estado_de(actual["email"])
+    return {"email": actual["email"], "conexiones": [c for c in (slack,) if c]}
+
+
+@app.get("/conexiones/slack/iniciar", tags=["conexiones"])
+def slack_iniciar(actual: dict = Depends(auth.usuario_del_token)) -> dict:
+    """La URL a la que mandar el navegador. El `state` va firmado con HMAC y
+    lleva dentro de quién es el flujo, porque el callback llega sin Bearer."""
+    return {"url": slack_oauth.url_de_autorizacion(actual["email"]), "scopes": slack_oauth.SCOPES}
+
+
+@app.get("/conexiones/slack/callback", tags=["conexiones"])
+def slack_callback(
+    code: str | None = Query(None),
+    state: str | None = Query(None),
+    error: str | None = Query(None),
+):
+    """A donde vuelve Slack. Redirige al frontend con el resultado en la query.
+
+    Es el navegador del usuario el que aterriza aquí, así que un JSON de error
+    sería una pantalla en blanco: todo camino termina en una redirección.
+    """
+    destino = _pantalla_de_conexiones()
+    if error:
+        return RedirectResponse(f"{destino}?slack=error&motivo={quote(error)}", status_code=302)
+    if not code or not state:
+        return RedirectResponse(f"{destino}?slack=error&motivo=faltan_code_o_state", status_code=302)
+    try:
+        email = slack_oauth.email_del_state(state)
+        slack_oauth.guardar_conexion(email, slack_oauth.canjear_codigo(code))
+    except HTTPException as e:
+        log.warning("callback de slack falló: %s", e.detail)
+        return RedirectResponse(f"{destino}?slack=error&motivo={quote(str(e.detail))}", status_code=302)
+    return RedirectResponse(f"{destino}?slack=conectado", status_code=302)
+
+
+@app.post("/conexiones/slack/sincronizar", tags=["conexiones"])
+def slack_sincronizar(
+    desde: str | None = Query(None, description="Unix timestamp. Por defecto, 60 días atrás."),
+    actual: dict = Depends(auth.usuario_del_token),
+) -> dict:
+    """Baja los mensajes del Slack del usuario y los deja donde `procesar()` los ve.
+
+    No corre la cadena de P2 detrás: `extraer()` cuesta tokens y segundos, y
+    mezclarlo aquí haría que un timeout de Claude pareciera un fallo de Slack.
+    """
+    email = actual["email"]
+    oficina = slack_oauth.oficina_de(email)
+    crudos = slack_oauth.descargar_eventos(email, desde)
+    eventos = [RawEvent.model_validate(e) for e in crudos]
+    resultado = st.guardar_eventos(eventos, oficina)
+    canales = {e.metadata.get("canal_id") for e in eventos if e.metadata.get("canal_id")}
+    return {
+        **resultado,
+        "mensajes": len(eventos),
+        "canales": len(canales),
+        "siguiente": "POST /admin/procesar para recalcular el mapa",
+    }
+
+
 # --- Admin ----------------------------------------------------------------------
 
 
@@ -299,6 +392,36 @@ def admin_procesar() -> RespuestaProcesar:
     correr dentro de un request de lectura.
     """
     return RespuestaProcesar(**st.procesar())
+
+
+def _admin_autorizado(x_admin_token: str | None = Header(None)) -> None:
+    """Candado opcional para lo que escribe datos.
+
+    El resto de `/admin/*` está abierto desde el primer día y así se quedó: es
+    hackathon y solo recalcula o resetea. Este endpoint es distinto porque
+    *inyecta* el conocimiento que después se atribuye a personas reales, así que
+    admite cerrarse poniendo `ADMIN_TOKEN` en Render, sin tocar código ni romper
+    a quien ya lo llama sin cabecera.
+    """
+    esperado = os.getenv("ADMIN_TOKEN", "")
+    if esperado and x_admin_token != esperado:
+        raise HTTPException(401, "Falta o no coincide la cabecera X-Admin-Token.")
+
+
+@app.post("/admin/eventos", tags=["admin"])
+def admin_eventos(
+    eventos: list[RawEvent] = Body(..., description="RawEvent[] tal como los normaliza P1"),
+    oficina: str = Query(OFICINA["id"], description="A qué oficina pertenecen"),
+    _: None = Depends(_admin_autorizado),
+) -> dict:
+    """Mete eventos sin desplegar: en Render `data/raw/` viene horneado en la imagen.
+
+    Deduplica por `id`, así que reenviar el mismo lote es inofensivo. No procesa:
+    después hay que llamar `POST /admin/procesar`.
+    """
+    if not eventos:
+        raise HTTPException(422, "Manda al menos un evento.")
+    return st.guardar_eventos(eventos, oficina)
 
 
 @app.post("/admin/reset", tags=["admin"])

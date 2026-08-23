@@ -31,6 +31,8 @@ python -m ingestion slack --since 1754006400
 
 Escribe eventos normalizados en `data/raw/slack_events.json` y respuestas crudas de la API en `data/source_raw/slack_api.json`. Los eventos quedan donde P2 los descubre automáticamente; las respuestas crudas se mantienen fuera de `data/raw/` para que P2 no intente validarlas como `RawEvent`.
 
+`fetch_slack_events` también se usa desde el backend: `POST /conexiones/slack/sincronizar` le pasa el token que cada usuario autorizó por OAuth en vez de `SLACK_BOT_TOKEN`, y escribe a `data/raw/ingesta-{oficina}.json`. El conector no cambia — solo cambia de dónde sale el token. Los pasos para crear la app de Slack están en [`backend/README.md`](../backend/README.md) (sección "Conectar Slack").
+
 ## GitHub
 
 Copia el mapa de ejemplo y usa los emails acordados por el equipo. Los usuarios que no estén en el mapa se omiten para no atribuir conocimiento a la persona equivocada.

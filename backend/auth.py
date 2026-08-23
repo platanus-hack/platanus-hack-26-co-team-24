@@ -126,7 +126,11 @@ def marcar_conexion(email: str, tipo: str) -> dict:
             filas = bd.rest("GET", "users", params={"email": f"eq.{email}", "select": "id"})
             if filas:
                 user_id = filas[0]["id"]
-                bd.rest("POST", "connections", json={"user_id": user_id, "tipo": tipo, "estado": "activa"})
+                # upsert y no insert: `connections` es única por (user_id, tipo)
+                # desde que guarda tokens, y repetir la llamada no puede reventar.
+                # El payload no menciona `access_token`, así que un merge no
+                # pisa el token de una conexión real de Slack.
+                bd.upsert("connections", {"user_id": user_id, "tipo": tipo, "estado": "activa"}, "user_id,tipo")
         except Exception as e:
             log.warning("conexion simulada no persistió: %s", e)
     persona = PERSONAS.get(email)
@@ -136,5 +140,5 @@ def marcar_conexion(email: str, tipo: str) -> dict:
         "email": email,
         "user_id": user_id,
         "nombre": (persona or {}).get("nombre") or nombre_de(email),
-        "nota": "Simulado: no hay OAuth. P1 conecta las fuentes reales del demo.",
+        "nota": "Marca de estado, sin token. Para Slack de verdad: GET /conexiones/slack/iniciar.",
     }

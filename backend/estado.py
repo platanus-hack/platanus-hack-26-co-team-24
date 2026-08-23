@@ -20,6 +20,7 @@ import json
 import re
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from cerebro import (
     calcular_riesgo,
@@ -71,6 +72,100 @@ def eventos() -> list[RawEvent]:
     if _eventos is None:
         _eventos = cargar_eventos(DIR_EVENTOS)
     return _eventos
+
+
+# --- Eventos que entran por HTTP -------------------------------------------------
+#
+# Por qué disco *y* Supabase, y no uno solo:
+#
+# - Solo disco: es lo que `cargar_eventos()` lee, así que basta para que
+#   `procesar()` los vea. Pero en Render el disco es efímero: lo que un usuario
+#   sincroniza desaparece en el siguiente deploy, y el próximo
+#   `/admin/procesar` correría sobre el fixture y borraría sus datos reales sin
+#   avisar. Ese silencio es el bug caro.
+# - Solo Supabase: habría que reimplementar en `eventos()` la precedencia
+#   live > mock > fixture que ya vive en `cargar_eventos()`, y tenerla en dos
+#   sitios es no tenerla.
+#
+# Así que: escribir siempre a disco (única fuente de verdad para el pipeline) y
+# espejar en `raw_events` para poder rehidratar el disco al arrancar. La regla
+# de precedencia sigue existiendo en un solo lugar, el de `cerebro`.
+
+
+def archivo_de_eventos(oficina: str) -> Path:
+    """Un archivo por oficina. `cargar_eventos()` trata cualquier `*.json` que no
+    sea el fixture ni el mock como datos vivos, así que en cuanto alguien
+    sincroniza su Slack el fixture deja de contar — que es lo correcto: mezclar
+    eventos ficticios con reales atribuiría conocimiento inventado a gente real."""
+    return DIR_EVENTOS / f"ingesta-{oficina}.json"
+
+
+def guardar_eventos(nuevos: list[RawEvent], oficina: str) -> dict:
+    """Persiste eventos crudos y deja el pipeline listo para reprocesarlos."""
+    global _eventos
+    destino = archivo_de_eventos(oficina)
+    por_id: dict[str, dict] = {}
+    if destino.exists():
+        por_id = {e["id"]: e for e in json.loads(destino.read_text(encoding="utf-8"))}
+    antes = len(por_id)
+    por_id.update({e.id: e.model_dump() for e in nuevos})
+    ordenados = sorted(por_id.values(), key=lambda e: (e["timestamp"], e["id"]))
+
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(json.dumps(ordenados, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _eventos = None  # la próxima lectura relee el disco
+
+    espejados = _espejar_eventos(nuevos, oficina)
+    return {
+        "recibidos": len(nuevos),
+        "nuevos": len(por_id) - antes,
+        "total": len(por_id),
+        "oficina": oficina,
+        "archivo": str(destino),
+        "en_supabase": espejados,
+    }
+
+
+def _espejar_eventos(nuevos: list[RawEvent], oficina: str) -> bool:
+    if not bd.hay_bd() or not nuevos:
+        return False
+    try:
+        bd.upsert(
+            "raw_events",
+            [{"id": e.id, "office_id": oficina, "fuente": e.fuente, "payload": e.model_dump()} for e in nuevos],
+            "id",
+        )
+        return True
+    except Exception as e:
+        print(f"[backend] espejar eventos falló ({type(e).__name__}: {e}); quedan en disco")
+        return False
+
+
+def rehidratar_eventos(oficina: str) -> int:
+    """Arranque en frío: baja de Supabase lo que el disco efímero perdió.
+
+    Se escribe el archivo en vez de devolver los eventos para que la precedencia
+    live > mock > fixture la siga decidiendo `cargar_eventos()` y no una segunda
+    copia de esa regla aquí.
+    """
+    global _eventos
+    if not bd.hay_bd():
+        return 0
+    try:
+        filas = bd.rest("GET", "raw_events", params={"office_id": f"eq.{oficina}", "select": "payload"}) or []
+    except Exception as e:
+        print(f"[backend] rehidratar_eventos falló ({type(e).__name__}: {e})")
+        return 0
+    if not filas:
+        return 0
+    destino = archivo_de_eventos(oficina)
+    if destino.exists():
+        return 0  # el disco ya tiene lo suyo; no lo pisamos con una copia vieja
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    payloads = sorted((f["payload"] for f in filas), key=lambda e: (e["timestamp"], e["id"]))
+    destino.write_text(json.dumps(payloads, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _eventos = None
+    return len(payloads)
 
 
 def estado_mock() -> Estado:
