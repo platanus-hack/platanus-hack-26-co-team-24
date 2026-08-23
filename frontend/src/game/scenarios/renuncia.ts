@@ -1,9 +1,8 @@
 import type { OfficeScene } from '../OfficeScene';
-import { floatIcon, wait } from './fx';
+import { floatIcon, hex, wait } from './fx';
 import { THEME, TILE } from '../palette';
 import { sfx } from '../../audio';
 
-const hex = (s: string): number => parseInt(s.slice(1), 16);
 // Escritorio "apagado" = tinte LINE (guía), no un gris genérico fuera de
 // los 11 colores de la paleta Synth Dusk.
 const GRAY = hex(THEME.line);

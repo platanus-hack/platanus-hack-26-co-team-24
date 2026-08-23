@@ -1,9 +1,8 @@
 import type { OfficeScene } from '../OfficeScene';
-import { floatIcon, nearestGlow, wait } from './fx';
+import { floatIcon, hex, nearestGlow, wait } from './fx';
 import { THEME, TILE } from '../palette';
 import { sfx } from '../../audio';
 
-const hex = (s: string): number => parseInt(s.slice(1), 16);
 const RED = hex(THEME.rojo);
 const DESK_COUNT = 9;
 
@@ -105,7 +104,23 @@ async function runApagon(scene: OfficeScene): Promise<void> {
     scene.objects[`pc_frame_${i}`]?.setDepth(950);
   }
 
-  // Rack apagado: frame "caído" y su halo lima a 0 (sin LEDs).
+  // Los halos aditivos de cada monitor y de la pantalla Meet también viven
+  // por debajo del overlay salvo que se eleven a mano (son `Image`
+  // anónimos, ver `fx.nearestGlow`): sin esto los biseles se veían
+  // encendidos pero sin su resplandor, como si sólo el sprite (no la luz
+  // que emite) sobreviviera al apagón.
+  for (let i = 0; i < DESK_COUNT; i++) {
+    const desk = scene.points[`desk_${i}`];
+    if (!desk) continue;
+    nearestGlow(scene, desk.x + TILE / 2, desk.y + 4)?.setDepth(950);
+  }
+  const meet = scene.points['meet_screen'];
+  if (meet) {
+    nearestGlow(scene, meet.x + TILE, meet.y + TILE / 2)?.setDepth(950);
+  }
+
+  // Rack apagado: frame "caído" y su halo lima a 0 (sin LEDs) -- el único
+  // que se apaga en vez de elevarse.
   for (const key of ['server', 'server_mid', 'server_top']) {
     const rack = scene.objects[key];
     if (!rack) continue;

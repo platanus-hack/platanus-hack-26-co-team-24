@@ -1,5 +1,5 @@
 import type { OfficeScene } from '../OfficeScene';
-import { applyFloat, dashedRectSegments, wait } from './fx';
+import { applyFloat, dashedRectSegments, hex, wait } from './fx';
 import { THEME } from '../palette';
 import { sfx } from '../../audio';
 
@@ -22,8 +22,6 @@ const LOCK_OFFSET_Y = -40; // candado flotando sobre el hueco, no encima del haz
 const LAMP_COUNT = 3; // ver OfficeScene.LAMP_COLUMNS
 const LAMP_BLINKS = 6; // 6 medios-ciclos = 3 parpadeos completos
 const LAMP_INTERVAL_MS = 500; // 6 * 500ms = 3s (guía: "≈3 s")
-
-const hex = (s: string): number => parseInt(s.slice(1), 16);
 
 /** Robo de laptop (guía, sección 06 · ROBO DEL PC): el PC del CTO (desk 0)
  * desaparece y deja un hueco punteado rosa, con un haz rojo girando y un

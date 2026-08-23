@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import type { OfficeScene } from '../OfficeScene';
-import { floatIcon, nearestGlow, wait } from './fx';
+import { floatIcon, hex, nearestGlow, wait } from './fx';
 import { THEME } from '../palette';
 import { sfx } from '../../audio';
 
@@ -14,8 +14,6 @@ const LAMP_COUNT = 3; // ver OfficeScene.LAMP_COLUMNS
 const SMOKE_BURST_MS = 1200;
 const SMOKE_PAUSE_MS = 600;
 const DEV_ICON_OFFSET_Y = -34; // sobre la cabeza, misma altura que la etiqueta de riesgo
-
-const hex = (s: string): number => parseInt(s.slice(1), 16);
 
 /** GitHub caído (guía, sección 06 · CAÍDA DE GITHUB): el rack se pone rojo y
  * apagado, humea en dos tandas separadas por una pausa, y exactamente dos
