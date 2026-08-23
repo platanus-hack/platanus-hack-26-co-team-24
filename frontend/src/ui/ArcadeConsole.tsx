@@ -72,13 +72,19 @@ export function ArcadeConsole() {
           setOpen((v) => !v);
         }}
       >
-        🕹️ Consola
+        <span>🕹️</span>
+        <span>CONSOLA</span>
       </button>
 
       {open && (
         <div className="arcade-panel">
           <div className="arcade-panel__header">
-            <p className="arcade-panel__title">Consola de escenarios</p>
+            <div className="arcade-panel__title-group">
+              <p className="arcade-panel__title">CONSOLA DE EMERGENCIAS</p>
+              <span className="arcade-panel__count">
+                {scenarios.length} ESCENARIOS
+              </span>
+            </div>
             <button
               type="button"
               className="arcade-close"
@@ -115,7 +121,7 @@ export function ArcadeConsole() {
 
           {selected?.requiere_persona && (
             <label className="arcade-field">
-              Persona
+              PERSONA
               <select
                 value={personId}
                 onChange={(e) => setPersonId(e.target.value)}
@@ -135,7 +141,7 @@ export function ArcadeConsole() {
             disabled={!selected || running}
             onClick={simulate}
           >
-            Simular
+            SIMULAR ▶
           </button>
         </div>
       )}

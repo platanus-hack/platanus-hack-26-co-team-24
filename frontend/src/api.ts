@@ -57,6 +57,8 @@ interface RawMiembro {
 interface RawOficina {
   oficina: { id: string; nombre: string };
   miembros: RawMiembro[];
+  // 0-100, cobertura de conocimiento del equipo (ver cerebro/README.md).
+  resiliencia_equipo?: number;
 }
 interface RawScore {
   persona_id: string;
@@ -107,7 +109,7 @@ export async function getOficina(): Promise<Oficina> {
     desk: i,
     avatar_config: toAvatarConfig(m.avatar_config, i),
   }));
-  return { office: raw.oficina, people };
+  return { office: raw.oficina, people, resiliencia: raw.resiliencia_equipo };
 }
 
 export async function getRiesgo(): Promise<Riesgo> {

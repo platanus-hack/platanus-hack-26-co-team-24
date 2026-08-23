@@ -1,5 +1,7 @@
 {
   "office": { "id": "off_1", "nombre": "Inerxia" },
+  "resiliencia": 64,
+  "resiliencia_delta": 12,
   "people": [
     {
       "id": "p_ana",

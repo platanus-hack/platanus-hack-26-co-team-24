@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { bus } from '../bus';
+import { getOficina } from '../api';
 import type { ItemCritico } from '../types';
 import { THEME } from '../game/palette';
+import { riskLevel, type RiskLevel } from '../game/risk';
 import './ui.css';
 
 interface PersonClickPayload {
@@ -12,17 +14,41 @@ interface PersonClickPayload {
   items: ItemCritico[];
 }
 
-function scoreToBorderColor(score: number): string {
-  if (score <= 40) return THEME.riskLow;
-  if (score <= 70) return THEME.riskMid;
-  return THEME.riskHigh;
-}
+const SCORE_COLOR: Record<RiskLevel, string> = {
+  bajo: THEME.lima,
+  medio: THEME.oro,
+  alto: THEME.rojo,
+};
 
-/** Tooltip flotante (esquina superior derecha) que muestra el riesgo y los
- * items críticos del personaje clickeado en el mapa. Se suscribe a
- * `bus` ('person:click') y se cierra con Escape o el botón "×". */
+// ponytail: el contrato v1 no manda género; en vez de un mapa persona ->
+// pronombre (o pedirle un campo nuevo a P3), basta con adivinar por la
+// terminación del nombre para el título "SOLO ELLA/ÉL SABE HACER ESTO".
+const posesivo = (nombre: string): 'ELLA' | 'ÉL' =>
+  nombre.trim().toLowerCase().endsWith('a') ? 'ELLA' : 'ÉL';
+
+const TIPO_LABEL: Record<string, string> = {
+  tarea: 'TAREA',
+  regla_tacita: 'TÁCITO',
+  acceso: 'ACCESO',
+  proceso: 'PROCESO',
+};
+
+const tipoChip = (tipo: string): string =>
+  TIPO_LABEL[tipo] ?? tipo.toUpperCase();
+
+/** Tooltip flotante (esquina superior derecha, debajo de la tarjeta
+ * RESILIENCIA) que muestra el riesgo y los items críticos del personaje
+ * clickeado en el mapa. Se suscribe a `bus` ('person:click') y se cierra con
+ * Escape o clic fuera. */
 export function RiskTooltip() {
   const [payload, setPayload] = useState<PersonClickPayload | null>(null);
+  const [officeName, setOfficeName] = useState('');
+
+  useEffect(() => {
+    getOficina()
+      .then((o) => setOfficeName(o.office.nombre))
+      .catch((err) => console.error('getOficina', err));
+  }, []);
 
   useEffect(() => {
     const handler = (data: PersonClickPayload) => setPayload(data);
@@ -37,21 +63,30 @@ export function RiskTooltip() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setPayload(null);
     };
+    const onPointerDown = (e: PointerEvent) => {
+      if (!(e.target as HTMLElement).closest('.risk-tooltip'))
+        setPayload(null);
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onPointerDown);
+    };
   }, [payload]);
 
   if (!payload) return null;
 
+  const level = riskLevel(payload.score);
+
   return (
-    <div
-      className="risk-tooltip"
-      style={{ borderLeftColor: scoreToBorderColor(payload.score) }}
-    >
+    <div className="risk-tooltip">
       <div className="risk-tooltip__header">
         <div>
           <p className="risk-tooltip__name">{payload.nombre}</p>
-          <p className="risk-tooltip__rol">{payload.rol}</p>
+          <p className="risk-tooltip__rol">
+            {payload.rol} · OFICINA {officeName.toUpperCase()}
+          </p>
         </div>
         <button
           type="button"
@@ -62,13 +97,29 @@ export function RiskTooltip() {
           ×
         </button>
       </div>
-      <p className="risk-tooltip__score">Riesgo: {payload.score}</p>
+
+      <div className="risk-tooltip__score-row">
+        <p
+          className="risk-tooltip__score"
+          style={{ color: SCORE_COLOR[level] }}
+        >
+          {payload.score}
+        </p>
+        <span className="risk-tooltip__score-label">riesgo</span>
+      </div>
+
+      <p className="risk-tooltip__section-title">
+        SOLO {posesivo(payload.nombre)} SABE HACER ESTO
+      </p>
       {payload.items.length === 0 ? (
-        <p>Sin items críticos</p>
+        <p className="risk-tooltip__empty">Sin items críticos</p>
       ) : (
         <ul className="risk-tooltip__items">
           {payload.items.map((item) => (
-            <li key={item.id}>{item.descripcion}</li>
+            <li key={item.id} className="risk-tooltip__item">
+              <span className="risk-tooltip__chip">{tipoChip(item.tipo)}</span>
+              <span className="risk-tooltip__desc">{item.descripcion}</span>
+            </li>
           ))}
         </ul>
       )}

@@ -4,7 +4,7 @@ import { config } from '../game/config';
 import { RiskTooltip } from './RiskTooltip';
 import { ArcadeConsole } from './ArcadeConsole';
 import { ResultPanel } from './ResultPanel';
-import { MuteButton } from './MuteButton';
+import { Hud } from './Hud';
 import { unlock } from '../audio';
 
 declare global {
@@ -31,7 +31,7 @@ export function GameCanvas() {
       onPointerDown={unlock}
     >
       <div ref={ref} style={{ width: '100%', height: '100%' }} />
-      <MuteButton />
+      <Hud />
       <RiskTooltip />
       <ArcadeConsole />
       <ResultPanel />
