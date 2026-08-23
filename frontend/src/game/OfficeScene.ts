@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { getOficina, getRiesgo, simular, DEMO_USER_ID } from '../api';
+import { getOficina, getRiesgo, simular, resolverMiId, miId } from '../api';
 import type { Riesgo } from '../types';
 import { Character } from './Character';
 import { hex } from './scenarios/fx';
@@ -249,21 +249,36 @@ export class OfficeScene extends Phaser.Scene {
           // best-effort: sin bloquear el spawn de personajes por esto.
         }
       })();
-      const [oficina] = await Promise.all([getOficina(), fontReady]);
+      // La identidad va en el mismo `Promise.all`: se resuelve mientras
+      // llega `/oficina`, así que no le cuesta un ms al arranque, y `Character`
+      // ya la encuentra resuelta cuando la lee (`miId()`). `resolverMiId()`
+      // nunca rechaza ni se cuelga (tiene su propio techo, ver api.ts): si el
+      // perfil no llega, la oficina se puebla igual con el usuario demo.
+      const [oficina] = await Promise.all([
+        getOficina(),
+        fontReady,
+        resolverMiId(),
+      ]);
       // La escena pudo haberse cerrado mientras esperábamos la respuesta.
       if (!this.sys.isActive()) return;
-      // El editor de avatar (/avatar) guarda la config del usuario demo en
-      // localStorage; la reflejamos aquí para que "crear avatar -> recargar
-      // -> el personaje lo luce" funcione. También en modo real: P3 aún no
-      // persiste avatares (no hay PUT /avatar) y su `avatar_config` viene en
-      // otro formato, así que localStorage es la única fuente del avatar
-      // que el usuario acaba de crear.
+      // El editor de avatar (/avatar) guarda la config en localStorage; la
+      // reflejamos aquí para que "crear avatar -> recargar -> el personaje lo
+      // luce" funcione incluso antes de que el servidor la devuelva en
+      // `/oficina` (P3 manda `avatar_config` en otro formato para los miembros
+      // sembrados).
       const localAvatar = loadAvatar();
+      // El personaje de uno es el de la sesión, no el del usuario demo: ese
+      // era el bug (te registrabas como carlos@ y el juego te pintaba encima
+      // de Ana). Si el email de la sesión NO está entre los miembros (recién
+      // registrado, todavía sin conocimiento asignado), simplemente ningún
+      // personaje es "yo": la oficina se puebla normal y nadie roba el avatar
+      // ajeno.
+      const yoId = miId();
       // Pelo+ropa únicos por persona: se reparte con la oficina entera a la
       // vista (guía, sección 04: "nunca dos personajes con el mismo par").
       const pairs = assignPairs(oficina.people);
       for (const person of oficina.people) {
-        if (localAvatar && person.id === DEMO_USER_ID) {
+        if (localAvatar && person.id === yoId) {
           person.avatar_config = localAvatar;
         }
         const character = new Character(

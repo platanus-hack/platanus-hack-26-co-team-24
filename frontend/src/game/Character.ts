@@ -14,7 +14,7 @@ import {
 import { nextState, durationMs, pointFor, canMove, decMoving } from './behavior';
 import { resolveTargetTile } from './targets';
 import { riskLevel, RISK_LEVEL_COLOR } from './risk';
-import { DEMO_USER_ID } from '../api';
+import { miId } from '../api';
 import { bus } from '../bus';
 
 const SPEED = 64; // px/s, constante (guía: "caminar 64 px/s lineal")
@@ -192,14 +192,18 @@ export class Character extends Phaser.GameObjects.Container {
     // `assignPairs` en palette.ts), que es quien ve la oficina entera y
     // puede garantizar que no se repita ninguno.
     this.hair.setTint(HAIR_PALETTE[pair[0]]);
-    // El editor de avatar (usuario demo) manda sobre el par para la ropa:
+    // El editor de avatar manda sobre el par para la ropa de UNO MISMO:
     // `avatar_config.paleta` es sólo 6 colores (sin naranja), así que sigue
     // siendo `PALETTE`. Para el resto, `pair[1]` puede ser 'orange' (slot 6
     // de la guía, "ropa naranja"), que `PALETTE` no tiene -- se usa
     // `HAIR_PALETTE` (superset con los mismos valores para las 6 claves
     // compartidas) en vez de `PALETTE` para no perder ese slot.
+    // `miId()` y no `DEMO_USER_ID`: quién es "yo" lo decide la sesión. Se lee
+    // síncrono porque este constructor lo es; `OfficeScene` ya esperó a
+    // `resolverMiId()` antes de crear a nadie, así que aquí la identidad ya
+    // está resuelta (y sin sesión sigue siendo el usuario demo de siempre).
     this.clothes.setTint(
-      person.id === DEMO_USER_ID
+      person.id === miId()
         ? PALETTE[person.avatar_config.paleta]
         : HAIR_PALETTE[pair[1]],
     );

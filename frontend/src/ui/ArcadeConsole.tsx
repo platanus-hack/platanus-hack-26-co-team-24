@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { bus } from '../bus';
-import { DEMO_USER_ID, getEscenarios, getOficina } from '../api';
+import { getEscenarios, getOficina, miId, resolverMiId } from '../api';
 import { sfx, unlock } from '../audio';
 import type { Person, Scenario } from '../types';
 import './ui.css';
@@ -13,21 +13,28 @@ export function ArcadeConsole() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [personId, setPersonId] = useState(DEMO_USER_ID);
+  // `miId` como inicializador perezoso: el primer render no puede esperar
+  // al perfil, así que arranca con lo que se sepa y el efecto lo corrige.
+  const [personId, setPersonId] = useState(miId);
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
     getEscenarios()
       .then((r) => setScenarios(r.scenarios))
       .catch((err) => console.error('getEscenarios', err));
-    getOficina()
-      .then((o) => {
+    // El objetivo por defecto es uno mismo: la gracia del juego es "qué se
+    // rompe si falto YO". Se piden la oficina y la identidad a la vez porque
+    // hay que cruzarlas: el id de la sesión puede no estar entre los miembros
+    // (recién registrado, sin conocimiento asignado) y entonces el select
+    // mostraría a la primera persona mientras el estado apunta a alguien
+    // inexistente y SIMULAR no haría nada.
+    Promise.all([getOficina(), resolverMiId()])
+      .then(([o, yoId]) => {
         setPeople(o.people);
-        // Con una API real los ids pueden no incluir el demo `p_ana`: el
-        // select mostraría la primera persona mientras el estado apunta a
-        // alguien inexistente y la simulación no haría nada.
-        setPersonId((p) =>
-          o.people.some((x) => x.id === p) ? p : (o.people[0]?.id ?? p),
+        setPersonId(
+          o.people.some((x) => x.id === yoId)
+            ? yoId
+            : (o.people[0]?.id ?? yoId),
         );
       })
       .catch((err) => console.error('getOficina', err));

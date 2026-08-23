@@ -20,7 +20,7 @@ import {
   ROPAS,
   isValidAvatar,
 } from './avatarStorage';
-import { cabecerasAuth, haySesion } from './sesion';
+import { cabecerasAuth, haySesion, leerToken, yo } from './sesion';
 import oficinaMock from './mocks/oficina.json';
 import riesgoMock from './mocks/riesgo.json';
 import escenariosMock from './mocks/escenarios.json';
@@ -50,6 +50,74 @@ export const API_BASE = BASE ?? null;
 export const DEMO_USER_ID =
   (import.meta.env.VITE_DEMO_USER_ID as string | undefined) ||
   (IS_MOCK ? 'p_ana' : 'ana@empresa.com');
+
+// --- Identidad del jugador -------------------------------------------------
+//
+// Quién soy lo dice el servidor (`GET /usuarios/me`, ver `yo()` en sesion.ts),
+// pero quienes preguntan son síncronos: el constructor de un `Character` y el
+// estado inicial de la consola arcade. La asimetría se resuelve con una sola
+// resolución por token guardada en el módulo:
+//
+//   - `resolverMiId()` para quien puede esperar (el spawn de la oficina ya
+//     espera a `/oficina`; pedir el perfil en paralelo no cuesta un ms más).
+//   - `miId()` para quien no: responde YA con lo mejor que se sepa.
+//
+// Nunca lanza. Sin sesión, con el token vencido o con la API caída la
+// identidad cae a `DEMO_USER_ID` y el juego sigue igual; en modo mock ni
+// siquiera se pregunta, porque ahí `DEMO_USER_ID` es la única identidad que
+// existe. Ese es el plan B del demo y no puede depender de la red.
+
+/** Techo para que el arranque del juego no quede colgado de `/usuarios/me`:
+ * si el perfil tarda más, la oficina se puebla como demo y `miId()` se corrige
+ * solo cuando la respuesta llegue. Mismo criterio que la espera de fuentes en
+ * `OfficeScene.spawnCharacters()`: nada bloquea el spawn indefinidamente. */
+const MS_IDENTIDAD = 3000;
+
+let idActual = DEMO_USER_ID;
+let promesaId: Promise<string> | null = null;
+let tokenDeLaPromesa: string | null = null;
+
+/** Quién soy AHORA mismo, sin esperar: el usuario de la sesión si ya se
+ * resolvió, el demo si todavía no (o si no hay sesión). */
+export function miId(): string {
+  return idActual;
+}
+
+/** Resuelve la identidad contra el servidor y la cachea por token. Se
+ * re-resuelve si el token cambió, porque entrar y salir navegan con la SPA (no
+ * hay recarga): sin esto, quien entra con su cuenta después de haber abierto
+ * la oficina seguiría jugando como el usuario demo. */
+export function resolverMiId(): Promise<string> {
+  const token = leerToken();
+  if (!promesaId || tokenDeLaPromesa !== token) {
+    tokenDeLaPromesa = token;
+    idActual = DEMO_USER_ID;
+    promesaId = pedirIdentidad(token);
+  }
+  return promesaId;
+}
+
+async function pedirIdentidad(token: string | null): Promise<string> {
+  if (!API_BASE || !token) return DEMO_USER_ID;
+  const perfil = yo(API_BASE)
+    .then((u) => {
+      // Puede llegar después del techo: corrige igual para quien pregunte
+      // luego (la consola, o un `restart()` de la escena tras restaurar) y
+      // deja la caché con la verdad en vez de con el demo. Si mientras tanto
+      // cambió el token, esta respuesta ya es de otra sesión: se descarta.
+      if (tokenDeLaPromesa !== token) return DEMO_USER_ID;
+      idActual = u.email;
+      promesaId = Promise.resolve(u.email);
+      return u.email;
+    })
+    // Token vencido (`yo()` ya lo borró) o API caída: se sigue como demo, que
+    // es exactamente lo que hace el resto del front sin sesión.
+    .catch(() => DEMO_USER_ID);
+  return Promise.race([
+    perfil,
+    new Promise<string>((ok) => setTimeout(() => ok(idActual), MS_IDENTIDAD)),
+  ]);
+}
 
 // Escritorios que dibuja el mapa (`desk_0`..`desk_8`, ver scripts/gen-map.mjs).
 // La oficina real puede tener más gente que puestos: el índice se cicla en vez
@@ -231,7 +299,7 @@ export async function putAvatar(cfg: AvatarConfig): Promise<{ ok: boolean }> {
   const { cuerpo, peinado, ropa, paleta } = cfg;
   const ruta = haySesion()
     ? '/usuarios/me/avatar'
-    : `/avatar?email=${encodeURIComponent(DEMO_USER_ID)}`;
+    : `/avatar?email=${encodeURIComponent(miId())}`;
   await req(ruta, { method: 'PUT', body: JSON.stringify({ cuerpo, peinado, ropa, paleta }) });
   return { ok: true };
 }
