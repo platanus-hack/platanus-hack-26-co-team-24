@@ -98,3 +98,4 @@
 - [ ] **Tests**: `palette.test.ts` añade `TILE === 32`; `behavior.test.ts` intacto; `index.test.ts` intacto. `npm test`, `npm run build`.
 - [ ] **Verificación visual obligatoria**: captura 1366×768 de `/oficina` y comparación lado a lado con `docs/design/oficina-mockup.html` (abrir el mockup en el navegador y capturarlo también): mismos colores de piso/muro/escritorios/sillas/monitores/rack/cafetera/puerta/lámparas/pantalla Meet/plantas; personajes de 32×52 con pelo+ropa únicos y aura bajo la silla. Si algo difiere, corregir antes de commitear.
 - [ ] Commit: `feat(art): tiles y sprites fieles a la guía, grilla 32 px`
+- [ ] (añadido tras merge de main 45d316f) `api.ts` modo real: `putAvatar(cfg)` → `PUT ${BASE}/avatar?email=${DEMO_USER_ID}` con body `{ cuerpo, peinado, ropa, paleta }` (P3 lo acepta sin token; `backend/app.py` `put_avatar`). `toAvatarConfig` ya valida lo que vuelva en `/oficina`. Test en `api.test.ts` (modo real): URL y body enviados.
