@@ -259,18 +259,28 @@ describe('api (modo real, con VITE_API_URL)', () => {
     expect(warn).toHaveBeenCalled();
   });
 
-  it('putAvatar no llama a la red (PUT /avatar no existe en P3) y resuelve ok', async () => {
-    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const { api, fetchMock } = await importRealApi({});
+  it('putAvatar hace PUT /avatar?email=... con las capas en la raíz del body', async () => {
+    const { api, fetchMock } = await importRealApi({ ok: true });
     const res = await api.putAvatar({
-      cuerpo: 'light',
-      peinado: 'short',
-      ropa: 'shirt',
-      paleta: 'blue',
+      cuerpo: 'dark',
+      peinado: 'long',
+      ropa: 'suit',
+      paleta: 'purple',
     });
+
     expect(res).toEqual({ ok: true });
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(info).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'http://x/avatar?email=ana%40empresa.com',
+    );
+    const init = fetchMock.mock.calls[0][1]!;
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body as string)).toEqual({
+      cuerpo: 'dark',
+      peinado: 'long',
+      ropa: 'suit',
+      paleta: 'purple',
+    });
   });
 
   it('VITE_DEMO_USER_ID sobreescribe el usuario demo', async () => {

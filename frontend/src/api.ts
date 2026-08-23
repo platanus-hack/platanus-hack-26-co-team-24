@@ -178,9 +178,15 @@ export async function simular(body: {
 }
 
 export async function putAvatar(cfg: AvatarConfig): Promise<{ ok: boolean }> {
-  // P3 todavía no expone PUT /avatar: no llamamos a la red para no ensuciar
-  // la demo con un 404. El editor ya guarda en localStorage en ambos modos.
-  if (!IS_MOCK)
-    console.info('PUT /avatar pendiente en P3; guardado local', cfg);
+  // En modo demo no hay red: el editor guarda en localStorage igual.
+  if (IS_MOCK) return { ok: true };
+  // P3 (`backend/app.py::put_avatar`) acepta las capas en la raíz del body y
+  // el email por query, sin token. La respuesta (`guardar_avatar`) no nos
+  // aporta nada: nos basta con que no sea un error.
+  const { cuerpo, peinado, ropa, paleta } = cfg;
+  await req(`/avatar?email=${encodeURIComponent(DEMO_USER_ID)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ cuerpo, peinado, ropa, paleta }),
+  });
   return { ok: true };
 }
