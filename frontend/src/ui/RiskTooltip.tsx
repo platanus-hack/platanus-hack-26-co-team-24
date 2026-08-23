@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { bus } from '../bus';
 import { getOficina } from '../api';
 import type { ItemCritico } from '../types';
-import type { CSSProperties } from 'react';
 import { THEME } from '../game/palette';
 import { riskLevel, type RiskLevel } from '../game/risk';
-import { tipoChip, tipoChipColor } from './chips';
+import { tipoChip, tipoChipStyle } from './chips';
 import './ui.css';
 
 interface PersonClickPayload {
@@ -28,15 +27,11 @@ const SCORE_COLOR: Record<RiskLevel, string> = {
 const posesivo = (nombre: string): 'ELLA' | 'ÉL' =>
   nombre.trim().toLowerCase().endsWith('a') ? 'ELLA' : 'ÉL';
 
-// El mapeo tipo -> etiqueta/color vive en `./chips` (compartido con
+// El mapeo tipo -> etiqueta/color/estilo vive en `./chips` (compartido con
 // ResultPanel.tsx). Fidelidad literal a guia-visual.dc.html (sección 07):
 // cada tipo conocido tiene su propio color de chip (sin borde); los tipos
 // sin receta (conocimiento, resumen, item...) caen al chip neutro LINE ya
 // definido en `.risk-tooltip__chip` (bg LINE + borde 1px #6E4FA8).
-const tipoChipStyle = (tipo: string): CSSProperties | undefined => {
-  const c = tipoChipColor(tipo);
-  return c ? { ...c, border: 'none' } : undefined;
-};
 
 /** Tooltip flotante (esquina superior derecha, debajo de la tarjeta
  * RESILIENCIA) que muestra el riesgo y los items críticos del personaje

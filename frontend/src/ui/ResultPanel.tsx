@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { bus } from '../bus';
 import { getOficina, IS_MOCK } from '../api';
 import type { Person, SimulationResult } from '../types';
-import { tipoChip, tipoChipColor } from './chips';
+import { tipoChip, tipoChipStyle } from './chips';
 import { formatSeconds } from './format';
 import './ui.css';
 
@@ -106,16 +106,27 @@ export function ResultPanel() {
 
   const { result: r, ms } = payload!;
   const person = people.find((p) => p.id === r.person_id) ?? null;
+  // Si hay person_id pero no lo encontramos en `people` (p.ej. getOficina()
+  // falló o el backend real usa ids distintos), mostramos el id crudo en
+  // vez de un genérico: sigue siendo más útil que "RESULTADO DEL
+  // ESCENARIO" para depurar qué persona era. El genérico sólo aplica a los
+  // escenarios sin persona objetivo (infra/física).
   const titulo = person
     ? `SIN ${person.nombre.toUpperCase()} · ${person.rol.toUpperCase()}`
-    : 'RESULTADO DEL ESCENARIO';
+    : r.person_id
+      ? `SIN ${r.person_id}`
+      : 'RESULTADO DEL ESCENARIO';
 
   const downloadMd = () => {
     const blob = new Blob([r.playbook_md], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `empalme-${r.person_id ?? r.scenario_id}.md`;
+    // Sanitizado: person_id/scenario_id son ids internos (guiones bajos,
+    // minúsculas) pero por si acaso viene algo con espacios o símbolos raros
+    // desde el backend real, no queremos un nombre de archivo roto.
+    const safeId = (r.person_id ?? r.scenario_id).replace(/[^a-z0-9_-]/gi, '_');
+    a.download = `empalme-${safeId}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -177,7 +188,7 @@ export function ResultPanel() {
                 <li key={item.id} className="result-item">
                   <span
                     className="result-item__chip"
-                    style={tipoChipColor(item.tipo)}
+                    style={tipoChipStyle(item.tipo)}
                   >
                     {tipoChip(item.tipo)}
                   </span>
