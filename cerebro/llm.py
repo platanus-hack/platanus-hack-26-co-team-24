@@ -114,7 +114,12 @@ def parse_json(
     return resultado
 
 
-ESFUERZO = os.getenv("CEREBRO_ESFUERZO", "medium")
+# Medido sobre los 30 elementos reales de P1: high se pasaba de 25 s y moría,
+# medium tarda ~136 s, low ~41 s. Ninguno llega a los 5-15 s del guion, así que
+# el demo se apoya en la caché: se ensaya una vez y en vivo responde al instante.
+# `low` es el default porque es el único que completa en un tiempo tolerable
+# cuando alguien simula un escenario no ensayado.
+ESFUERZO = os.getenv("CEREBRO_ESFUERZO", "low")
 
 
 def texto(

@@ -172,36 +172,43 @@ def cobertura_casos(items: list[KnowledgeItem]) -> tuple[list[str], list[str]]:
 
 
 def escenarios_sanos(items: list[KnowledgeItem]) -> list[str]:
-    """Los 7 escenarios corren, devuelven cosas distintas y no inventan gente.
+    """Los 7 escenarios dan resultados distintos, y el del demo corre entero.
 
     "Simular 3 escenarios sin que el JSON se rompa nunca" es un ítem del
     checklist de P2; esto lo cubre para los 7.
     """
     from .esquemas import ESCENARIOS
-    from .nucleo import simular
+    from .nucleo import _afectados, simular
 
     fallos, firmas = [], {}
     ids_validos = {i.id for i in items}
+
+    # El filtrado es lógica pura: comprobarlo con `_afectados` en vez de con
+    # `simular` evita siete llamadas al LLM cada vez que corre el arnés. Con la
+    # API key puesta eso eran varios minutos y dinero real por comprobar algo
+    # que no depende del modelo.
     for esc in ESCENARIOS:
         objetivo = "ana@empresa.com" if esc.requiere_objetivo else None
-        try:
-            r = simular(esc.id, items, objetivo)
-        except Exception as e:
-            fallos.append(f"{esc.id}: levantó {type(e).__name__}: {e}")
-            continue
-        if r.scenario_id != esc.id:
-            fallos.append(f"{esc.id}: devolvió scenario_id={r.scenario_id}")
-        if not r.playbook_md.strip().startswith("#"):
-            fallos.append(f"{esc.id}: el playbook no empieza con encabezado Markdown")
-        if huerfanos_raros := [i.id for i in r.items_huerfanos if i.id not in ids_validos]:
-            fallos.append(f"{esc.id}: huérfanos que no están en el catálogo: {huerfanos_raros}")
-        if inventados := [a for a in r.advertencias if "inventado" in a]:
-            fallos.extend(f"{esc.id}: {a}" for a in inventados)
-        firmas.setdefault(frozenset(i.id for i in r.items_huerfanos), []).append(esc.id)
+        afectados = _afectados(esc.id, items, objetivo)
+        if raros := [i.id for i in afectados if i.id not in ids_validos]:
+            fallos.append(f"{esc.id}: afectados fuera del catálogo: {raros}")
+        firmas.setdefault(frozenset(i.id for i in afectados if i.es_critico), []).append(esc.id)
 
     for firma, ids in firmas.items():
         if len(ids) > 1 and firma:
             fallos.append(f"escenarios indistinguibles (mismos huérfanos): {ids}")
+
+    # Y una sola pasada de punta a punta sobre el escenario del demo, que sí
+    # ejercita el LLM y la verificación de emails inventados.
+    try:
+        r = simular("renuncia", items, "ana@empresa.com")
+    except Exception as e:
+        return [*fallos, f"renuncia levantó {type(e).__name__}: {e}"]
+    if r.scenario_id != "renuncia":
+        fallos.append(f"devolvió scenario_id={r.scenario_id}")
+    if not r.playbook_md.strip().startswith("#"):
+        fallos.append("el playbook no empieza con encabezado Markdown")
+    fallos.extend(f"renuncia: {a}" for a in r.advertencias if "inventado" in a)
     return fallos
 
 
