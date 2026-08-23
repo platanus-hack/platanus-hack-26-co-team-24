@@ -98,3 +98,13 @@ si el modelo falla o se pasa del timeout.
 ## Deploy
 
 `<FILL THIS>`
+
+## Antes de mergear a `main`
+
+```bash
+python tools/validar_entrega.py
+```
+
+Corre las mismas reglas que el bot del hackathon (logo 1000×1000 y ≤500 KB,
+campos de `platanus-hack-project.jsonc` llenos, README y descripción sin
+plantilla). El bot avisa después del merge; esto avisa antes.
