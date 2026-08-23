@@ -49,7 +49,7 @@ solos. Una oficina sin personajes parece un bug, no un estado vacío.
 | PUT | `/quests/{id}` | **P5** | completa una quest y devuelve el puntaje nuevo |
 | POST | `/admin/procesar` | P3 | corre la cadena de P2 y persiste |
 | POST | `/admin/eventos` | P1, P3 | mete `RawEvent[]` por HTTP, sin desplegar |
-| POST | `/admin/reset` | P5 | vuelve al estado demo perfecto entre ensayos |
+| POST | `/admin/reset` | P5 | vuelve al estado demo perfecto: borra estado **y** lo ingerido |
 
 Los modelos `KnowledgeItem`, `RiskScore`, `SimulationResult`, `Quest` y `Escenario`
 son **los de `cerebro/esquemas.py` sin tocar**. Ese archivo es el contrato; aquí no
@@ -258,8 +258,12 @@ haría que un timeout de Claude pareciera un fallo de Slack.
 **En cuanto alguien sincroniza, el fixture deja de contar.** `cargar_eventos()`
 trata cualquier `data/raw/*.json` que no sea `fixture_p2.json` ni
 `mock_events.json` como datos vivos, y no los mezcla a propósito: atribuir
-conocimiento inventado a personas reales sería peor que no tener datos. Para
-volver al demo de siempre, borrar `data/raw/ingesta-*.json` y reprocesar.
+conocimiento inventado a personas reales sería peor que no tener datos.
+
+**Para volver al demo de siempre, `POST /admin/reset`.** Borra lo ingerido (el
+archivo en disco y las filas de `raw_events`) además del estado, así que la
+oficina vuelve a ser la de los 9 de la historia. No hace falta terminal, y el
+token de Slack sigue guardado: quien quiera, resincroniza.
 
 ## Transcripciones de Meet
 
