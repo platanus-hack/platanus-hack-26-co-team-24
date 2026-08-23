@@ -193,22 +193,39 @@ function fillCircle(cv, cx, cy, r, color) {
 
 const TILE = 32;
 
-/** Rack GitHub (tile 6 y frames server_on/off de objects.png). `live` = LEDs
- * sanos (lima); si no, el rack se apaga a rojo tenue. */
-function drawRack(cv, x0, live) {
+/** Un segmento del rack GitHub. El rack del mockup es una torre de 3 celdas,
+ * así que los segmentos se apilan: sólo llevan borde LIMA a izquierda y
+ * derecha, y los de los extremos (`cap`) añaden la tapa superior (el de abajo
+ * se dibuja con `setFlipY`). Repartido así, la torre completa enseña 4 filas
+ * de LEDs, como el mockup. `live` = LEDs sanos; si no, todo se apaga a rojo.
+ *
+ * `rows`: posiciones Y de las filas de LEDs dentro del segmento. */
+function drawRackSegment(cv, x0, { live, cap, rows }) {
   const box = col('rackBox');
+  const edge = live ? col('lima') : col('rojo');
   fillRect(cv, x0, 0, 32, 32, box);
-  strokeRect(cv, x0, 0, 32, 32, 2, live ? col('lima') : col('rojo'));
+  fillRect(cv, x0, 0, 2, 32, edge);
+  fillRect(cv, x0 + 30, 0, 2, 32, edge);
+  if (cap) fillRect(cv, x0, 0, 32, 2, edge);
+
   const lima = live ? col('lima') : over(col('rojo'), box, 0.6);
   const turq = live ? col('turquesa') : over(col('rojo'), box, 0.35);
-  const rows = [
-    [6, [lima, over(lima, box, 0.3), turq]],
-    [16, [over(lima, box, 0.3), lima, over(turq, box, 0.4)]],
+  // Patrón de la guía: lima / lima .3 / turquesa, alternado en la fila par.
+  const PATTERN = [
+    [lima, over(lima, box, 0.3), turq],
+    [over(lima, box, 0.3), lima, over(turq, box, 0.4)],
   ];
-  for (const [y, leds] of rows) {
-    leds.forEach((c, i) => fillRect(cv, x0 + 6 + i * 6, y, 4, 4, c));
-  }
-  fillRect(cv, x0 + 6, 12, 20, 2, col('line'));
+  rows.forEach((y, i) => {
+    PATTERN[i % 2].forEach((c, j) => fillRect(cv, x0 + 8 + j * 6, y, 4, 4, c));
+    fillRect(cv, x0 + 6, y + 8, 20, 2, col('line'));
+  });
+}
+
+/** Rack de una sola celda: el tile 6 del tileset (el mapa usa los sprites
+ * apilados de objects.png, pero el tile sigue en la tira por contrato). */
+function drawRack(cv, x0, live) {
+  drawRackSegment(cv, x0, { live, cap: true, rows: [6, 20] });
+  fillRect(cv, x0, 30, 32, 2, live ? col('lima') : col('rojo'));
 }
 
 const TILE_DRAW = [
@@ -266,21 +283,26 @@ const TILE_DRAW = [
     fillRect(cv, x0 + 7, 5, 18, 5, col('rosa'));
     fillRect(cv, x0 + 10, 16, 12, 9, col('oro'));
   },
-  // 8 · PUERTA: NARANJA con pomo ORO 4x4 y marco ORO de 2 px en el canto que
-  // da al interior (la puerta vive en el muro inferior del mapa).
+  // 8 · PUERTA: NARANJA con pomo ORO 4x4 y marco ORO de 2 px en el canto
+  // derecho, el que da al interior (el mockup la pone en el muro izquierdo:
+  // `left: 0; width: 30px; border-right: 5px solid #FFD166`). Dos tiles
+  // apilados forman la hoja alta del mockup.
   (cv, x0) => {
     fillRect(cv, x0, 0, 32, 32, col('naranja'));
-    fillRect(cv, x0, 0, 32, 2, col('oro'));
-    fillRect(cv, x0 + 24, 14, 4, 4, col('oro'));
+    fillRect(cv, x0 + 30, 0, 2, 32, col('oro'));
+    fillRect(cv, x0 + 22, 14, 4, 4, col('oro'));
   },
   // 9 · LÁMPARA: círculo ORO centrado en (16,15). El mockup la dibuja mucho
   // más gorda que la muestra de la sección 03: r10 es el punto medio. Sin
   // glow horneado (lo pone OfficeScene).
   (cv, x0) => fillCircle(cv, x0 + 16, 15, 10, col('oro')),
-  // 10 · PANTALLA MEET: TURQUESA 26x17 en (3,4) + base MORADO 26x4 en (3,23).
+  // 10 · PANTALLA MEET: TURQUESA a todo el ancho (y=4, alto 17) + base MORADO
+  // (y=23, alto 4). La muestra de la guía la deja con 3 px de aire a los
+  // lados, pero el mockup la dibuja de 208 px a 2x (= 1,6 celdas): a todo el
+  // ancho, dos tiles contiguos forman el panel de 64 px sin costura.
   (cv, x0) => {
-    fillRect(cv, x0 + 3, 4, 26, 17, col('turquesa'));
-    fillRect(cv, x0 + 3, 23, 26, 4, col('morado'));
+    fillRect(cv, x0, 4, 32, 17, col('turquesa'));
+    fillRect(cv, x0, 23, 32, 4, col('morado'));
   },
   // 11 · PLANTA: follaje LIMA 18x13 en (7,9) sobre maceta NARANJA 10x7 en (11,22).
   (cv, x0) => {
@@ -346,11 +368,26 @@ function genTiles() {
   writePNG('tiles/office.png', extrude(cv, TILE, TILE_DRAW.length));
 }
 
-// ---------- sprites/objects.png : 12 frames de 32x32 (384x32) ----------
+// ---------- sprites/objects.png : 16 frames de 32x32 (512x32) ----------
 //
-// Mismo orden de siempre (lo consumen OfficeScene.ANIMS y scenarios/*):
+// Los 12 primeros mantienen su orden histórico (lo consumen OfficeScene.ANIMS,
+// scenarios/fx.ts `QUESTION_FRAME = 11` y scenarios/*):
 //   0 server_on · 1 server_off · 2 pc_on · 3 pc_off · 4 coffee_a · 5 coffee_b
 //   6 lamp_a · 7 lamp_b · 8 meet_on · 9 meet_off · 10 console · 11 question
+// y se añaden al final (los índices viejos no se mueven):
+//   12 desk · 13 monitor_frame · 14 rack_cap_on · 15 rack_cap_off
+//
+// - `desk` es sprite, no tile, porque tiene que dibujarse POR ENCIMA de las
+//   piernas del personaje sentado detrás (profundidad por Y, ver OfficeScene).
+// - `monitor_frame` es sólo el marco, en `#d8d8d8`, para que OfficeScene lo
+//   tinte por escritorio (el mockup varía el color del bisel de puesto a
+//   puesto). Por eso `pc_on`/`pc_off` ya no llevan borde: son sólo el
+//   interior de la pantalla + la peana, y el marco va superpuesto sin teñir
+//   el `#3A1959` del interior.
+// - `server_on`/`server_off` son ahora el segmento CENTRAL del rack (2 filas
+//   de LEDs, sin tapas) y `rack_cap_*` el segmento de los extremos (1 fila +
+//   tapa); el de abajo se dibuja con `setFlipY`.
+//
 // Fondo transparente: son sprites que se superponen al mapa.
 
 // "?" de 5x7 px (la guía pide un signo real, no un cuadrado), pintado a 2x
@@ -381,16 +418,19 @@ function drawCoffeeMachine(cv, x0, lit) {
   fillRect(cv, x0 + 10, 16, 12, 9, cup);
 }
 
+/** Interior de la pantalla + peana. El marco va en su propio frame
+ * (`monitor_frame`) para poder tintarlo por escritorio sin ensuciar el
+ * `#3A1959` del interior, que el tinte multiplicativo dejaría casi negro. */
 function drawMonitor(cv, x0, on) {
   fillRect(cv, x0 + 5, 7, 22, 15, on ? col('screenOff') : col('screenDead'));
-  strokeRect(cv, x0 + 5, 7, 22, 15, 2, on ? col('turquesa') : col('line'));
   fillRect(cv, x0 + 12, 22, 8, 4, col('line'));
 }
 
 function genObjects() {
   const frames = [
-    (cv, x0) => drawRack(cv, x0, true), // 0 server_on
-    (cv, x0) => drawRack(cv, x0, false), // 1 server_off
+    // 0/1 · segmento CENTRAL del rack (2 filas de LEDs, sin tapas)
+    (cv, x0) => drawRackSegment(cv, x0, { live: true, cap: false, rows: [4, 18] }),
+    (cv, x0) => drawRackSegment(cv, x0, { live: false, cap: false, rows: [4, 18] }),
     (cv, x0) => drawMonitor(cv, x0, true), // 2 pc_on
     (cv, x0) => drawMonitor(cv, x0, false), // 3 pc_off
     (cv, x0) => drawCoffeeMachine(cv, x0, true), // 4 coffee_a
@@ -399,15 +439,15 @@ function genObjects() {
     (cv, x0) =>
       fillCircle(cv, x0 + 16, 15, 10, over(col('oro'), col('base'), 0.78)), // 7 lamp_b
     (cv, x0) => {
-      // 8 meet_on
-      fillRect(cv, x0 + 3, 4, 26, 17, col('turquesa'));
-      fillRect(cv, x0 + 3, 23, 26, 4, col('morado'));
+      // 8 meet_on -- a todo el ancho: dos sprites contiguos forman el panel
+      // de 64 px del mockup sin costura.
+      fillRect(cv, x0, 4, 32, 17, col('turquesa'));
+      fillRect(cv, x0, 23, 32, 4, col('morado'));
     },
     (cv, x0) => {
       // 9 meet_off
-      fillRect(cv, x0 + 3, 4, 26, 17, col('screenDead'));
-      strokeRect(cv, x0 + 3, 4, 26, 17, 2, col('line'));
-      fillRect(cv, x0 + 3, 23, 26, 4, col('morado'));
+      fillRect(cv, x0, 4, 32, 17, col('screenDead'));
+      fillRect(cv, x0, 23, 32, 4, col('morado'));
     },
     (cv, x0) => {
       // 10 console: caja ROSA con borde `texto` (el trato de la guía para la
@@ -419,6 +459,17 @@ function genObjects() {
       fillRect(cv, x0 + 18, 22, 4, 3, col('turquesa'));
     },
     (cv, x0) => drawQuestion(cv, x0, col('oro')), // 11 question
+    // 12 · ESCRITORIO (misma receta que el tile 2, pero como sprite para poder
+    // ordenarlo por profundidad delante de las piernas del que está sentado).
+    (cv, x0) => {
+      fillRect(cv, x0, 10, 32, 22, col('deskBody'));
+      fillRect(cv, x0, 10, 32, 3, col('deskTop'));
+    },
+    // 13 · MARCO DEL MONITOR: sólo el bisel de 2 px, en gris tintable.
+    (cv, x0) => strokeRect(cv, x0 + 5, 7, 22, 15, 2, col('tintable')),
+    // 14/15 · segmento EXTREMO del rack (1 fila de LEDs + tapa arriba).
+    (cv, x0) => drawRackSegment(cv, x0, { live: true, cap: true, rows: [12] }),
+    (cv, x0) => drawRackSegment(cv, x0, { live: false, cap: true, rows: [12] }),
   ];
 
   const cv = makeCanvas(TILE * frames.length, TILE);
@@ -580,10 +631,18 @@ Los tiles de mobiliario tienen fondo transparente: se pintan en la capa
 Textura de un solo uso: \`OfficeScene\` la tinta y la escala para los glows
 aditivos (monitores encendidos, rack, lámparas, pantalla Meet).
 
-### \`sprites/objects.png\` — 384x32, 12 frames de 32x32 en fila
+### \`sprites/objects.png\` — 512x32, 16 frames de 32x32 en fila
 
 \`server_on, server_off, pc_on, pc_off, coffee_a, coffee_b, lamp_a, lamp_b,
-meet_on, meet_off, console, question\`. Fondo transparente.
+meet_on, meet_off, console, question, desk, monitor_frame, rack_cap_on,
+rack_cap_off\`. Fondo transparente. Los 12 primeros índices no se mueven
+nunca (\`scenarios/fx.ts\` referencia el 11 y \`OfficeScene\` el 10).
+
+\`desk\` es sprite y no tile porque tiene que dibujarse por encima de las
+piernas de quien está sentado detrás. \`monitor_frame\` es el bisel en
+\`#d8d8d8\`, que \`OfficeScene\` tinta por escritorio; por eso \`pc_on\`/\`pc_off\`
+sólo llevan el interior de la pantalla y la peana. \`server_on\`/\`server_off\`
+son el segmento central de la torre del rack y \`rack_cap_*\` los extremos.
 
 ### Capas de personaje — 96x208 (3 columnas x 4 filas de 32x52)
 

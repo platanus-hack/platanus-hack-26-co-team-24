@@ -36,33 +36,27 @@ export async function run(scene: OfficeScene, personId: string): Promise<void> {
   if (!scene.sys.isActive()) return;
   char.setVisible(false);
 
-  // El escritorio queda "apagado": PC y mueble en gris.
-  scene.objects[`pc_${char.person.desk}`]?.setTint(GRAY);
-  const desk = scene.points[`desk_${char.person.desk}`];
+  // El escritorio queda "apagado": PC, bisel y mueble en gris. El tablero son
+  // dos sprites (`desk_i` y `desk_i_b`, ver OfficeScene.placeObjects), no
+  // tiles de la capa `furniture`.
+  const deskIdx = char.person.desk;
+  for (const key of [
+    `pc_${deskIdx}`,
+    `pc_frame_${deskIdx}`,
+    `desk_${deskIdx}`,
+    `desk_${deskIdx}_b`,
+  ]) {
+    scene.objects[key]?.setTint(GRAY);
+  }
+  const desk = scene.points[`desk_${deskIdx}`];
   if (desk) {
-    const tile = scene.map.getTileAt(
-      desk.x / TILE,
-      desk.y / TILE,
-      false,
-      'furniture',
-    );
-    if (tile) tile.tint = GRAY;
-    // El escritorio ocupa dos tiles de ancho (ver gen-map.mjs): hay que
-    // apagar los dos, no sólo el que lleva el punto `desk_i`.
-    const right = scene.map.getTileAt(
-      desk.x / TILE + 1,
-      desk.y / TILE,
-      false,
-      'furniture',
-    );
-    if (right) right.tint = GRAY;
     QUESTION_OFFSETS.forEach((dx, i) => {
-      // Un tile por encima del monitor (que vive en desk.y - TILE), para
-      // que los "?" no tapen el escritorio apagado.
+      // Sobre la silla vacía (una fila por encima de la mesa), que es donde
+      // el ojo va a buscar a quien ya no está.
       floatIcon(
         scene,
         desk.x + TILE / 2 + dx,
-        desk.y - TILE * 1.5,
+        desk.y - TILE,
         undefined,
         i * 150,
       );

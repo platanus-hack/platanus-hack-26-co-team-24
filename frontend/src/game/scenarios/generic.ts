@@ -94,8 +94,9 @@ async function runApagon(scene: OfficeScene): Promise<void> {
     .setDepth(900);
   scene.scenarioFx.push(dark);
 
-  scene.objects['server']?.setDepth(950);
-  scene.objects['meet_screen']?.setDepth(950);
+  for (const key of ['server', 'server_mid', 'server_top', 'meet_screen', 'meet_screen_b']) {
+    scene.objects[key]?.setDepth(950);
+  }
   for (let i = 0; i < DESK_COUNT; i++) {
     scene.objects[`pc_${i}`]?.setDepth(950);
   }

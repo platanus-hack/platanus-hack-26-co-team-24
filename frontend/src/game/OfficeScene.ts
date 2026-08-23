@@ -35,7 +35,6 @@ const ANIMS: Array<{
   frames: number[];
   frameRate: number;
 }> = [
-  { key: 'server', frames: [0], frameRate: 1 },
   { key: 'pc', frames: [2, 2, 2, 2, 2, 3], frameRate: 4 },
   { key: 'coffee', frames: [4, 4, 4, 5], frameRate: 2 },
   { key: 'lamp', frames: [6, 6, 6, 7], frameRate: 1 },
@@ -55,6 +54,33 @@ const LAMP_OFFSET_Y = 8; // el círculo cuelga un poco por debajo del borde
 // que tengan la misma caída suave que el `box-shadow` del mockup. Son 14 en
 // total: 9 monitores + rack + pantalla Meet + 3 lámparas.
 const GLOW_KEY = 'glow';
+// Frames extra de objects.png (ver gen-assets.mjs); los 12 primeros índices
+// siguen siendo los históricos.
+const FRAME = { desk: 12, monitorFrame: 13, rackCapOn: 14, rackCapOff: 15 };
+// Color del bisel de cada monitor: el mockup lo varía de puesto a puesto. El
+// interior de la pantalla se queda en `#3A1959` porque el marco es un sprite
+// aparte (`monitor_frame`) y sólo se tinta él -- tintar el sprite entero
+// dejaría el interior casi negro (el tinte de Phaser multiplica).
+const MONITOR_TINT = [
+  THEME.turquesa,
+  THEME.oro,
+  THEME.turquesa,
+  THEME.rosa,
+  THEME.turquesa,
+  THEME.oro,
+  THEME.turquesa,
+  THEME.lima,
+  THEME.turquesa,
+];
+// La torre del rack GitHub son 3 segmentos apilados hacia arriba desde el
+// punto `server` (el de abajo, una tapa volteada). Los nombres de `objects`
+// son los que consumen los runners de escenario (ver scenarios/github.ts), y
+// cada sprite lleva su frame "caído" en el data `offFrame`.
+const RACK_SEGMENTS = [
+  { key: 'server', dy: 0, frame: 14, off: 15, flip: true },
+  { key: 'server_mid', dy: -1, frame: 0, off: 1, flip: false },
+  { key: 'server_top', dy: -2, frame: 14, off: 15, flip: false },
+];
 // Recuadro de la sala Meet en tiles. Cubre el interior (x 15..18, y 2..4, ver
 // MEET en scripts/gen-map.mjs) y sube una fila para englobar la pantalla que
 // cuelga del muro, igual que el mockup dibuja su marco sobre la franja alta.
@@ -289,16 +315,17 @@ export class OfficeScene extends Phaser.Scene {
       .setStrokeStyle(2, hex(THEME.morado), 0.9);
 
     // Dentro del marco y por debajo de la lámpara del techo, para no chocar.
-    this.roomLabel(MEET_ROOM.x * TILE + 4, MEET_ROOM.y * TILE + 4, 'SALA MEET', THEME.lila);
+    // Bajo el muro, dentro de la sala: arriba chocaría con la pantalla.
+    this.roomLabel(MEET_ROOM.x * TILE + 4, (MEET_ROOM.y + 1) * TILE + 3, 'SALA MEET', THEME.lila);
     const server = this.points['server'];
-    if (server) this.roomLabel(server.x - 30, server.y - TILE - 16, 'GITHUB', THEME.lima);
+    if (server) this.roomLabel(server.x - 36, server.y - TILE * 2 - 18, 'GITHUB', THEME.lima);
   }
 
   private roomLabel(x: number, y: number, text: string, color: string): void {
     this.add
       .text(x, y, text, {
         fontFamily: 'VT323, monospace',
-        fontSize: '13px',
+        fontSize: '17px',
         color,
       })
       .setResolution(2);
@@ -364,9 +391,9 @@ export class OfficeScene extends Phaser.Scene {
     if (server) {
       this.glow(
         server.x + TILE / 2,
-        server.y,
-        80,
-        110,
+        server.y + TILE / 2 - TILE,
+        84,
+        150,
         THEME.lima,
         0.45,
       );
@@ -374,10 +401,10 @@ export class OfficeScene extends Phaser.Scene {
     const meet = this.points['meet_screen'];
     if (meet) {
       this.glow(
-        meet.x + TILE / 2,
+        meet.x + TILE,
         meet.y + TILE / 2,
-        84,
-        60,
+        118,
+        64,
         THEME.turquesa,
         0.5,
       );
@@ -395,27 +422,45 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private placeObjects(): void {
-    // El rack ocupa 2 tiles en vertical (ver gen-map.mjs): dos cuerpos
-    // idénticos, ambos animados, como la torre del mockup.
-    const server = this.spriteAt(this.points['server']);
-    server.play('server');
-    this.objects['server'] = server;
-    const serverTop = this.spriteAt(this.points['server'], -TILE);
-    serverTop.play('server');
-    this.objects['server_top'] = serverTop;
+    // Torre del rack: 3 segmentos apilados hacia arriba desde el punto
+    // `server`. El de abajo es la tapa volteada, el del medio lleva 2 filas
+    // de LEDs: 4 filas en total, como el mockup.
+    for (const seg of RACK_SEGMENTS) {
+      const sprite = this.spriteAt(this.points['server'], seg.dy * TILE);
+      sprite.setFrame(seg.frame).setFlipY(seg.flip).setData('offFrame', seg.off);
+      this.objects[seg.key] = sprite;
+    }
 
-    const meetScreen = this.spriteAt(this.points['meet_screen']);
+    // Pantalla Meet de 2 tiles (el panel de 208 px del mockup): dos sprites
+    // contiguos con el mismo frame, dibujado a todo el ancho, sin costura.
+    const meet = this.points['meet_screen'];
+    const meetScreen = this.spriteAt(meet);
     meetScreen.play('meet');
     this.objects['meet_screen'] = meetScreen;
+    const meetScreenB = this.spriteAt({ x: meet.x + TILE, y: meet.y });
+    meetScreenB.play('meet');
+    this.objects['meet_screen_b'] = meetScreenB;
 
     for (let i = 0; i < DESK_COUNT; i++) {
       const desk = this.points[`desk_${i}`];
       if (!desk) continue;
-      // El monitor va apoyado sobre el canto de la mesa, asomando hacia
-      // arriba (ver gen-map.mjs), como en el mockup.
+      // Monitor: primero el interior de la pantalla (que titila) y encima el
+      // bisel, tintado por puesto. Va apoyado en el canto de la mesa,
+      // asomando hacia arriba, como en el mockup.
       const pc = this.spriteAt(desk, PC_OFFSET_Y);
       pc.play('pc');
       this.objects[`pc_${i}`] = pc;
+      const bezel = this.spriteAt(desk, PC_OFFSET_Y);
+      bezel.setFrame(FRAME.monitorFrame).setTint(hex(MONITOR_TINT[i]));
+      this.objects[`pc_frame_${i}`] = bezel;
+      // El tablero (2 tiles) es sprite y no tile: con profundidad = su Y tapa
+      // las piernas de quien está sentado detrás (silla en la fila de arriba)
+      // y queda por detrás de quien pasa por delante.
+      [0, TILE].forEach((dx, n) => {
+        const board = this.spriteAt({ x: desk.x + dx, y: desk.y });
+        board.setFrame(FRAME.desk).setDepth(desk.y + TILE / 2);
+        this.objects[`desk_${i}${n ? '_b' : ''}`] = board;
+      });
     }
 
     const coffee = this.spriteAt(this.points['coffee']);

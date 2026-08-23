@@ -15,8 +15,10 @@ const LAMP_COUNT = 3; // ver OfficeScene.LAMP_COLUMNS
  * hacia el server a intentar algo. Dura ~5-8 s. */
 export async function run(scene: OfficeScene): Promise<void> {
   sfx('smoke');
-  // El rack son dos cuerpos apilados (ver OfficeScene.placeObjects).
-  const racks = ['server', 'server_top']
+  // El rack es una torre de 3 segmentos (ver OfficeScene.RACK_SEGMENTS). Cada
+  // sprite sabe cuál es su frame "caído" (`offFrame`), así que este runner no
+  // necesita conocer la geometría de la torre.
+  const racks = ['server', 'server_mid', 'server_top']
     .map((k) => scene.objects[k])
     .filter(Boolean);
   for (const rack of racks) {
@@ -29,7 +31,7 @@ export async function run(scene: OfficeScene): Promise<void> {
     await wait(scene, 200);
     if (!scene.sys.isActive()) return;
     for (const rack of racks) {
-      rack.setFrame(1); // server_off
+      rack.setFrame(rack.getData('offFrame') ?? 1);
       rack.clearTint();
     }
   }

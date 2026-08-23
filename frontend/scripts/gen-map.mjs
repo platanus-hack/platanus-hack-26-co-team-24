@@ -84,9 +84,12 @@ for (let y = 0; y < H; y++) {
   setWall(W - 1, y);
 }
 
-// ---------- puerta: abajo-centro, atravesable ----------
-const DOOR = { x: 10, y: H - 1 };
+// ---------- puerta: muro izquierdo, a media altura, atravesable ----------
+// El mockup la dibuja como una hoja naranja vertical pegada al muro de la
+// izquierda (`left: 0; top: 420px; height: 150px`), no como un hueco abajo.
+const DOOR = { x: 0, y: 6 };
 setWalkable(DOOR.x, DOOR.y, GID.door, walls);
+setWalkable(DOOR.x, DOOR.y + 1, GID.door, walls);
 
 // ---------- sala Meet: arriba-derecha, muro parcial con abertura de 2 ----------
 // Interior x 15..18, y 2..4. Muro vertical en x=14 (y 2..5) y muro inferior en
@@ -96,48 +99,51 @@ for (let y = MEET.y0; y <= MEET.y1 + 1; y++) setWall(14, y);
 setWall(17, MEET.y1 + 1);
 setWall(18, MEET.y1 + 1);
 
-// Mesa de juntas MORADO 2x1 (el mockup la dibuja igual que un escritorio:
-// cuerpo #6E4FA8 con canto LILA) y pantalla Meet colgada del muro superior.
-setProp(16, 3, GID.desk);
-setProp(17, 3, GID.desk);
-const MEET_SCREEN = { x: 17, y: 1 };
-furniture[MEET_SCREEN.y][MEET_SCREEN.x] = GID.meetScreen; // ya es muro
+// Mesa de juntas 3x1 (el mockup la dibuja igual que un escritorio: cuerpo
+// #6E4FA8 con canto LILA) y pantalla Meet de 2 tiles colgada del muro
+// superior, como el panel de 208 px del mockup.
+for (const x of [15, 16, 17]) setProp(x, 3, GID.desk);
+const MEET_SCREEN = { x: 16, y: 1 }; // el sprite hermano va en (17,1)
+for (const x of [16, 17]) furniture[1][x] = GID.meetScreen; // ya son muro
 const MEETING = { x: 16, y: 4 }; // celda libre delante de la mesa
 
-// ---------- escritorios: 3x3, mesa de 2 tiles, silla debajo ----------
-// Cada puesto ocupa 2 filas (mesa + silla) y quedan filas libres entre bloques,
-// como en el mockup. El monitor NO es un tile: es el sprite `pc` de
-// objects.png, que OfficeScene apoya sobre el canto de la mesa (offset -12 px)
-// igual que el mockup lo dibuja montado encima del tablero.
-const DESK_COLS = [2, 7, 12];
+// ---------- escritorios: 3x3, mesa de 2 tiles, silla ENCIMA ----------
+// Cada puesto ocupa 2 filas: la silla va en la fila de ARRIBA (y-1) y la mesa
+// en la de abajo, de modo que la persona queda detrás del escritorio y de cara
+// al espectador, como en el mockup. El tablero se dibuja como sprite (frame
+// `desk` de objects.png) con profundidad por Y, así tapa las piernas del que
+// está sentado. El monitor tampoco es un tile: es el sprite `pc`, apoyado en
+// el canto de la mesa (offset -12 px) sobre el tile IZQUIERDO; la silla va en
+// el DERECHO para que la persona quede al lado del monitor y no detrás.
+const DESK_COLS = [2, 7, 11];
 const DESK_ROWS = [3, 6, 9];
 const desks = [];
 for (const y of DESK_ROWS) {
   for (const x of DESK_COLS) {
     desks.push({ x, y });
-    setProp(x, y, GID.desk);
-    setProp(x + 1, y, GID.desk); // el tile de escritorio va a todo el ancho:
-    // dos contiguos forman una mesa de 64 px como en el mockup.
+    // La mesa bloquea pero no se pinta en `furniture`: la dibuja OfficeScene.
+    collision[y][x] = GID.wall;
+    collision[y][x + 1] = GID.wall;
     collision[y - 1][x] = GID.wall; // el monitor asoma aquí: nadie lo atraviesa
-    // La silla va bajo el tile DERECHO: el monitor ocupa el izquierdo y en
-    // el mockup la persona queda al lado del monitor, no detrás.
-    setWalkable(x + 1, y + 1, GID.chair); // la silla es el destino de `desk_i`
+    setWalkable(x + 1, y - 1, GID.chair); // la silla es el destino de `desk_i`
   }
 }
 
 // ---------- cafetera + planta arriba-izquierda ----------
 const COFFEE = { x: 1, y: 2 };
 setProp(COFFEE.x, COFFEE.y, GID.coffee);
-setProp(4, 2, GID.plant);
+setProp(5, 2, GID.plant);
 
 // ---------- planta abajo-izquierda ----------
 setProp(1, 11, GID.plant);
 
 // ---------- rack GitHub: pared derecha, fuera de la sala Meet ----------
-const SERVER = { x: 18, y: 7 };
-setProp(SERVER.x, SERVER.y, GID.rack);
-setProp(SERVER.x, SERVER.y - 1, GID.rack); // rack de 2 tiles como en el mockup
-// (18,8) queda libre: el destino `server` sigue siendo alcanzable.
+// Torre de 3 tiles como en el mockup (118x214 a 2x). El punto `server` es el
+// segmento de abajo; (18,9) queda libre, así que el destino es alcanzable.
+// Los tiles sólo bloquean: los tres segmentos los pinta OfficeScene con los
+// frames `rack_cap_*` / `server_*` de objects.png.
+const SERVER = { x: 18, y: 8 };
+for (const y of [6, 7, 8]) collision[y][SERVER.x] = GID.wall;
 
 // ---------- consola arcade: abajo-derecha ----------
 const CONSOLE = { x: 17, y: 11 };
@@ -195,7 +201,7 @@ for (const name of [
   const p = points.find((o) => o.name === name);
   const t = { x: p.x / TILE, y: p.y / TILE };
   const target = name.startsWith('desk_')
-    ? { x: t.x + 1, y: t.y + 1 }
+    ? { x: t.x + 1, y: t.y - 1 }
     : blocked(t.x, t.y)
       ? { x: t.x, y: t.y + 1 }
       : t;

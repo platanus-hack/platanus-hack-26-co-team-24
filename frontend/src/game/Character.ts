@@ -18,12 +18,13 @@ import { bus } from '../bus';
 
 const SPEED = 64; // px/s, constante (guía: "caminar 64 px/s lineal")
 const CELL_DURATION_MS = (TILE / SPEED) * 1000; // 500 ms por celda de 32 px
-// Altura visible del cuerpo al estar sentado: se recortan las 11 filas de
-// piernas (41..51) para que el personaje lea como sentado detrás del
-// escritorio sin gastar una cuarta columna en la hoja (guía, sección 04 ·
-// POSES MÍNIMAS: "sentado = el cuadro frontal sin piernas").
-const SEAT_CROP_H = 41;
-const TYPE_INTERVAL_MS = 250; // 4 fps: el recorte late 41<->40 px
+// Sentado: el personaje se planta en la silla, que está en el tile de ARRIBA
+// del escritorio, y se baja 14 px para meterse detrás del tablero. El sprite
+// del escritorio (profundidad por Y, ver OfficeScene) tapa las piernas, así
+// que no hace falta recortarlas: el resultado es la pose "sentado de frente"
+// del mockup, torso por encima de la mesa y piernas ocultas.
+const SEAT_OFFSET_Y = 14;
+const TYPE_INTERVAL_MS = 250; // 4 fps: el cuerpo late 1 px (manos tecleando)
 // "La sala respira" (guía, sección 05): desfase inicial y espera de
 // reintento, ambos 2-4s. Mismo rango para las dos cosas -> una sola pareja
 // de constantes.
@@ -32,13 +33,27 @@ const AMBIENT_DELAY_MAX_MS = 4000;
 const ambientDelay = (): number =>
   AMBIENT_DELAY_MIN_MS + Math.random() * (AMBIENT_DELAY_MAX_MS - AMBIENT_DELAY_MIN_MS);
 
-// Aura de riesgo: elipse aplastada a los pies (la guía la dibuja como un
-// óvalo bajo el personaje, no como un círculo alrededor).
+// Aura de riesgo: óvalo aplastado a los pies (la guía la dibuja así, no como
+// un círculo alrededor). Se pinta con la textura `glow` (halo blanco de caída
+// radial, ver gen-assets.mjs) en modo ADD y tintada: una elipse plana sumada
+// sobre el ciruela del piso da un oliva sucio (lima .45 sobre #2A1747 sale
+// 124,138,98 -- medido), mientras que un núcleo radial de alfa alta llega a
+// 188,227,119 y sí se lee verde, como los glows del mockup.
+const AURA_KEY = 'glow';
 const AURA_Y = 26; // = SPRITE_H / 2: el borde inferior del sprite
-const AURA_W = 30;
-const AURA_H = 9;
-const AURA_HIGH_W = 38; // riesgo alto: aura más ancha, además del pulso
-const AURA_HIGH_H = 12;
+// El mockup dibuja el óvalo de 84x22 px CSS sobre una celda de 64 px, o sea
+// ~42x11 a escala de juego: más ancho que el propio sprite.
+const AURA_W = 44;
+const AURA_H = 15;
+const AURA_HIGH_W = 58; // riesgo alto: aura más ancha, además del pulso
+const AURA_HIGH_H = 20;
+// Sentado, el tablero del escritorio tapa los pies y con ellos el aura. En vez
+// de subirla a la altura del torso (donde el propio cuerpo la parte en dos y
+// asoma como un par de alas), baja al suelo POR DELANTE de la mesa: se lee
+// como luz derramándose bajo el escritorio y el nivel de riesgo sigue visible
+// en el puesto, que es lo que pide la guía ("sentado conserva su aura").
+const AURA_SEAT_Y = 54;
+const AURA_SEAT_SCALE = 1.2;
 const LABEL_Y = -34; // etiqueta flotante 8 px por encima de la cabeza
 
 type Direction = 'up' | 'down' | 'left' | 'right';
@@ -110,7 +125,7 @@ function isBlocked(map: Phaser.Tilemaps.Tilemap, x: number, y: number): boolean 
  * comportamiento ambiental (trabajar / café / reunión / caminar). */
 export class Character extends Phaser.GameObjects.Container {
   readonly person: Person;
-  readonly aura: Phaser.GameObjects.Ellipse;
+  readonly aura: Phaser.GameObjects.Image;
   /** Público en lectura; sólo `setRisk()` debería escribirlo. */
   riskScore = 0;
   riskItems: ItemCritico[] = [];
@@ -128,7 +143,10 @@ export class Character extends Phaser.GameObjects.Container {
   private pulseTween?: Phaser.Tweens.Tween;
   private label?: Phaser.GameObjects.Text;
   private labelTween?: Phaser.Tweens.Tween;
-  private cropTimer?: Phaser.Time.TimerEvent;
+  private typeTimer?: Phaser.Time.TimerEvent;
+  /** Desplazamiento vertical actual de las capas (0 de pie, ~14 sentado). */
+  private seatDy = 0;
+  private auraLevel: ReturnType<typeof riskLevel> = 'bajo';
 
   constructor(
     scene: OfficeScene,
@@ -149,7 +167,10 @@ export class Character extends Phaser.GameObjects.Container {
     ensureAnims(scene, hairKey);
     ensureAnims(scene, clothesKey);
 
-    this.aura = scene.add.ellipse(0, AURA_Y, AURA_W, AURA_H, 0xffffff, 0.25);
+    this.aura = scene.add
+      .image(0, AURA_Y, AURA_KEY)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.7);
     this.bodySprite = new Phaser.GameObjects.Sprite(scene, 0, 0, bodyKey, 1);
     this.clothes = new Phaser.GameObjects.Sprite(scene, 0, 0, clothesKey, 1);
     this.hair = new Phaser.GameObjects.Sprite(scene, 0, 0, hairKey, 1);
@@ -213,18 +234,19 @@ export class Character extends Phaser.GameObjects.Container {
     this.label = undefined;
 
     const level = riskLevel(score);
-    this.aura.setFillStyle(RISK_LEVEL_COLOR[level]);
-    this.aura.setSize(AURA_W, AURA_H);
+    this.auraLevel = level;
+    this.aura.setTint(RISK_LEVEL_COLOR[level]);
+    this.applyAuraGeometry();
 
     switch (level) {
       case 'bajo':
-        this.aura.setAlpha(0.55);
+        this.aura.setAlpha(0.7);
         break;
 
       case 'medio':
         this.pulseTween = this.scene.tweens.add({
           targets: this.aura,
-          alpha: { from: 0.35, to: 0.8 },
+          alpha: { from: 0.5, to: 0.9 },
           duration: 3000,
           yoyo: true,
           repeat: -1,
@@ -233,10 +255,9 @@ export class Character extends Phaser.GameObjects.Container {
         break;
 
       case 'alto': {
-        this.aura.setSize(AURA_HIGH_W, AURA_HIGH_H);
         this.pulseTween = this.scene.tweens.add({
           targets: this.aura,
-          alpha: { from: 0.3, to: 0.9 },
+          alpha: { from: 0.55, to: 1 },
           duration: 700,
           yoyo: true,
           repeat: -1,
@@ -244,7 +265,7 @@ export class Character extends Phaser.GameObjects.Container {
         });
 
         const label = this.scene.add
-          .text(0, LABEL_Y, `${this.person.nombre.toUpperCase()} ${score}`, {
+          .text(0, LABEL_Y + this.seatDy, `${this.person.nombre.toUpperCase()} ${score}`, {
             fontFamily: 'VT323, monospace',
             fontSize: '17px',
             color: THEME.rojo,
@@ -271,37 +292,59 @@ export class Character extends Phaser.GameObjects.Container {
     this.depth = this.y;
   }
 
+  /** Coloca y dimensiona el aura según el nivel de riesgo y si el personaje
+   * está sentado (detrás del tablero) o de pie. */
+  private applyAuraGeometry(): void {
+    const high = this.auraLevel === 'alto';
+    const w = high ? AURA_HIGH_W : AURA_W;
+    const h = high ? AURA_HIGH_H : AURA_H;
+    if (this.seatDy > 0) {
+      this.aura.setPosition(0, AURA_SEAT_Y).setDisplaySize(w * AURA_SEAT_SCALE, h);
+    } else {
+      this.aura.setPosition(0, AURA_Y).setDisplaySize(w, h);
+    }
+  }
+
   /** Reproduce la misma animación (por sufijo) en las tres capas.
    *
    * `sit` y `type` no tienen cuadro propio en la hoja (son 3 columnas fijas):
-   * son el cuadro frontal de reposo con las piernas recortadas, para que el
-   * personaje lea como sentado detrás del escritorio. `type` además hace
-   * latir el recorte 41<->40 px a 4 fps (las manos moviéndose 1 px que pide
-   * la guía en POSES MÍNIMAS). */
+   * son el cuadro frontal de reposo bajado `SEAT_OFFSET_Y`, de modo que las
+   * piernas quedan detrás del tablero del escritorio (que se dibuja encima
+   * por profundidad) y el torso asoma por arriba, de cara al espectador.
+   * `type` además hace latir el cuerpo 1 px a 4 fps (las manos moviéndose que
+   * pide la guía en POSES MÍNIMAS). */
   play(anim: AnimName): void {
     const seated = anim === 'sit' || anim === 'type';
     const key = seated ? 'stand' : anim;
-    for (const sprite of [this.bodySprite, this.clothes, this.hair]) {
+    const layers = [this.bodySprite, this.clothes, this.hair];
+    for (const sprite of layers) {
       sprite.play(`${sprite.texture.key}_${key}`, true);
     }
 
-    this.cropTimer?.remove();
-    this.cropTimer = undefined;
+    this.typeTimer?.remove();
+    this.typeTimer = undefined;
+
+    const seat = (dy: number) => {
+      this.seatDy = dy;
+      for (const sprite of layers) sprite.setY(dy);
+      this.label?.setY(LABEL_Y + dy);
+      this.applyAuraGeometry();
+    };
 
     if (!seated) {
-      this.bodySprite.setCrop();
+      seat(0);
       return;
     }
-    this.bodySprite.setCrop(0, 0, SPRITE_W, SEAT_CROP_H);
+    seat(SEAT_OFFSET_Y);
     if (anim !== 'type') return;
 
-    let tall = true;
-    this.cropTimer = this.scene.time.addEvent({
+    let down = false;
+    this.typeTimer = this.scene.time.addEvent({
       delay: TYPE_INTERVAL_MS,
       loop: true,
       callback: () => {
-        tall = !tall;
-        this.bodySprite.setCrop(0, 0, SPRITE_W, tall ? SEAT_CROP_H : SEAT_CROP_H - 1);
+        down = !down;
+        seat(SEAT_OFFSET_Y + (down ? 1 : 0));
       },
     });
   }
@@ -309,10 +352,11 @@ export class Character extends Phaser.GameObjects.Container {
   /** Resuelve el tile destino para un nombre de punto (`scene.points`). */
   private resolveTargetTile(point: string, scene: OfficeScene): { x: number; y: number } {
     if (point.startsWith('desk_')) {
-      // El escritorio ocupa 2 tiles y la silla es la de abajo-derecha
-      // (el monitor ocupa el tile izquierdo, ver scripts/gen-map.mjs).
+      // El escritorio ocupa 2 tiles y la silla es la de ARRIBA-DERECHA: se
+      // trabaja detrás de la mesa y de cara al espectador (el monitor ocupa
+      // el tile de arriba-izquierda, ver scripts/gen-map.mjs).
       const desk = scene.points[point];
-      return { x: desk.x / TILE + 1, y: desk.y / TILE + 1 };
+      return { x: desk.x / TILE + 1, y: desk.y / TILE - 1 };
     }
     const p = scene.points[point];
     const tile = { x: p.x / TILE, y: p.y / TILE };
@@ -427,8 +471,8 @@ export class Character extends Phaser.GameObjects.Container {
     this.pulseTween = undefined;
     this.labelTween?.stop();
     this.labelTween = undefined;
-    this.cropTimer?.remove();
-    this.cropTimer = undefined;
+    this.typeTimer?.remove();
+    this.typeTimer = undefined;
   }
 
   /** Cualquier ruta de destrucción (no sólo el shutdown de la escena) debe
@@ -474,7 +518,7 @@ export class Character extends Phaser.GameObjects.Container {
 
 function chairPixelFor(scene: OfficeScene, deskIndex: number): { x: number; y: number } {
   const desk = scene.points[`desk_${deskIndex}`];
-  const tx = desk.x / TILE + 1; // silla = tile abajo-derecha del escritorio
-  const ty = desk.y / TILE + 1;
+  const tx = desk.x / TILE + 1; // silla = tile arriba-derecha del escritorio
+  const ty = desk.y / TILE - 1;
   return { x: tx * TILE + TILE / 2, y: ty * TILE + TILE / 2 };
 }

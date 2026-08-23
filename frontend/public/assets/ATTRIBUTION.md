@@ -24,10 +24,18 @@ Los tiles de mobiliario tienen fondo transparente: se pintan en la capa
 Textura de un solo uso: `OfficeScene` la tinta y la escala para los glows
 aditivos (monitores encendidos, rack, lámparas, pantalla Meet).
 
-### `sprites/objects.png` — 384x32, 12 frames de 32x32 en fila
+### `sprites/objects.png` — 512x32, 16 frames de 32x32 en fila
 
 `server_on, server_off, pc_on, pc_off, coffee_a, coffee_b, lamp_a, lamp_b,
-meet_on, meet_off, console, question`. Fondo transparente.
+meet_on, meet_off, console, question, desk, monitor_frame, rack_cap_on,
+rack_cap_off`. Fondo transparente. Los 12 primeros índices no se mueven
+nunca (`scenarios/fx.ts` referencia el 11 y `OfficeScene` el 10).
+
+`desk` es sprite y no tile porque tiene que dibujarse por encima de las
+piernas de quien está sentado detrás. `monitor_frame` es el bisel en
+`#d8d8d8`, que `OfficeScene` tinta por escritorio; por eso `pc_on`/`pc_off`
+sólo llevan el interior de la pantalla y la peana. `server_on`/`server_off`
+son el segmento central de la torre del rack y `rack_cap_*` los extremos.
 
 ### Capas de personaje — 96x208 (3 columnas x 4 filas de 32x52)
 
