@@ -20,7 +20,7 @@ import {
   ROPAS,
   isValidAvatar,
 } from './avatarStorage';
-import { cabecerasAuth, haySesion, leerToken, yo } from './sesion';
+import { borrarToken, cabecerasAuth, leerToken, yo } from './sesion';
 import oficinaMock from './mocks/oficina.json';
 import riesgoMock from './mocks/riesgo.json';
 import escenariosMock from './mocks/escenarios.json';
@@ -127,11 +127,18 @@ const DESK_COUNT = 9;
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(BASE + path, {
     ...init,
-    // El Bearer va en toda petición cuando hay sesión: los endpoints públicos
-    // lo ignoran y los de usuario lo necesitan. Va después de `...init` para
-    // que un caller no lo pise sin querer al pasar sus propias cabeceras.
+    // El Bearer va en toda petición: desde que la API dejó de ser pública, la
+    // única ruta que no lo pide es `/salud`. Va después de `...init` para que
+    // un caller no lo pise sin querer al pasar sus propias cabeceras.
     headers: { 'Content-Type': 'application/json', ...init?.headers, ...cabecerasAuth() },
   });
+  // Token vencido, o correo de fuera del dominio: la sesión no sirve y no va a
+  // servir reintentando. Se limpia y se vuelve al login desde un solo sitio,
+  // que es por donde pasan todas las llamadas.
+  if (r.status === 401 || r.status === 403) {
+    borrarToken();
+    if (!IS_MOCK) globalThis.location?.assign('/entrar');
+  }
   if (!r.ok) throw new Error(`${path} -> ${r.status}`);
   return r.json();
 }
@@ -292,14 +299,13 @@ export async function simular(body: {
 export async function putAvatar(cfg: AvatarConfig): Promise<{ ok: boolean }> {
   // En modo demo no hay red: el editor guarda en localStorage igual.
   if (IS_MOCK) return { ok: true };
-  // P3 acepta las capas en la raíz del body en ambos endpoints. Con sesión el
-  // avatar queda atado a la cuenta, que es lo que hace que sobreviva al cambio
-  // de equipo; sin sesión cae al endpoint sin token para no obligar a
-  // registrarse durante la demo.
+  // Las capas van en la raíz del body. El avatar queda atado a la cuenta (el
+  // dueño sale del token, no del cliente), que es lo que hace que sobreviva al
+  // cambio de equipo.
   const { cuerpo, peinado, ropa, paleta } = cfg;
-  const ruta = haySesion()
-    ? '/usuarios/me/avatar'
-    : `/avatar?email=${encodeURIComponent(miId())}`;
-  await req(ruta, { method: 'PUT', body: JSON.stringify({ cuerpo, peinado, ropa, paleta }) });
+  await req('/usuarios/me/avatar', {
+    method: 'PUT',
+    body: JSON.stringify({ cuerpo, peinado, ropa, paleta }),
+  });
   return { ok: true };
 }

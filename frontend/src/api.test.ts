@@ -320,7 +320,7 @@ describe('api (modo real, con VITE_API_URL)', () => {
     expect(warn).toHaveBeenCalled();
   });
 
-  it('putAvatar hace PUT /avatar?email=... con las capas en la raíz del body', async () => {
+  it('putAvatar hace PUT /usuarios/me/avatar con las capas en la raíz del body', async () => {
     const { api, fetchMock } = await importRealApi({ ok: true });
     const res = await api.putAvatar({
       cuerpo: 'dark',
@@ -331,9 +331,9 @@ describe('api (modo real, con VITE_API_URL)', () => {
 
     expect(res).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      'http://x/avatar?email=ana%40empresa.com',
-    );
+    // El dueño sale del token, nunca del cliente: no hay endpoint que acepte
+    // un email por query.
+    expect(fetchMock.mock.calls[0][0]).toBe('http://x/usuarios/me/avatar');
     const init = fetchMock.mock.calls[0][1]!;
     expect(init.method).toBe('PUT');
     expect(JSON.parse(init.body as string)).toEqual({

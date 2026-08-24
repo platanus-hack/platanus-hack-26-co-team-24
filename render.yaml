@@ -28,10 +28,15 @@ services:
         sync: false
       - key: SLACK_REDIRECT_URI
         sync: false
+      # Quién puede entrar. Se valida contra el email que confirma Supabase,
+      # no contra el `hd` que se le sugiere a Google.
+      - key: DOMINIO_PERMITIDO
+        value: inerxia.co
       # Opcional: si se llena, POST /admin/eventos exige X-Admin-Token.
       - key: ADMIN_TOKEN
         sync: false
-      # A dónde vuelve el navegador tras aprobar la app de Slack.
+      # A dónde vuelve el navegador tras entrar con Google o aprobar la app de
+      # Slack, y el único origen que acepta CORS.
       - key: FRONTEND_URL
         fromService:
           type: web

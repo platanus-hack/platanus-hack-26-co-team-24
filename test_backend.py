@@ -26,6 +26,12 @@ from backend.app import app
 
 cliente = TestClient(app)
 
+# La app entera pide Bearer del dominio (`auth.guardia`). Los tests no salen de
+# la máquina, así que la puerta se abre una vez aquí; quien además necesite
+# saber QUIÉN entró usa `como()`. El guardia tiene su propio test más abajo,
+# con la dependencia real.
+app.dependency_overrides[auth.guardia] = lambda: None
+
 SLACK_ENV = {
     "SLACK_CLIENT_ID": "123.456",
     "SLACK_CLIENT_SECRET": "secreto-de-prueba",
@@ -239,11 +245,13 @@ def test_procesar_corre_la_cadena_completa():
 
 
 def test_avatar_se_guarda_y_aparece_en_la_oficina():
-    """P4 manda las capas en el root, sin token. Default: Ana."""
-    r = cliente.put(
-        "/avatar",
-        json={"cuerpo": "light", "peinado": "long", "ropa": "shirt", "paleta": "blue"},
-    )
+    """Las capas van en el root del body; el dueño sale del token."""
+    with como() as cab:
+        r = cliente.put(
+            "/usuarios/me/avatar",
+            headers=cab,
+            json={"cuerpo": "light", "peinado": "long", "ropa": "shirt", "paleta": "blue"},
+        )
     assert r.status_code == 200, r.text
     assert r.json()["email"] == "ana@empresa.com"
     assert r.json()["avatar_config"]["peinado"] == "long"
@@ -252,9 +260,56 @@ def test_avatar_se_guarda_y_aparece_en_la_oficina():
 
 
 def test_conexion_simulada_no_pide_oauth():
-    r = cliente.post("/conexiones", json={"tipo": "slack", "email": "david@empresa.com"})
+    with como("david@empresa.com") as cab:
+        r = cliente.post("/conexiones", headers=cab, json={"tipo": "slack"})
     assert r.status_code == 200, r.text
     assert r.json()["estado"] == "activa"
+
+
+# --- La puerta -------------------------------------------------------------------
+
+
+@contextlib.contextmanager
+def sin_override_del_guardia():
+    """Devuelve el guardia real solo para el bloque: el resto del archivo corre
+    con la puerta abierta."""
+    app.dependency_overrides.pop(auth.guardia, None)
+    try:
+        yield
+    finally:
+        app.dependency_overrides[auth.guardia] = lambda: None
+
+
+def test_sin_token_no_se_sirve_nada():
+    """Lo que motivó todo esto: la oficina y el conocimiento eran públicos."""
+    with sin_override_del_guardia():
+        for ruta in ("/oficina", "/conocimiento", "/riesgo", "/digest", "/admin/procesar"):
+            metodo = cliente.post if ruta.startswith("/admin") else cliente.get
+            assert metodo(ruta).status_code == 401, ruta
+        assert cliente.get("/salud").status_code == 200
+
+
+def test_solo_entra_el_dominio_permitido():
+    """El `hd` de Google es una sugerencia; esto es el candado de verdad."""
+    with patch.object(bd, "hay_bd", lambda: True):
+        with patch.object(bd, "auth_publico", lambda *a, **k: {"id": "u-9", "email": "ajeno@gmail.com"}):
+            with pytest_raises_http(403):
+                auth.usuario_del_token("Bearer lo-que-sea")
+        with patch.object(bd, "auth_publico", lambda *a, **k: {"id": "u-9", "email": f"quien@{auth.DOMINIO}"}):
+            assert auth.usuario_del_token("Bearer lo-que-sea")["email"] == f"quien@{auth.DOMINIO}"
+
+
+@contextlib.contextmanager
+def pytest_raises_http(codigo):
+    """Sin framework de tests: el `raises` de este archivo."""
+    from fastapi import HTTPException
+
+    try:
+        yield
+    except HTTPException as e:
+        assert e.status_code == codigo, e.status_code
+    else:
+        raise AssertionError(f"se esperaba HTTPException {codigo}")
 
 
 # --- Conexiones de Slack ---------------------------------------------------------

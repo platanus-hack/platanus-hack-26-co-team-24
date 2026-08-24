@@ -1,11 +1,16 @@
 // Sesión del usuario contra el auth de P3 (Supabase por debajo).
 //
+// Se entra SOLO con Google y solo con un correo del dominio de la empresa: el
+// backend manda el navegador a Supabase, Supabase lo devuelve a `/entrar` con
+// el token en el fragmento de la URL, y el dominio lo verifica el servidor
+// contra el email que confirma Supabase.
+//
 // Lo único que vive en el navegador es el token. La personalización vive en el
 // servidor, que es lo que permite abrir el juego en otro equipo y encontrar tu
-// avatar. Antes de esto el avatar estaba en localStorage y no salía de ahí.
+// avatar.
 //
-// En modo mock (sin VITE_API_URL) no hay sesión: el juego corre offline como
-// siempre y el avatar cae a localStorage. Es el plan B del demo.
+// En modo mock (sin VITE_API_URL) no hay sesión: el juego corre offline con
+// datos de mentira, sin nada del equipo.
 
 const CLAVE_TOKEN = 'bfhq.token';
 
@@ -62,45 +67,42 @@ async function motivo(r: Response, porDefecto: string): Promise<string> {
   return porDefecto;
 }
 
-async function pedirSesion(
-  base: string,
-  ruta: string,
-  cuerpo: Record<string, string>,
-  errorPorDefecto: string,
-): Promise<Usuario> {
-  const r = await fetch(`${base}${ruta}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(cuerpo),
-  });
-  if (!r.ok) throw new Error(await motivo(r, errorPorDefecto));
-
-  const datos = (await r.json()) as { token?: string };
-  if (!datos.token) throw new Error('El servidor no devolvió sesión.');
-  guardarToken(datos.token);
-
-  return yo(base);
+/** A dónde mandar el navegador para entrar. El backend redirige a Supabase
+ * porque es él quien sabe la URL del proyecto. */
+export function urlLoginGoogle(base: string): string {
+  return `${base}/auth/google`;
 }
 
-export function entrar(base: string, email: string, password: string): Promise<Usuario> {
-  return pedirSesion(base, '/auth/login', { email, password }, 'Email o contraseña incorrectos.');
-}
+/** El retorno de Google, leído UNA vez del fragmento de la URL.
+ *
+ * Se memoriza a nivel de módulo porque el fragmento se limpia al leerlo (el
+ * token no tiene por qué quedar en la barra ni en el historial) y `useEffect`
+ * corre dos veces en StrictMode: sin la memoria, el segundo pase vería una URL
+ * vacía y creería que nadie volvió de Google. */
+let retorno: { token?: string; error?: string } | null = null;
 
-export function registrar(
-  base: string,
-  email: string,
-  password: string,
-  nombre: string,
-): Promise<Usuario> {
-  return pedirSesion(base, '/auth/registro', { email, password, nombre }, 'No se pudo crear la cuenta.');
+export function retornoDeGoogle(): { token?: string; error?: string } {
+  if (retorno) return retorno;
+  const hash = globalThis.location?.hash ?? '';
+  if (!hash.includes('access_token') && !hash.includes('error')) return (retorno = {});
+
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+  const token = params.get('access_token');
+  if (token) guardarToken(token);
+  globalThis.history?.replaceState(null, '', location.pathname + location.search);
+
+  return (retorno = token
+    ? { token }
+    : { error: params.get('error_description') ?? params.get('error') ?? 'Google no devolvió sesión.' });
 }
 
 /** Quién soy según el servidor, avatar incluido. Null si el token ya no sirve. */
 export async function yo(base: string): Promise<Usuario> {
   const r = await fetch(`${base}/usuarios/me`, { headers: cabecerasAuth() });
-  if (r.status === 401) {
+  if (r.status === 401 || r.status === 403) {
+    const detalle = await motivo(r, 'La sesión venció. Entra otra vez.');
     borrarToken();
-    throw new Error('La sesión venció. Entra otra vez.');
+    throw new Error(detalle);
   }
   if (!r.ok) throw new Error(await motivo(r, 'No se pudo leer tu perfil.'));
   return (await r.json()) as Usuario;
