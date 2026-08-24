@@ -38,7 +38,6 @@ from . import slack_oauth
 from .esquemas import (
     Miembro,
     Oficina,
-    PeticionAuth,
     PeticionAvatar,
     PeticionConexion,
     PeticionQuest,
@@ -78,11 +77,17 @@ app = FastAPI(
     description="P3. Los frontends solo hablan con esto. `?mock=true` en cualquier lectura devuelve el plan B del demo.",
     version="0.1.0",
     lifespan=ciclo_de_vida,
+    # Terminado el hackathon: todo pide Bearer del dominio salvo
+    # `auth.RUTAS_PUBLICAS`. Aquí y no en cada endpoint, para que una ruta
+    # nueva nazca cerrada.
+    dependencies=[Depends(auth.guardia)],
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    # Un solo origen: el front desplegado. Con `*` cualquier página podía
+    # llamar la API con el token de quien la estuviera visitando.
+    allow_origins=[auth.frontend_base(), "http://localhost:5173"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -246,16 +251,11 @@ def _avatar_del_cuerpo(cuerpo: PeticionAvatar) -> dict:
 # --- Usuario --------------------------------------------------------------------
 
 
-@app.post("/auth/registro", tags=["auth"])
-def registro(cuerpo: PeticionAuth) -> dict:
-    if not cuerpo.nombre:
-        raise HTTPException(422, "El registro pide nombre.")
-    return auth.registrar(cuerpo.email, cuerpo.password, cuerpo.nombre)
-
-
-@app.post("/auth/login", tags=["auth"])
-def login(cuerpo: PeticionAuth) -> dict:
-    return auth.entrar(cuerpo.email, cuerpo.password)
+@app.get("/auth/google", tags=["auth"])
+def entrar_con_google() -> RedirectResponse:
+    """La puerta. Supabase hace el OAuth y devuelve al front con el token en el
+    fragmento; el dominio se exige después, al resolver el token."""
+    return RedirectResponse(auth.url_login_google())
 
 
 @app.get("/usuarios/me", tags=["auth"])
@@ -276,25 +276,12 @@ def put_mi_avatar(cuerpo: PeticionAvatar, actual: dict = Depends(auth.usuario_de
     return auth.guardar_avatar(actual["email"], _avatar_del_cuerpo(cuerpo))
 
 
-@app.put("/avatar", tags=["auth"])
-def put_avatar(cuerpo: PeticionAvatar, email: str | None = Query(None)) -> dict:
-    """Lo que P4 llama hoy. Sin token: el email va en query o en el body (default Ana)."""
-    destino = email or cuerpo.email or "ana@empresa.com"
-    config = _avatar_del_cuerpo(cuerpo)
-    if not config:
-        raise HTTPException(422, "Manda avatar_config o las capas (cuerpo, peinado, ropa, paleta).")
-    return auth.guardar_avatar(destino, config)
-
-
 @app.post("/conexiones", tags=["auth"])
 def post_conexion(
     cuerpo: PeticionConexion,
-    authorization: str | None = Header(None),
+    actual: dict = Depends(auth.usuario_del_token),
 ) -> dict:
-    email = cuerpo.email or "ana@empresa.com"
-    if authorization:
-        email = auth.usuario_del_token(authorization)["email"]
-    return auth.marcar_conexion(email, cuerpo.tipo)
+    return auth.marcar_conexion(actual["email"], cuerpo.tipo)
 
 
 # --- Conexiones de Slack --------------------------------------------------------
@@ -305,16 +292,8 @@ def post_conexion(
 
 
 def _pantalla_de_conexiones() -> str:
-    """A dónde devolver el navegador después de Slack.
-
-    Render inyecta `fromService: property: host` sin esquema, y una redirección
-    a `host/conexiones` sería relativa: el usuario aterrizaría en la API en vez
-    del frontend.
-    """
-    base = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
-    if not base.startswith(("http://", "https://")):
-        base = f"https://{base}"
-    return f"{base}/conexiones"
+    """A dónde devolver el navegador después de Slack."""
+    return f"{auth.frontend_base()}/conexiones"
 
 
 @app.get("/conexiones", tags=["conexiones"])

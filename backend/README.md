@@ -37,6 +37,12 @@ solos. Una oficina sin personajes parece un bug, no un estado vacío.
 
 ## Endpoints
 
+**Todo pide `Authorization: Bearer <token>` de una cuenta `@inerxia.co`.** Las
+únicas rutas abiertas son `/salud`, `/docs`, `/redoc`, `/openapi.json`,
+`/auth/google` y el callback de Slack (`auth.RUTAS_PUBLICAS`). El candado está
+en el constructor de la app, no endpoint por endpoint: una ruta nueva nace
+cerrada. Ver "Entrar".
+
 | Método | Ruta | Para quién | Devuelve |
 |---|---|---|---|
 | GET | `/salud` | todos | estado del backend y de dónde salen los datos |
@@ -180,19 +186,51 @@ curl -X POST https://bus-factor-hq.onrender.com/admin/sembrar
 
 | Método | Ruta | Auth | Devuelve |
 |---|---|---|---|
-| POST | `/auth/registro` | no | `{token, user}` |
-| POST | `/auth/login` | no | `{token, user}` |
+| GET | `/auth/google` | no | 302 a Supabase, que hace el OAuth de Google |
 | GET | `/usuarios/me` | Bearer | User |
 | PUT | `/usuarios/me/avatar` | Bearer | `{ok, email, avatar_config}` |
-| PUT | `/avatar` | no (P4) | igual. `?email=` o body; default Ana |
 | GET | `/conexiones` | Bearer | las conexiones **que existen**, sin token |
-| POST | `/conexiones` | opcional | marca de estado, sin token. Para Drive |
+| POST | `/conexiones` | Bearer | marca de estado, sin token. Para Drive |
 | GET | `/conexiones/slack/iniciar` | Bearer | `{url}` a la que mandar el navegador |
 | GET | `/conexiones/slack/callback` | no (Slack) | canjea el código y redirige al front |
 | POST | `/conexiones/slack/sincronizar` | Bearer | baja los mensajes del usuario |
 | POST | `/conexiones/drive/transcripciones` | Bearer | sube transcripciones de Meet como texto |
 
-`PUT /avatar` acepta el body de P4 tal cual: `{cuerpo, peinado, ropa, paleta}`.
+`PUT /usuarios/me/avatar` acepta el body de P4 tal cual:
+`{cuerpo, peinado, ropa, paleta}`. El dueño sale del token, nunca del cliente.
+
+## Entrar
+
+Terminado el hackathon la API dejó de ser pública. Se entra solo con Google y
+solo con un correo del dominio; el resto recibe 403 aunque tenga un token
+válido de Supabase.
+
+El navegador va a `GET /auth/google`, que redirige a Supabase; Supabase hace el
+OAuth y devuelve a `$FRONTEND_URL/entrar` con el token en el **fragmento** de la
+URL (`#access_token=…`), que el front guarda y limpia de la barra.
+
+El dominio lo verifica `auth.usuario_del_token` contra el email que confirma
+Supabase, **no** el parámetro `hd` que se le manda a Google: ese es una
+sugerencia para la pantalla de cuentas y el usuario puede ignorarlo.
+
+### Configuración (una vez)
+
+1. **Google Cloud → APIs y servicios → Credenciales → ID de cliente OAuth**
+   (tipo *Aplicación web*). URI de redirección autorizado:
+   `https://<proyecto>.supabase.co/auth/v1/callback`.
+2. **Supabase → Authentication → Providers → Google**: pegar el *Client ID* y
+   el *Client Secret*, y habilitarlo.
+3. **Supabase → Authentication → URL Configuration**: *Site URL* = la URL del
+   front; *Redirect URLs* incluye `<front>/entrar` (y
+   `http://localhost:5173/entrar` para desarrollo). Si falta, Supabase devuelve
+   al Site URL y el login se queda a medias.
+4. `FRONTEND_URL` en el servicio de la API: de ahí salen el `redirect_to` y el
+   único origen que acepta CORS.
+5. Opcional: `DOMINIO_PERMITIDO` para abrir a otro dominio. Sin ella, `inerxia.co`.
+
+Como el email/contraseña de Supabase ya no se usa, conviene apagar en el
+dashboard el provider *Email* y *Allow new users to sign up* si se quiere que
+ni siquiera se creen usuarios de fuera.
 
 ## Conectar Slack
 

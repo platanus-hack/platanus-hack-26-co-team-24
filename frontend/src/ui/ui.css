@@ -1099,51 +1099,6 @@
   margin: 0;
 }
 
-.entrar-pestanas {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.entrar-pestanas button {
-  flex: 1;
-  padding: 0.5rem;
-  font-family: monospace;
-  font-size: 0.85rem;
-  color: #b9c4ff;
-  background: transparent;
-  border: 2px solid #2b2d7a;
-  cursor: pointer;
-}
-
-.entrar-pestanas button.activa {
-  color: #0b0b2b;
-  background: #00e5ff;
-  border-color: #00e5ff;
-}
-
-.entrar-campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-family: monospace;
-  font-size: 0.8rem;
-  color: #b9c4ff;
-}
-
-.entrar-campo input {
-  padding: 0.55rem;
-  font-family: monospace;
-  font-size: 0.95rem;
-  color: #ffffff;
-  background: #0b0b2b;
-  border: 2px solid #2b2d7a;
-}
-
-.entrar-campo input:focus-visible {
-  outline: 2px solid #00e5ff;
-  outline-offset: 1px;
-}
-
 .entrar-error {
   margin: 0;
   font-family: monospace;
@@ -1151,23 +1106,19 @@
   color: #ff8a9b;
 }
 
-.entrar-caja > button[type='submit'] {
+.entrar-caja > button,
+.entrar-google {
   padding: 0.7rem;
   font-family: monospace;
   font-size: 0.95rem;
+  text-align: center;
+  text-decoration: none;
   color: #0b0b2b;
   background: #39ff14;
   border: none;
   cursor: pointer;
 }
 
-.entrar-caja > button[type='submit']:disabled {
-  background: #2b2d7a;
-  color: #b9c4ff;
-  cursor: progress;
-}
-
-.entrar-invitado,
 .avatar-salir {
   padding: 0.4rem;
   font-family: monospace;

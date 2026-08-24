@@ -1,50 +1,51 @@
-// Pantalla de entrada. Un solo formulario que hace login o registro según la
-// pestaña, porque `POST /auth/registro` ya devuelve sesión: registrarse y
-// entrar son el mismo paso.
-import { useState } from 'react';
+// Pantalla de entrada. Un solo camino: Google con correo de la empresa.
+//
+// Es también la página de retorno del OAuth: Supabase devuelve aquí con el
+// token en el fragmento de la URL, así que al montar hay que mirar si venimos
+// de allá antes de pintar el botón.
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE, IS_MOCK } from '../api';
-import { entrar, registrar } from '../sesion';
+import { haySesion, retornoDeGoogle, salir, urlLoginGoogle, yo } from '../sesion';
 import './ui.css';
-
-type Modo = 'entrar' | 'crear';
 
 export function Entrar() {
   const navegar = useNavigate();
-  const [modo, setModo] = useState<Modo>('entrar');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [nombre, setNombre] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const [verificando, setVerificando] = useState(!IS_MOCK);
 
-  const creando = modo === 'crear';
-
-  async function enviar(e: React.FormEvent) {
-    e.preventDefault();
-    if (!API_BASE) return;
-    setError(null);
-    setEnviando(true);
-    try {
-      await (creando
-        ? registrar(API_BASE, email.trim(), password, nombre.trim())
-        : entrar(API_BASE, email.trim(), password));
-      navegar('/oficina', { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo entrar.');
-    } finally {
-      setEnviando(false);
+  useEffect(() => {
+    if (IS_MOCK || !API_BASE) return;
+    const vuelta = retornoDeGoogle();
+    if (vuelta.error) {
+      setError(vuelta.error);
+      setVerificando(false);
+      return;
     }
-  }
+    // Sin token guardado no hay nada que verificar: a pedir el login.
+    if (!vuelta.token && !haySesion()) {
+      setVerificando(false);
+      return;
+    }
+    // El dominio lo decide el servidor, no el navegador: si el correo no es de
+    // la casa, `/usuarios/me` responde 403 y aquí se ve el motivo.
+    yo(API_BASE)
+      .then(() => navegar('/oficina', { replace: true }))
+      .catch((e) => {
+        salir();
+        setError(e instanceof Error ? e.message : 'No se pudo entrar.');
+        setVerificando(false);
+      });
+  }, [navegar]);
 
-  // Sin backend no hay a quién pedirle sesión: el juego corre offline igual.
+  // Sin backend no hay a quién pedirle sesión: el juego corre con mocks.
   if (IS_MOCK) {
     return (
       <div className="entrar">
         <div className="entrar-caja">
           <h1>Bus Factor HQ</h1>
           <p className="entrar-nota">
-            Modo demo sin servidor. Tu avatar se guarda solo en este navegador.
+            Modo demo sin servidor: datos de ejemplo, nada del equipo real.
           </p>
           <button type="button" onClick={() => navegar('/oficina', { replace: true })}>
             Entrar a la oficina
@@ -56,67 +57,9 @@ export function Entrar() {
 
   return (
     <div className="entrar">
-      <form className="entrar-caja" onSubmit={enviar}>
+      <div className="entrar-caja">
         <h1>Bus Factor HQ</h1>
-        <p className="entrar-nota">
-          Tu avatar y tu personaje quedan en tu cuenta: los encuentras desde cualquier equipo.
-        </p>
-
-        <div className="entrar-pestanas" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={!creando}
-            className={!creando ? 'activa' : ''}
-            onClick={() => setModo('entrar')}
-          >
-            Entrar
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={creando}
-            className={creando ? 'activa' : ''}
-            onClick={() => setModo('crear')}
-          >
-            Crear cuenta
-          </button>
-        </div>
-
-        {creando && (
-          <label className="entrar-campo">
-            Nombre
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-              autoComplete="name"
-            />
-          </label>
-        )}
-
-        <label className="entrar-campo">
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-        </label>
-
-        <label className="entrar-campo">
-          Contraseña
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            autoComplete={creando ? 'new-password' : 'current-password'}
-          />
-        </label>
+        <p className="entrar-nota">Acceso solo para cuentas @inerxia.co.</p>
 
         {error && (
           <p className="entrar-error" role="alert">
@@ -124,18 +67,14 @@ export function Entrar() {
           </p>
         )}
 
-        <button type="submit" disabled={enviando}>
-          {enviando ? 'Un momento…' : creando ? 'Crear cuenta y entrar' : 'Entrar'}
-        </button>
-
-        <button
-          type="button"
-          className="entrar-invitado"
-          onClick={() => navegar('/oficina', { replace: true })}
-        >
-          Mirar la oficina sin cuenta
-        </button>
-      </form>
+        {verificando ? (
+          <p className="entrar-nota">Un momento…</p>
+        ) : (
+          <a className="entrar-google" href={urlLoginGoogle(API_BASE!)}>
+            Entrar con Google
+          </a>
+        )}
+      </div>
     </div>
   );
 }
