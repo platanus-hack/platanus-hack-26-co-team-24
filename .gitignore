@@ -8,3 +8,13 @@ __pycache__/
 # Cuando haya una corrida buena con Claude, forzar su commit (git add -f) como
 # plan B del demo sin red.
 data/estado.json
+node_modules/
+venv/
+.next/
+dist/
+build/
+.env.example
+!.env.example
+.turbo/
+.cache/
+*.pyc
